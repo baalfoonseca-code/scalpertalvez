@@ -1,5 +1,6 @@
 // GENERATED: scalpertalvez_MONOLITICO.mq5; complete MQL5-target transposition.
-// Immutable engineering reference: modular commit 323750ad5bc3a9f4e5c92570313b206966dfdff6.
+// MATRIX_ID_FIX1: diagnostic identifiers renamed; candidate for native recompilation.
+// Immutable engineering reference: modular commit 824e0ced7a3ebb3fd9893c60a4547562ef4cea05.
 // All 13 custom modules are incorporated at their original include sites.
 // Host-only adapters remain as comments; only official MQL5 includes remain active.
 // Native MetaEditor compilation NOT verified; experimental, not homologated.
@@ -4300,9 +4301,9 @@ int BookCsvOpenInitialFile()
 #ifndef BOOK_BUILD_IDENTITY_MQH
 #define BOOK_BUILD_IDENTITY_MQH
 #define BOOK_BASELINE_REVISION "a31f7b03701dd13b5c26801669552001d3ed634c"
-#define BOOK_REVISION_AT_GENERATION "cab2cc8a3eb8a40a58b37b47af2c22e5145a18c1"
+#define BOOK_REVISION_AT_GENERATION "eee1b308ed1ee5c92a699f852705413eca9a74ec"
 #define BOOK_BUILD_ID "BOOK1125_SURGERY_EXP1"
-#define BOOK_SOURCE_BUNDLE_SHA256 "9559ee5a5e2529b9780cccf323a7542f17bcd224b64f002279376564086171eb"
+#define BOOK_SOURCE_BUNDLE_SHA256 "f631060deea71822d03f40b26d8d734e29310a8637b29f55bcc6d45ace5c52bd"
 #endif
 // END_INCORPORATED Include/BookBuildIdentity.mqh
 // Identity is telemetry only: failure never authorizes or changes an order.
@@ -12256,7 +12257,7 @@ struct BookArmedDiagnostic
    double bid_pct,ask_pct,sigma,vwap_d1,d1_high,d1_low;
    int sigma_days;
    ulong book_sequence;
-   MatrixSnapshot matrix;
+   MatrixSnapshot matrixSnapshot;
    BookArmedTrace trace;
 };
 struct BookArmedEvent
@@ -12344,7 +12345,7 @@ void BookDiagSelected(const MatrixSnapshot &s,const ArmedSignal &a,double trigge
    gBookDiagState.signal_bar=a.regionEndTime; gBookDiagState.armed_at=a.armedAt;
    gBookDiagState.high=a.regionHigh; gBookDiagState.low=a.regionLow;
    gBookDiagState.margin=gBreakoutMargin; gBookDiagState.effort_min=a.breakoutEffortMin;
-   gBookDiagState.matrix=s; gBookDiagState.matrix_available=true;
+   gBookDiagState.matrixSnapshot=s; gBookDiagState.matrix_available=true;
    gBookDiagState.sigma=SigmaD1; gBookDiagState.sigma_days=gBookSigmaValidDays;
    gBookDiagState.vwap_d1=VWAP_D1; gBookDiagState.d1_high=H1; gBookDiagState.d1_low=L1;
    BookArmedResetTrace(gBookDiagState.trace,a.dir,(long)a.armedAt*1000,trigger);
@@ -12554,7 +12555,7 @@ void BookDiagMatrix(const MatrixSnapshot &s,datetime live_bar)
    e.event=gBookDiagState.active?"ARMED_MATRIX_OPPORTUNITY":"BANDS_REFERENCE";
    e.reason="ORIGINAL_SNAPSHOT_ONLY_NO_NEW_EVALUATION";
    if(gBookDiagState.active) e.state=gBookDiagState;
-   e.state.matrix=s; e.state.matrix_available=true;
+   e.state.matrixSnapshot=s; e.state.matrix_available=true;
    e.state.signal_bar=live_bar;
    e.state.sigma=SigmaD1; e.state.sigma_days=gBookSigmaValidDays;
    e.state.vwap_d1=VWAP_D1; e.state.d1_high=H1; e.state.d1_low=L1;
@@ -12733,24 +12734,24 @@ string BookDiagFormat(const BookArmedEvent &e)
    BookDiagCell(row,BookDiagNumber(s.sigma,s.matrix_available));
    BookDiagCell(row,s.matrix_available?(string)s.sigma_days:"");
    BookDiagCell(row,BookDiagNumber(BandMultiplier));
-   BookDiagCell(row,BookDiagNumber(s.matrix.vwapVig,s.matrix_available));
-   BookDiagCell(row,BookDiagNumber(s.matrix.lower,s.matrix_available));
-   BookDiagCell(row,BookDiagNumber(s.matrix.upper,s.matrix_available));
-   BookDiagCell(row,BookDiagNumber(s.matrix.upper-s.matrix.lower,s.matrix_available));
-   BookDiagCell(row,BookDiagNumber(s.matrix.vwapVig-s.matrix.lower,s.matrix_available));
-   BookDiagCell(row,BookDiagNumber(s.matrix.upper-s.matrix.vwapVig,s.matrix_available));
+   BookDiagCell(row,BookDiagNumber(s.matrixSnapshot.vwapVig,s.matrix_available));
+   BookDiagCell(row,BookDiagNumber(s.matrixSnapshot.lower,s.matrix_available));
+   BookDiagCell(row,BookDiagNumber(s.matrixSnapshot.upper,s.matrix_available));
+   BookDiagCell(row,BookDiagNumber(s.matrixSnapshot.upper-s.matrixSnapshot.lower,s.matrix_available));
+   BookDiagCell(row,BookDiagNumber(s.matrixSnapshot.vwapVig-s.matrixSnapshot.lower,s.matrix_available));
+   BookDiagCell(row,BookDiagNumber(s.matrixSnapshot.upper-s.matrixSnapshot.vwapVig,s.matrix_available));
    BookDiagCell(row,BookDiagNumber(s.vwap_d1,s.matrix_available));
    BookDiagCell(row,BookDiagNumber(s.d1_high,s.matrix_available)); BookDiagCell(row,BookDiagNumber(s.d1_low,s.matrix_available));
    BookDiagCell(row,"UNAVAILABLE"); BookDiagCell(row,"UNAVAILABLE");
-   BookDiagCell(row,BookDiagNumber(s.matrix.posRel,s.matrix_available));
+   BookDiagCell(row,BookDiagNumber(s.matrixSnapshot.posRel,s.matrix_available));
    BookDiagCell(row,(string)gBookDiagDropped); BookDiagCell(row,(string)gBookDiagOverwrites);
    BookDiagCell(row,(string)gBookDiagDeduplicated); BookDiagCell(row,(string)gBookDiagIOErrors);
    BookDiagCell(row,(string)gBookDiagHookCount); BookDiagCell(row,(string)gBookDiagHookTotalUS);
    BookDiagCell(row,(string)gBookDiagHookMaxUS); BookDiagCell(row,(string)gBookDiagTimerUS);
    // All original matrix fields retained as ONE quoted CSV cell, formatted only
    // on timer from frozen scalars. Sigma/previous-day references are separate.
-   string matrix=s.matrix_available?BookDiagOriginalMatrix(s.matrix):"";
-   BookDiagCell(row,matrix);
+   string matrixCsvCell=s.matrix_available?BookDiagOriginalMatrix(s.matrixSnapshot):"";
+   BookDiagCell(row,matrixCsvCell);
    return row+"\r\n";
 }
 string BookDiagHeader()

@@ -1,0 +1,704 @@
+{
+  "schema": "BOOK_MONOLITH_SOURCE_MAP_V1",
+  "reference_commit": "824e0ced7a3ebb3fd9893c60a4547562ef4cea05",
+  "reference_paths_commit": "323750ad5bc3a9f4e5c92570313b206966dfdff6",
+  "monolith_sha256": "c3a2e1bd2ea4f9f04eeafa48a2c8fb70cd20af441d2c09b296e41f44c30534ae",
+  "segments": [
+    {
+      "generated_start_line": 8,
+      "generated_end_line": 233,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 1,
+      "source_end_line": 226,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 234,
+      "generated_end_line": 234,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 227,
+      "source_end_line": 227,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 235,
+      "generated_end_line": 235,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 227,
+      "source_end_line": 227,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 236,
+      "generated_end_line": 256,
+      "source_path": "Include/BookRiskInputs.mqh",
+      "source_start_line": 1,
+      "source_end_line": 21,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 257,
+      "generated_end_line": 257,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 227,
+      "source_end_line": 227,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 258,
+      "generated_end_line": 258,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 228,
+      "source_end_line": 228,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 259,
+      "generated_end_line": 259,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 228,
+      "source_end_line": 228,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 260,
+      "generated_end_line": 264,
+      "source_path": "Include/BookArmedInputs.mqh",
+      "source_start_line": 1,
+      "source_end_line": 5,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 265,
+      "generated_end_line": 265,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 228,
+      "source_end_line": 228,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 266,
+      "generated_end_line": 736,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 229,
+      "source_end_line": 699,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 737,
+      "generated_end_line": 737,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 700,
+      "source_end_line": 700,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 738,
+      "generated_end_line": 738,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 700,
+      "source_end_line": 700,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 739,
+      "generated_end_line": 740,
+      "source_path": "Include/BookAdvancedRisk.mqh",
+      "source_start_line": 1,
+      "source_end_line": 2,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 741,
+      "generated_end_line": 741,
+      "source_path": "Include/BookAdvancedRisk.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 742,
+      "generated_end_line": 742,
+      "source_path": "Include/BookAdvancedRisk.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 743,
+      "generated_end_line": 745,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 1,
+      "source_end_line": 3,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 746,
+      "generated_end_line": 752,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 4,
+      "source_end_line": 10,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 753,
+      "generated_end_line": 756,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 11,
+      "source_end_line": 14,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 757,
+      "generated_end_line": 757,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 15,
+      "source_end_line": 15,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 758,
+      "generated_end_line": 836,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 16,
+      "source_end_line": 94,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 837,
+      "generated_end_line": 837,
+      "source_path": "Include/BookAdvancedRisk.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 838,
+      "generated_end_line": 1347,
+      "source_path": "Include/BookAdvancedRisk.mqh",
+      "source_start_line": 4,
+      "source_end_line": 513,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 1348,
+      "generated_end_line": 1348,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 700,
+      "source_end_line": 700,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 1349,
+      "generated_end_line": 3976,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 701,
+      "source_end_line": 3328,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 3977,
+      "generated_end_line": 3977,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3329,
+      "source_end_line": 3329,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 3978,
+      "generated_end_line": 3978,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3329,
+      "source_end_line": 3329,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 3979,
+      "generated_end_line": 4292,
+      "source_path": "Include/BookCsvDiagnostics.mqh",
+      "source_start_line": 1,
+      "source_end_line": 314,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 4293,
+      "generated_end_line": 4293,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3329,
+      "source_end_line": 3329,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4294,
+      "generated_end_line": 4294,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3330,
+      "source_end_line": 3330,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 4295,
+      "generated_end_line": 4295,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3330,
+      "source_end_line": 3330,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4296,
+      "generated_end_line": 4297,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 1,
+      "source_end_line": 2,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 4298,
+      "generated_end_line": 4298,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 4299,
+      "generated_end_line": 4299,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4300,
+      "generated_end_line": 4307,
+      "source_path": "Include/BookBuildIdentity.mqh",
+      "source_start_line": 1,
+      "source_end_line": 8,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 4308,
+      "generated_end_line": 4308,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4309,
+      "generated_end_line": 4336,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 4,
+      "source_end_line": 31,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 4337,
+      "generated_end_line": 4337,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 32,
+      "source_end_line": 32,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 4338,
+      "generated_end_line": 4338,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 32,
+      "source_end_line": 32,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4339,
+      "generated_end_line": 4436,
+      "source_path": "Include/BookInputSnapshot.mqh",
+      "source_start_line": 1,
+      "source_end_line": 98,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 4437,
+      "generated_end_line": 4437,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 32,
+      "source_end_line": 32,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4438,
+      "generated_end_line": 4556,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 33,
+      "source_end_line": 151,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 4557,
+      "generated_end_line": 4557,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3330,
+      "source_end_line": 3330,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4558,
+      "generated_end_line": 10716,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3331,
+      "source_end_line": 9489,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 10717,
+      "generated_end_line": 10721,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9490,
+      "source_end_line": 9494,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 10722,
+      "generated_end_line": 10723,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9495,
+      "source_end_line": 9496,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 10724,
+      "generated_end_line": 10724,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9497,
+      "source_end_line": 9497,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 10725,
+      "generated_end_line": 10725,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9498,
+      "source_end_line": 9498,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 10726,
+      "generated_end_line": 10726,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9499,
+      "source_end_line": 9499,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 10727,
+      "generated_end_line": 10727,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9499,
+      "source_end_line": 9499,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 10728,
+      "generated_end_line": 10731,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 1,
+      "source_end_line": 4,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 10732,
+      "generated_end_line": 10736,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 5,
+      "source_end_line": 9,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 10737,
+      "generated_end_line": 10738,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 10,
+      "source_end_line": 11,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 10739,
+      "generated_end_line": 10739,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 12,
+      "source_end_line": 12,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 10740,
+      "generated_end_line": 10884,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 13,
+      "source_end_line": 157,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 10885,
+      "generated_end_line": 10887,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 158,
+      "source_end_line": 160,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 10888,
+      "generated_end_line": 10888,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 161,
+      "source_end_line": 161,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 10889,
+      "generated_end_line": 10889,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 162,
+      "source_end_line": 162,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 10890,
+      "generated_end_line": 10896,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 163,
+      "source_end_line": 169,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 10897,
+      "generated_end_line": 10899,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 170,
+      "source_end_line": 172,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 10900,
+      "generated_end_line": 10900,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 173,
+      "source_end_line": 173,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 10901,
+      "generated_end_line": 10901,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 174,
+      "source_end_line": 174,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 10902,
+      "generated_end_line": 10980,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 175,
+      "source_end_line": 253,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 10981,
+      "generated_end_line": 10981,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9499,
+      "source_end_line": 9499,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 10982,
+      "generated_end_line": 11138,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9500,
+      "source_end_line": 9656,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11139,
+      "generated_end_line": 11139,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9657,
+      "source_end_line": 9657,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 11140,
+      "generated_end_line": 11140,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9657,
+      "source_end_line": 9657,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 11141,
+      "generated_end_line": 11587,
+      "source_path": "Include/BookMicrostructure.mqh",
+      "source_start_line": 1,
+      "source_end_line": 447,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11588,
+      "generated_end_line": 11588,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9657,
+      "source_end_line": 9657,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 11589,
+      "generated_end_line": 12176,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9658,
+      "source_end_line": 10245,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 12177,
+      "generated_end_line": 12177,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10246,
+      "source_end_line": 10246,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 12178,
+      "generated_end_line": 12178,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10246,
+      "source_end_line": 10246,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 12179,
+      "generated_end_line": 12180,
+      "source_path": "Include/BookArmedDiagnostics.mqh",
+      "source_start_line": 1,
+      "source_end_line": 2,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 12181,
+      "generated_end_line": 12181,
+      "source_path": "Include/BookArmedDiagnostics.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 12182,
+      "generated_end_line": 12182,
+      "source_path": "Include/BookArmedDiagnostics.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 12183,
+      "generated_end_line": 12185,
+      "source_path": "Include/BookArmedMath.mqh",
+      "source_start_line": 1,
+      "source_end_line": 3,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 12186,
+      "generated_end_line": 12189,
+      "source_path": "Include/BookArmedMath.mqh",
+      "source_start_line": 4,
+      "source_end_line": 7,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 12190,
+      "generated_end_line": 12190,
+      "source_path": "Include/BookArmedMath.mqh",
+      "source_start_line": 8,
+      "source_end_line": 8,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 12191,
+      "generated_end_line": 12191,
+      "source_path": "Include/BookArmedMath.mqh",
+      "source_start_line": 9,
+      "source_end_line": 9,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 12192,
+      "generated_end_line": 12240,
+      "source_path": "Include/BookArmedMath.mqh",
+      "source_start_line": 10,
+      "source_end_line": 58,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 12241,
+      "generated_end_line": 12241,
+      "source_path": "Include/BookArmedDiagnostics.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 12242,
+      "generated_end_line": 12860,
+      "source_path": "Include/BookArmedDiagnostics.mqh",
+      "source_start_line": 4,
+      "source_end_line": 622,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 12861,
+      "generated_end_line": 12861,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10246,
+      "source_end_line": 10246,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 12862,
+      "generated_end_line": 12862,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10247,
+      "source_end_line": 10247,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 12863,
+      "generated_end_line": 12863,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10248,
+      "source_end_line": 10248,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 12864,
+      "generated_end_line": 12864,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10248,
+      "source_end_line": 10248,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 12865,
+      "generated_end_line": 12895,
+      "source_path": "Include/BookRuntimePerf.mqh",
+      "source_start_line": 1,
+      "source_end_line": 31,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 12896,
+      "generated_end_line": 12896,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10248,
+      "source_end_line": 10248,
+      "rendering": "boundary_comment"
+    }
+  ]
+}

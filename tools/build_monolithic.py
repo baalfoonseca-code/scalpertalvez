@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lossless MQL-target include transposition; existing modular files are immutable.
+"""Lossless MQL-target include transposition; the selected modular commit is immutable.
 
 Personal includes are replaced in-place by their complete contents. Non-MQL
 host adapters are retained verbatim after a comment prefix, not discarded. Only
@@ -17,17 +17,21 @@ import subprocess
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = '323750ad5bc3a9f4e5c92570313b206966dfdff6'
+BASE = '824e0ced7a3ebb3fd9893c60a4547562ef4cea05'
+# Keep the original 49 engineering paths, with their corrected content at BASE.
+# Complementary monoliths/reports must never become part of their own baseline.
+REFERENCE_PATHS_BASE = '323750ad5bc3a9f4e5c92570313b206966dfdff6'
 SOURCE = ROOT / 'scalpertalvez.mq5'
 TARGET = ROOT / 'scalpertalvez_MONOLITICO.mq5'
-ARTIFACTS = ROOT / 'artifacts/monolitico'
-ZIP = ARTIFACTS / 'scalpertalvez_MODULAR_323750a.zip'
+ARTIFACTS = ROOT / 'artifacts/matrix-id-fix1'
+ZIP = ARTIFACTS / 'scalpertalvez_MODULAR_MATRIX_ID_FIX1.zip'
 HOST_UNDEFINED = frozenset({'__cplusplus', 'BOOK_RISK_HOST'})
 OFFICIAL = (r'Trade\Trade.mqh', r'Trade\PositionInfo.mqh')
 LOCAL = re.compile(r'^\s*#\s*include\s+"([^"\n]+)"[^\n]*$')
 DIRECTIVE = re.compile(r'^\s*#\s*(\w+)\b(.*)$')
 PREAMBLE = (
     '// GENERATED: scalpertalvez_MONOLITICO.mq5; complete MQL5-target transposition.\n'
+    '// MATRIX_ID_FIX1: diagnostic identifiers renamed; candidate for native recompilation.\n'
     '// Immutable engineering reference: modular commit '+BASE+'.\n'
     '// All 13 custom modules are incorporated at their original include sites.\n'
     '// Host-only adapters remain as comments; only official MQL5 includes remain active.\n'
@@ -40,7 +44,7 @@ def sha(data: bytes) -> str:
 
 
 def baseline_files() -> dict[str, bytes]:
-    names = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', '-z', BASE], cwd=ROOT).decode().split('\0')
+    names = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', '-z', REFERENCE_PATHS_BASE], cwd=ROOT).decode().split('\0')
     return {name: subprocess.check_output(['git', 'show', f'{BASE}:{name}'], cwd=ROOT) for name in names if name}
 
 
@@ -170,7 +174,7 @@ def build_text():
 
 def create_zip(files):
     ARTIFACTS.mkdir(exist_ok=True, parents=True)
-    subprocess.run(['git', 'archive', '--format=zip', f'--output={ZIP}', BASE], cwd=ROOT, check=True)
+    subprocess.run(['git', 'archive', '--format=zip', f'--output={ZIP}', BASE, '--', *files], cwd=ROOT, check=True)
     with zipfile.ZipFile(ZIP) as archive:
         names = {i.filename for i in archive.infolist() if not i.is_dir()}
         if names != set(files) or archive.testzip() is not None:
@@ -187,8 +191,10 @@ def main():
     files = verify_reference()
     content, graph, records = build_text()
     mapping = {'schema': 'BOOK_MONOLITH_SOURCE_MAP_V1', 'reference_commit': BASE,
+               'reference_paths_commit': REFERENCE_PATHS_BASE,
                'monolith_sha256': sha(content), 'segments': compress_map(records)}
     manifest = {'schema': 'BOOK_MONOLITH_TRANSPOSE_V1', 'reference_commit': BASE,
+                'reference_paths_commit': REFERENCE_PATHS_BASE,
                 'modular_main_sha256': sha(files['scalpertalvez.mq5']),
                 'monolith_sha256': sha(content), 'monolith_bytes': len(content),
                 'monolith_lines': len(content.splitlines()), 'module_count': len(graph),

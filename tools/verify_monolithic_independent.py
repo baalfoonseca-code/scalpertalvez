@@ -247,8 +247,13 @@ def inventory(active: str) -> dict:
     return result
 
 
-def frozen_files(repo: pathlib.Path, baseline: str) -> dict:
+def frozen_files(repo: pathlib.Path, baseline: str, reference_paths_baseline: str | None = None) -> dict:
     rows = subprocess.check_output(["git", "ls-tree", "-rz", baseline], cwd=repo).split(b"\0")
+    selected = None
+    if reference_paths_baseline is not None:
+        selected = set(subprocess.check_output(
+            ["git", "ls-tree", "-r", "--name-only", "-z", reference_paths_baseline], cwd=repo
+        ).decode("utf-8").split("\0")) - {""}
     format_name = subprocess.check_output(["git", "rev-parse", "--show-object-format"], cwd=repo, text=True).strip()
     if format_name not in ("sha1", "sha256"):
         raise VerificationError(f"Unsupported Git object hash format: {format_name}")
@@ -259,6 +264,8 @@ def frozen_files(repo: pathlib.Path, baseline: str) -> dict:
         metadata, raw_path = row.split(b"\t", 1)
         mode, kind, expected = metadata.split()
         relative = raw_path.decode("utf-8")
+        if selected is not None and relative not in selected:
+            continue
         paths.append(relative)
         path = repo / relative
         if kind != b"blob" or mode == b"120000":
@@ -270,12 +277,16 @@ def frozen_files(repo: pathlib.Path, baseline: str) -> dict:
         digest = hashlib.new(format_name, b"blob " + str(len(payload)).encode() + b"\0" + payload).hexdigest()
         if digest != expected.decode():
             changed.append(relative)
-    return {"baseline": baseline, "checked_files": len(paths), "changed_or_missing": changed,
+    if selected is not None and set(paths) != selected:
+        raise VerificationError("Corrected reference omitted engineering paths: " + repr(sorted(selected - set(paths))))
+    return {"baseline": baseline, "reference_paths_baseline": reference_paths_baseline,
+            "checked_files": len(paths), "changed_or_missing": changed,
             "unchanged": not changed, "paths": paths}
 
 
-def verify(repo: pathlib.Path, source: pathlib.Path, monolith: pathlib.Path, baseline: str) -> dict:
-    frozen = frozen_files(repo, baseline)
+def verify(repo: pathlib.Path, source: pathlib.Path, monolith: pathlib.Path, baseline: str,
+           reference_paths_baseline: str | None = None) -> dict:
+    frozen = frozen_files(repo, baseline, reference_paths_baseline)
     left, right = MQLProjection(repo), MQLProjection(repo)
     original = left.project(source)
     flattened = right.project(monolith)
@@ -321,12 +332,14 @@ def main() -> int:
     parser.add_argument("--repo", type=pathlib.Path, default=pathlib.Path(__file__).resolve().parents[1])
     parser.add_argument("--source", default="scalpertalvez.mq5")
     parser.add_argument("--monolith", default="scalpertalvez_MONOLITICO.mq5")
-    parser.add_argument("--baseline", default="323750a")
+    parser.add_argument("--baseline", default="824e0ced7a3ebb3fd9893c60a4547562ef4cea05")
+    parser.add_argument("--reference-paths-baseline", default="323750ad5bc3a9f4e5c92570313b206966dfdff6")
     parser.add_argument("--report", "--output", dest="report", type=pathlib.Path)
     args = parser.parse_args()
     repo = args.repo.resolve()
     try:
-        report = verify(repo, repo / args.source, repo / args.monolith, args.baseline)
+        report = verify(repo, repo / args.source, repo / args.monolith, args.baseline,
+                        args.reference_paths_baseline)
     except (VerificationError, OSError, subprocess.SubprocessError) as error:
         report = {"schema": "BOOK_MONOLITH_INDEPENDENT_V1", "status": "failed",
                   "error": str(error), "native_compilation_executed": False}

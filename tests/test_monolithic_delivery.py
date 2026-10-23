@@ -21,7 +21,8 @@ class MonolithicDeliveryTests(unittest.TestCase):
     def setUpClass(cls):
         cls.modular = (ROOT / 'scalpertalvez.mq5').read_text()
         cls.monolith = builder.TARGET.read_text()
-        cls.report = independent.verify(ROOT, builder.SOURCE, builder.TARGET, builder.BASE)
+        cls.report = independent.verify(ROOT, builder.SOURCE, builder.TARGET, builder.BASE,
+                                        builder.REFERENCE_PATHS_BASE)
 
     def test_entire_modular_reference_remains_byte_identical(self):
         files = builder.verify_reference()

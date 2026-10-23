@@ -16,8 +16,8 @@ import unittest
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACTS = ROOT / 'artifacts/monolitico'
-BASE = '323750ad5bc3a9f4e5c92570313b206966dfdff6'
+ARTIFACTS = ROOT / 'artifacts/matrix-id-fix1'
+BASE = '824e0ced7a3ebb3fd9893c60a4547562ef4cea05'
 
 
 def compiler_discovery():
@@ -56,7 +56,7 @@ def main():
     for args in [['tools/build_monolithic.py','--check'],
                  ['tools/generate_identity_inputs.py','--check'],
                  ['tools/verify_delivery.py'],
-                 ['tools/verify_monolithic_independent.py','--output','artifacts/monolitico/independent-equivalence.json']]:
+                 ['tools/verify_monolithic_independent.py','--output','artifacts/matrix-id-fix1/independent-equivalence.json']]:
         completed=subprocess.run([sys.executable,*args],cwd=ROOT,text=True,capture_output=True)
         output.write(completed.stdout+completed.stderr)
         if completed.returncode:
