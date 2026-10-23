@@ -1,0 +1,89 @@
+{
+  "schema": "BOOK_MATRIX_ID_FIX1_SOURCE_DELTA_V1",
+  "before_commit": "eee1b308ed1ee5c92a699f852705413eca9a74ec",
+  "corrected_modular_commit": "824e0ced7a3ebb3fd9893c60a4547562ef4cea05",
+  "changed_modular_files": [
+    "Include/BookArmedDiagnostics.mqh",
+    "Include/BookBuildIdentity.mqh"
+  ],
+  "files": {
+    "scalpertalvez.mq5": {
+      "before_sha256": "4a9fa25f2fcaf3dd165caa3c68ad8a859ecf69fd7bf24ab5fc254dde8b23a432",
+      "after_sha256": "4a9fa25f2fcaf3dd165caa3c68ad8a859ecf69fd7bf24ab5fc254dde8b23a432",
+      "byte_identical": true
+    },
+    "Include/BookAdvancedRisk.mqh": {
+      "before_sha256": "5c9f7236434959dd3178557386527efcea5a857562be4646f5e2be3922208cd9",
+      "after_sha256": "5c9f7236434959dd3178557386527efcea5a857562be4646f5e2be3922208cd9",
+      "byte_identical": true
+    },
+    "Include/BookArmedDiagnostics.mqh": {
+      "before_sha256": "f21da3d345ca82bad5eedb8fcf18af0bd3f41bbe904c389f2caeba290de1a724",
+      "after_sha256": "23296049e3ec0f66089e59e986d08218a4765778858821efa03868c5ebb6c860",
+      "byte_identical": false
+    },
+    "Include/BookArmedInputs.mqh": {
+      "before_sha256": "03b1d3e95a73a09b401b97e8da42c3de7b499d448593876df7c471ecc33dd3c7",
+      "after_sha256": "03b1d3e95a73a09b401b97e8da42c3de7b499d448593876df7c471ecc33dd3c7",
+      "byte_identical": true
+    },
+    "Include/BookArmedMath.mqh": {
+      "before_sha256": "9dec02c161855d12b6c6e80dda706450581f9a7609a202523a56351911708d45",
+      "after_sha256": "9dec02c161855d12b6c6e80dda706450581f9a7609a202523a56351911708d45",
+      "byte_identical": true
+    },
+    "Include/BookBuildIdentity.mqh": {
+      "before_sha256": "20a125b389e366419afaa3b755bfbceb97179248065a06b1b57e61a980ff7eda",
+      "after_sha256": "58d93fbc61bf7e4cedb86d8d6b0c35c5c44cdaafdca101c7fd83c1c010f73ba0",
+      "byte_identical": false
+    },
+    "Include/BookCsvDiagnostics.mqh": {
+      "before_sha256": "39d1f90d446eaaeb11340b5e7d06fbbef2035d0864d51125cecd839c9914e394",
+      "after_sha256": "39d1f90d446eaaeb11340b5e7d06fbbef2035d0864d51125cecd839c9914e394",
+      "byte_identical": true
+    },
+    "Include/BookIdentity.mqh": {
+      "before_sha256": "90ab63b6e4339eaa9a2127b6279d3dd655ff679f89298707c65cbeb5f99f6e6c",
+      "after_sha256": "90ab63b6e4339eaa9a2127b6279d3dd655ff679f89298707c65cbeb5f99f6e6c",
+      "byte_identical": true
+    },
+    "Include/BookInputSnapshot.mqh": {
+      "before_sha256": "b9944ee8c1e77ed37e4158fff0a7e23a82fbf2bf99afc951683fbe99ffad1984",
+      "after_sha256": "b9944ee8c1e77ed37e4158fff0a7e23a82fbf2bf99afc951683fbe99ffad1984",
+      "byte_identical": true
+    },
+    "Include/BookMicroMath.mqh": {
+      "before_sha256": "00e3ef8741e0403b11171f4a3293fe5f727a6229d3735fcc2f0dd6b9f4c55864",
+      "after_sha256": "00e3ef8741e0403b11171f4a3293fe5f727a6229d3735fcc2f0dd6b9f4c55864",
+      "byte_identical": true
+    },
+    "Include/BookMicrostructure.mqh": {
+      "before_sha256": "af5ab949513393bf5e557c08f5db1782604e8fd7aad9839dd94f6efa41b8457a",
+      "after_sha256": "af5ab949513393bf5e557c08f5db1782604e8fd7aad9839dd94f6efa41b8457a",
+      "byte_identical": true
+    },
+    "Include/BookRiskCore.mqh": {
+      "before_sha256": "faa4b4b16830c9d9a552a98c61f9ba3aa5e7e6105658fb046443be34297c20f0",
+      "after_sha256": "faa4b4b16830c9d9a552a98c61f9ba3aa5e7e6105658fb046443be34297c20f0",
+      "byte_identical": true
+    },
+    "Include/BookRiskInputs.mqh": {
+      "before_sha256": "e4a64fd2db53fca1017ad1e3f320a3be86260e6f0dd15be5972359f1096aa910",
+      "after_sha256": "e4a64fd2db53fca1017ad1e3f320a3be86260e6f0dd15be5972359f1096aa910",
+      "byte_identical": true
+    },
+    "Include/BookRuntimePerf.mqh": {
+      "before_sha256": "a454a0e9387573c76adb5f822107d9d9524bcc7ee505e25a4ce1243688375a91",
+      "after_sha256": "a454a0e9387573c76adb5f822107d9d9524bcc7ee505e25a4ce1243688375a91",
+      "byte_identical": true
+    }
+  },
+  "allowed_changes": {
+    "Include/BookArmedDiagnostics.mqh": "Only alpha-renaming matrix field/local and associated references; all string literals preserved.",
+    "Include/BookBuildIdentity.mqh": "Only revision-at-generation and source-bundle SHA256 metadata refreshed by existing generator."
+  },
+  "monolith_sha256": "c3a2e1bd2ea4f9f04eeafa48a2c8fb70cd20af441d2c09b296e41f44c30534ae",
+  "source_patch_sha256": "8bda508980ea48957ad8eb91c916c1bef23a0f9f4c517db698286a2d2a99f3ff",
+  "native_compilation_confirmed": false,
+  "production_modified": false
+}

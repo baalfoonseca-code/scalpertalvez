@@ -1,0 +1,23 @@
+{
+  "schema": "BOOK_MONOLITH_NATIVE_STATUS_V1",
+  "reason": "No accessible MetaEditor discovered; no Wine in PATH. Native compilation not executed.",
+  "discovery_log": "compiler-discovery.log",
+  "versions": {
+    "modular": {
+      "file": "scalpertalvez.mq5",
+      "executed": false,
+      "errors": null,
+      "warnings": null,
+      "compiler_log": null
+    },
+    "monolithic": {
+      "file": "scalpertalvez_MONOLITICO.mq5",
+      "executed": false,
+      "errors": null,
+      "warnings": null,
+      "compiler_log": null
+    }
+  },
+  "ex5_produced": false,
+  "production_modified": false
+}

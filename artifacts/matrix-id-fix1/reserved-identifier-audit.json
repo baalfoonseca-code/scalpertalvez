@@ -1,0 +1,152 @@
+{
+  "schema": "BOOK_MATRIX_IDENTIFIER_AUDIT_V1",
+  "status": "passed",
+  "before_reference": "eee1b308ed1ee5c92a699f852705413eca9a74ec",
+  "corrected_modular_reference": "824e0ced7a3ebb3fd9893c60a4547562ef4cea05",
+  "scope": "Lexical audit of typed MQL declarations; not a native compiler or complete parser.",
+  "reserved_types_and_keywords_checked": [
+    "bool",
+    "break",
+    "case",
+    "char",
+    "class",
+    "color",
+    "complex",
+    "const",
+    "continue",
+    "datetime",
+    "default",
+    "delete",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "export",
+    "extern",
+    "false",
+    "float",
+    "for",
+    "if",
+    "import",
+    "input",
+    "int",
+    "long",
+    "matrix",
+    "matrixc",
+    "matrixf",
+    "namespace",
+    "new",
+    "operator",
+    "private",
+    "protected",
+    "public",
+    "return",
+    "short",
+    "sinput",
+    "sizeof",
+    "static",
+    "string",
+    "struct",
+    "switch",
+    "template",
+    "this",
+    "true",
+    "typedef",
+    "typename",
+    "uchar",
+    "uint",
+    "ulong",
+    "union",
+    "ushort",
+    "using",
+    "vector",
+    "vectorc",
+    "vectorf",
+    "virtual",
+    "void",
+    "while"
+  ],
+  "after_active_programs": {
+    "scalpertalvez.mq5": {
+      "typed_declaration_collisions": [],
+      "active_tokens_sha256": "22d32727643b7d14a4d86ce5eead2682ea5978aab5dddad8d4710a0d532c7ff5"
+    },
+    "scalpertalvez_MONOLITICO.mq5": {
+      "typed_declaration_collisions": [],
+      "active_tokens_sha256": "22d32727643b7d14a4d86ce5eead2682ea5978aab5dddad8d4710a0d532c7ff5"
+    }
+  },
+  "module_alpha_renaming_only": true,
+  "all_module_string_literals_byte_identical": true,
+  "module_string_literal_count": 241,
+  "module_string_literals_sha256": "d4d54fa0bed7d1809c53c2abf19b23cd620cdf4d043fa5ce67f7563134109121",
+  "full_program_before_after": {
+    "source_files_materialized": 14,
+    "before_tokens": 110695,
+    "after_tokens": 110695,
+    "identifier_tokens_renamed": 16,
+    "before_reserved_declaration_collisions": [
+      {
+        "type": "MatrixSnapshot",
+        "name": "matrix",
+        "token_index": 103665
+      },
+      {
+        "type": "string",
+        "name": "matrix",
+        "token_index": 109273
+      }
+    ],
+    "provenance_changes": [
+      {
+        "macro": "BOOK_REVISION_AT_GENERATION",
+        "before": "\"cab2cc8a3eb8a40a58b37b47af2c22e5145a18c1\"",
+        "after": "\"eee1b308ed1ee5c92a699f852705413eca9a74ec\""
+      },
+      {
+        "macro": "BOOK_SOURCE_BUNDLE_SHA256",
+        "before": "\"9559ee5a5e2529b9780cccf323a7542f17bcd224b64f002279376564086171eb\"",
+        "after": "\"f631060deea71822d03f40b26d8d734e29310a8637b29f55bcc6d45ace5c52bd\""
+      }
+    ],
+    "equal_after_only_permitted_changes": true,
+    "normalized_active_tokens_sha256": "22d32727643b7d14a4d86ce5eead2682ea5978aab5dddad8d4710a0d532c7ff5"
+  },
+  "formatter_equivalence": {
+    "test": "tests/test_matrix_identifier_fix.py::test_actual_csv_formatter_bytes_before_after_and_monolith",
+    "representations": [
+      "before",
+      "corrected modular",
+      "regenerated monolithic"
+    ],
+    "actual_formatter_rows": 24,
+    "csv_columns": 83,
+    "output_bytes": 57614,
+    "output_sha256": "f9cabb9029bc0b5f0af74af69a4493c601dc8745351efc7c6a6fa8df702c0118",
+    "output_bytes_equal": true,
+    "execution": "Actual source formatter bodies compiled under identical C++17 host API/type adapters; numeric formatter uses snprintf %.17g.",
+    "native_mql_formatting_executed": false
+  },
+  "reference_guard_negative_checks": [
+    "unauthorized protected-content mutation rejected",
+    "missing protected working-tree file rejected",
+    "corrected Git reference omitting original path rejected"
+  ],
+  "native_compilation_executed": false,
+  "limitations": [
+    "Native MetaEditor errors/warning must be rechecked by compiling this candidate in MT5.",
+    "No additional collisions found within lexical declaration audit coverage; not proof of absence of all native syntax errors."
+  ],
+  "before_active_program_collisions": [
+    {
+      "type": "MatrixSnapshot",
+      "name": "matrix",
+      "token_index": 103665
+    },
+    {
+      "type": "string",
+      "name": "matrix",
+      "token_index": 109273
+    }
+  ]
+}
