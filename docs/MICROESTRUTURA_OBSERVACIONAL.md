@@ -99,7 +99,7 @@ Enums exportados:
 |---|---|
 | `regime_experimental` | 0 insuficiente, 1 eficiente, 2 deterioração candidata, 3 absorção candidata, 4 reação iniciada, 5 reversão observável, 6 equilíbrio |
 | `test_status` | 1 teste de janela iniciado no primeiro negócio, 2 candidata reconhecida, 3 toque tardio/triagem apenas |
-| `reaction_status` | 1 aguardando/observando, 2 iniciada, 3 critérios observáveis confirmados, 4 invalidada, 5 lacuna/dados insuficientes, 6 horizonte encerrado |
+| `reaction_status` | 1 aguardando/observando, 2 iniciada, 3 critérios observáveis confirmados, 4 invalidada, 5 lacuna/dados insuficientes, 6 horizonte encerrado, 7 aguardando janela causal futura |
 
 Os limiares descritivos 0.6 de aceitação/eficiência de tendência, 0.5 de ER de
 reação, 0.2 de equilíbrio e cobertura de 0.5 são hipóteses de instrumentação, não
@@ -143,7 +143,7 @@ aritmética em C++; não é latência do EA no MT5. O teste Python verifica esqu
 CSV e ausência de APIs financeiras/coletores duplicados na extensão.
 
 Não foram executados compilação MetaEditor, replay nativo de ticks/book, teste
-de Strategy Tester ou calibração estatística. Estados de teste/reação, timings
+de Strategy Tester ou calibração estatística. Estados de teste/reação também têm fixtures de lifecycle no host; timings
 do MT5 e comparação operacional completa ainda requerem replay nativo com dados
 controlados. Nenhum desses resultados foi simulado como teste aprovado.
 

@@ -18,6 +18,7 @@ class MicrostructureTests(unittest.TestCase):
                 check=True, capture_output=True, text=True,
             )
             result = subprocess.run([str(binary)], check=True, capture_output=True, text=True)
+            print(result.stdout.strip())
             self.assertIn("20705 assertions", result.stdout)
             self.assertIn("not MT5 OnTick latency", result.stdout)
 

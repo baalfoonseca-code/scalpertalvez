@@ -34,7 +34,8 @@ Cobertura dos fixtures:
   volume real indisponível para tick volume, além da avaliação da onda viva.
 - Parser MQL efetivo: 12 casos de CSV com aspas, aspas duplicadas, CR/LF
   dentro de campo, campos vazios, corrupção; 9 casos de ID incluindo
-  `ulong` máximo e overflow; falha de alocação injetada.
+  `ulong` máximo e overflow; falha de alocação injetada e oito combinações da política de criação
+  de arquivo financeiro ausente.
 
 Os hashes de saída são comparados entre original e candidata dentro da mesma
 execução. Contagens são verificadas, evitando tratar uma execução sem casos

@@ -133,6 +133,11 @@ PROTECTED = (
     "CheckArmedMarketReady", "CheckArmedEntryReady", "RecomputeDailyRiskBlock",
     "CountTodayTrades", "RestoreDailyEconomicsFromHistory", "ResetAccountingDay",
     "ParseScalperComment", "CalcInitialRiskMoney", "IsAcceptedRetcode", "IsUncertainRetcode",
+    "ProcessEOD", "HasExecutionInFlight", "PreparePendingExec", "ReconcilePendingExecution",
+    "ReconcilePendingExitIntent", "TryFinalizeTrackedTrade", "IsTrackedVolumeCycleComplete",
+    "OwnPositionSafe", "BEConfirm", "BEAcceptResult", "BEEntryComplete", "BEReferenceValid",
+    "BEStopsValid", "RebuildTrackedHistory", "ReconstructOpenPosition", "RestoreDailyPersistence",
+    "SyncOpenPositionFromRecord",
 )
 
 
@@ -227,7 +232,8 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(module.exists(), "CSV module missing")
         parser = function(module.read_text(encoding="utf-8"), "BookCsvParse")
         parser = parser.replace("string &fields[]", "std::vector<string> &fields")
-        code = CSV_PRELUDE + parser + function(self.new, "CsvParsePID") + CSV_MAIN
+        missing_policy = function(module.read_text(encoding="utf-8"), "BookCsvCanCreateMissing")
+        code = CSV_PRELUDE + parser + missing_policy + function(self.new, "CsvParsePID") + CSV_MAIN
         with tempfile.TemporaryDirectory(prefix="book-csv-parser-") as temporary:
             path = pathlib.Path(temporary) / "parser.cpp"
             path.write_text(code, encoding="utf-8")
@@ -237,7 +243,7 @@ class CompatibilityTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             run = subprocess.run([str(executable)], text=True, capture_output=True)
             self.assertEqual(run.returncode, 0, run.stderr)
-            self.assertEqual(run.stdout.strip(), "csv_parser=12 pid=9 memory_failure=1")
+            self.assertEqual(run.stdout.strip(), "csv_parser=12 pid=9 memory_failure=1 missing_file_policy=8")
 
 
 def build_fixture(source: str) -> str:
@@ -587,7 +593,11 @@ int main(){
  }
  allocation_fail=true;std::vector<string> fields;string reason;int offset=-1;
  if(BookCsvParse("a,b",fields,reason,offset)||reason!="MEMORY_FAILURE")return 5;
- std::cout<<"csv_parser=12 pid=9 memory_failure=1\n";
+ for(int bits=0;bits<8;bits++){
+  bool seen=(bits&1)!=0,absent=(bits&2)!=0,evidence=(bits&4)!=0;
+  if(BookCsvCanCreateMissing(seen,absent,evidence)!=(bits==2))return 6;
+ }
+ std::cout<<"csv_parser=12 pid=9 memory_failure=1 missing_file_policy=8\n";
 }
 '''
 

@@ -1,0 +1,20 @@
+{
+  "started_at": "2026-10-23T04:46:01.133212-03:00",
+  "elapsed_seconds": 17.914,
+  "revision_at_test_start": "f538a34e59c53e7b71fa9274ac6825550c550461",
+  "source_sha256": "4a9fa25f2fcaf3dd165caa3c68ad8a859ecf69fd7bf24ab5fc254dde8b23a432",
+  "baseline_sha256": "c6e601429bea933ea937a3e985a2031a89b08bc42b199215dc5e8adfec2dd2a9",
+  "python": "3.12.14",
+  "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+  "tests_run": 36,
+  "passed": 36,
+  "failures": [],
+  "errors": [],
+  "skipped": [],
+  "expected_failures": [],
+  "unexpected_successes": [],
+  "native_metaeditor_compilation": "NOT_RUN: MetaEditor/MT5 unavailable",
+  "broker_book_orders_restart_backtest": "NOT_RUN: no MT5, broker session or market replay data",
+  "real_wdo_trade_csv": "NOT_PROVIDED: real incident not repaired",
+  "production_modified": false
+}
