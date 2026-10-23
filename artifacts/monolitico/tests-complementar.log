@@ -1,0 +1,84 @@
+PASS: 49 immutable modular files, 13 expanded modules, exactly 2 official MQL5 includes
+Monolith: 576983 bytes; SHA256 5366e6ce20188a5bac1e0b27f8d9f0fdb3c4b84b4cb3fb69cf570a428e3e3df2; native compilation NOT executed
+identity verified: 91 inputs, historic 71 intact, source_sha256=9559ee5a5e2529b9780cccf323a7542f17bcd224b64f002279376564086171eb
+PASS lexical delimiters/local includes: scalpertalvez (10230 lines)
+PASS lexical delimiters/local includes: scalpertalvez.mq5 (10248 lines)
+PASS lexical delimiters/local includes: Include/BookAdvancedRisk.mqh (513 lines)
+PASS lexical delimiters/local includes: Include/BookArmedDiagnostics.mqh (622 lines)
+PASS lexical delimiters/local includes: Include/BookArmedInputs.mqh (5 lines)
+PASS lexical delimiters/local includes: Include/BookArmedMath.mqh (58 lines)
+PASS lexical delimiters/local includes: Include/BookBuildIdentity.mqh (8 lines)
+PASS lexical delimiters/local includes: Include/BookCsvDiagnostics.mqh (314 lines)
+PASS lexical delimiters/local includes: Include/BookIdentity.mqh (151 lines)
+PASS lexical delimiters/local includes: Include/BookInputSnapshot.mqh (98 lines)
+PASS lexical delimiters/local includes: Include/BookMicroMath.mqh (253 lines)
+PASS lexical delimiters/local includes: Include/BookMicrostructure.mqh (447 lines)
+PASS lexical delimiters/local includes: Include/BookRiskCore.mqh (94 lines)
+PASS lexical delimiters/local includes: Include/BookRiskInputs.mqh (21 lines)
+PASS lexical delimiters/local includes: Include/BookRuntimePerf.mqh (31 lines)
+PASS immutable reference and master PDF; 15 files checked. Native compilation NOT performed.
+{"status": "passed", "report": "artifacts/monolitico/independent-equivalence.json", "comparison": {"active_tokens_equal": true, "inventories_equal": true, "duplicate_inventory_equal": true, "first_difference": null}, "counts": {"inputs": 91, "functions": 490, "structs": 31, "enums": 18, "globals": 468}, "error": null}
+test_actual_observer_collection_state (test_armed_diagnostics.ArmedDiagnostics.test_actual_observer_collection_state) ... ok
+test_actual_shared_trace_math (test_armed_diagnostics.ArmedDiagnostics.test_actual_shared_trace_math) ... ok
+test_csv_schema_column_integrity (test_armed_diagnostics.ArmedDiagnostics.test_csv_schema_column_integrity) ... ok
+test_no_financial_or_market_read_side_effects (test_armed_diagnostics.ArmedDiagnostics.test_no_financial_or_market_read_side_effects) ... ok
+test_actual_csv_parser_and_legacy_pid_overflow (test_compatibility.CompatibilityTests.test_actual_csv_parser_and_legacy_pid_overflow) ... ok
+test_extracted_poc_and_weis_on_controlled_ticks_and_bars (test_compatibility.CompatibilityTests.test_extracted_poc_and_weis_on_controlled_ticks_and_bars) ... ok
+test_extracted_strategy_on_controlled_market_data (test_compatibility.CompatibilityTests.test_extracted_strategy_on_controlled_market_data) ... ok
+test_historical_71_input_types_order_names_and_defaults (test_compatibility.CompatibilityTests.test_historical_71_input_types_order_names_and_defaults) ... ok
+test_legacy_financial_journal_schemas (test_compatibility.CompatibilityTests.test_legacy_financial_journal_schemas) ... ok
+test_observational_modules_cannot_dispatch_or_write_strategy_state (test_compatibility.CompatibilityTests.test_observational_modules_cannot_dispatch_or_write_strategy_state) ... ok
+test_original_reference_bytes_unchanged (test_compatibility.CompatibilityTests.test_original_reference_bytes_unchanged) ... ok
+test_protected_strategy_function_bodies (test_compatibility.CompatibilityTests.test_protected_strategy_function_bodies) ... ok
+test_absent_file_is_not_empty_success (test_csv_infrastructure.CsvInfrastructureTests.test_absent_file_is_not_empty_success) ... ok
+test_duplicate_position_is_uncertain (test_csv_infrastructure.CsvInfrastructureTests.test_duplicate_position_is_uncertain) ... ok
+test_embedded_nul (test_csv_infrastructure.CsvInfrastructureTests.test_embedded_nul) ... ok
+test_foreign_row_not_silently_accepted (test_csv_infrastructure.CsvInfrastructureTests.test_foreign_row_not_silently_accepted) ... ok
+test_incompatible_header (test_csv_infrastructure.CsvInfrastructureTests.test_incompatible_header) ... ok
+test_incomplete_quote_is_distinct (test_csv_infrastructure.CsvInfrastructureTests.test_incomplete_quote_is_distinct) ... ok
+test_intact_and_large_position_id (test_csv_infrastructure.CsvInfrastructureTests.test_intact_and_large_position_id) ... ok
+test_invalid_and_overflow_position_ids (test_csv_infrastructure.CsvInfrastructureTests.test_invalid_and_overflow_position_ids) ... ok
+test_line_ending_compatibility (test_csv_infrastructure.CsvInfrastructureTests.test_line_ending_compatibility) ... ok
+test_missing_columns_reports_expected_received_and_row (test_csv_infrastructure.CsvInfrastructureTests.test_missing_columns_reports_expected_received_and_row) ... ok
+test_quoted_multiline_and_escaped_quotes (test_csv_infrastructure.CsvInfrastructureTests.test_quoted_multiline_and_escaped_quotes) ... ok
+test_recovery_reads_only_and_repeats_without_duplicates (test_csv_infrastructure.CsvInfrastructureTests.test_recovery_reads_only_and_repeats_without_duplicates) ... ok
+test_truncation_is_not_success (test_csv_infrastructure.CsvInfrastructureTests.test_truncation_is_not_success) ... ok
+test_unresolved_accounting_is_retained_not_invented (test_csv_infrastructure.CsvInfrastructureTests.test_unresolved_accounting_is_retained_not_invented) ... ok
+test_utf8_bom_and_utf16_diagnosis (test_csv_infrastructure.CsvInfrastructureTests.test_utf8_bom_and_utf16_diagnosis) ... ok
+test_actual_delayed_detection_reaction_and_invalidation (test_micro_reaction.MicroReactionTests.test_actual_delayed_detection_reaction_and_invalidation) ... actual micro reaction: delayed recognition, confirmation, gap, invalidation, late-touch cases passed
+ok
+test_actual_shared_math (test_microstructure.MicrostructureTests.test_actual_shared_math) ... PASS efficient sell aggression and lower-price acceptance
+PASS sell aggression with no price progress; ER unavailable
+PASS bilateral flow, unknown delta, tiny delta and untrusted flags
+PASS fall and recovery, false breakout and recovered-side rejection
+PASS silent market is uncovered; no-trade volume is not invented
+PASS causal level, late data and incomplete windows
+PASS exactly eleven closed M1 prices and rank tie semantics
+PASS C1 extension-to-stall is not monotonically restrictive; unconfigured sigma stays NA
+PASS C1 threshold-equivalence lattice (20,664 controlled snapshots)
+PASS 20705 assertions; native arithmetic benchmark ticks=1000000 total_us=11669.5 mean_us_per_tick=0.0116695 sizeof_flow=224 sizeof_snapshot=736 (C++ arithmetic only; not MT5 OnTick latency)
+ok
+test_fixed_csv_schema_matches_formatter (test_microstructure.MicrostructureTests.test_fixed_csv_schema_matches_formatter) ... ok
+test_main_integration_uses_existing_flow (test_microstructure.MicrostructureTests.test_main_integration_uses_existing_flow) ... ok
+test_observer_has_no_financial_or_duplicate_feed_api (test_microstructure.MicrostructureTests.test_observer_has_no_financial_or_duplicate_feed_api) ... ok
+test_91_inputs_and_official_dependencies_only (test_monolithic_delivery.MonolithicDeliveryTests.test_91_inputs_and_official_dependencies_only) ... ok
+test_actual_decision_and_poc_weis_fixtures_against_monolith (test_monolithic_delivery.MonolithicDeliveryTests.test_actual_decision_and_poc_weis_fixtures_against_monolith) ... MONOLITH FIXTURE matrix_stage2: matrix=12000 abs=2899 cont=31 conflicts=2 base=1413 turbo=2789 dom=96 stage2=4096 ready=1088 wait=1782 ended=1165 digest=aa16ed3577bb69ca
+MONOLITH FIXTURE poc_weis: poc=514 weis=128 fallback=64 live_flips=71 digest=febf922085385281
+ok
+test_entire_modular_reference_remains_byte_identical (test_monolithic_delivery.MonolithicDeliveryTests.test_entire_modular_reference_remains_byte_identical) ... ok
+test_every_original_source_line_is_accounted_for (test_monolithic_delivery.MonolithicDeliveryTests.test_every_original_source_line_is_accounted_for) ... ok
+test_exact_regeneration_and_original_include_order (test_monolithic_delivery.MonolithicDeliveryTests.test_exact_regeneration_and_original_include_order) ... ok
+test_independent_checker_rejects_unsupported_semantics (test_monolithic_delivery.MonolithicDeliveryTests.test_independent_checker_rejects_unsupported_semantics) ... ok
+test_independent_full_mql_program_and_inventory_equality (test_monolithic_delivery.MonolithicDeliveryTests.test_independent_full_mql_program_and_inventory_equality) ... ok
+test_modular_zip_is_exact_baseline_archive (test_monolithic_delivery.MonolithicDeliveryTests.test_modular_zip_is_exact_baseline_archive) ... ok
+test_actual_risk_core (test_risk_core.RiskCoreTests.test_actual_risk_core) ... risk core: 2216 assertions passed (host kernel only; no MT5/API execution)
+ok
+test_actual_original_and_configurable_be_trigger (test_risk_integration.RiskIntegrationTests.test_actual_original_and_configurable_be_trigger) ... ok
+test_actual_risk_paths_cannot_poison_legacy_emr_namespace (test_risk_integration.RiskIntegrationTests.test_actual_risk_paths_cannot_poison_legacy_emr_namespace) ... ok
+test_actual_journal_parser_and_inputs (test_risk_journal.RiskJournalTests.test_actual_journal_parser_and_inputs) ... risk journal/input extraction: 56 assertions passed (ASCII host conversions; no MT5 file/server execution)
+ok
+
+----------------------------------------------------------------------
+Ran 44 tests in 30.250s
+
+OK

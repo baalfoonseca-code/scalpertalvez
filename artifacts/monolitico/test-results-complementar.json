@@ -1,0 +1,46 @@
+{
+  "schema": "BOOK_MONOLITH_HOST_TESTS_V1",
+  "started_at": "2026-10-23T11:32:16.214244-03:00",
+  "elapsed_seconds": 32.27,
+  "reference_commit": "323750ad5bc3a9f4e5c92570313b206966dfdff6",
+  "revision_at_test_start": "e45cf81d63e8beb425e44e1852eeb8424e0cc38c",
+  "python": "3.12.14",
+  "gpp": "g++ (Debian 14.2.0-19) 14.2.0",
+  "source_sha256": {
+    "scalpertalvez.mq5": "4a9fa25f2fcaf3dd165caa3c68ad8a859ecf69fd7bf24ab5fc254dde8b23a432",
+    "scalpertalvez_MONOLITICO.mq5": "5366e6ce20188a5bac1e0b27f8d9f0fdb3c4b84b4cb3fb69cf570a428e3e3df2"
+  },
+  "tests_run": 44,
+  "passed": 44,
+  "failures": [],
+  "errors": [],
+  "skipped": [],
+  "expected_failures": [],
+  "unexpected_successes": [],
+  "native_compilation": {
+    "schema": "BOOK_MONOLITH_NATIVE_STATUS_V1",
+    "reason": "No accessible MetaEditor discovered; no Wine in PATH. Native compilation not executed.",
+    "discovery_log": "compiler-discovery.log",
+    "versions": {
+      "modular": {
+        "file": "scalpertalvez.mq5",
+        "executed": false,
+        "errors": null,
+        "warnings": null,
+        "compiler_log": null
+      },
+      "monolithic": {
+        "file": "scalpertalvez_MONOLITICO.mq5",
+        "executed": false,
+        "errors": null,
+        "warnings": null,
+        "compiler_log": null
+      }
+    },
+    "ex5_produced": false,
+    "production_modified": false
+  },
+  "modular_reference_files_unchanged": 49,
+  "mt5_backtest_book_server_orders": "NOT_EXECUTED",
+  "homologated": false
+}
