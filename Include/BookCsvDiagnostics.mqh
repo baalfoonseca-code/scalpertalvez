@@ -6,6 +6,78 @@ bool gTradeCsvInfrastructureUnresolved=true;
 string gBookCsvLastDiagnostic="";
 ulong gBookCsvVerifiedSize=0;
 bool gBookCsvObservedEver=false;
+bool gBookCsvSentinelWarning=false;
+
+// A durable path-seen marker survives restart even after old trade records have
+// aged out of the current accounting window. This is evidence of prior presence,
+// never a backup or a replacement for the financial CSV.
+bool BookCsvSentinelIdentity(string &path,string &payload)
+{
+   string identity=AccountInfoString(ACCOUNT_SERVER)+"|"+(string)AccountInfoInteger(ACCOUNT_LOGIN)+
+      "|"+Symbol()+"|"+(string)gMagicCore+"|"+gTradeCsvFileName;
+   uchar bytes[],key[],digest[];
+   int count=StringToCharArray(identity,bytes,0,WHOLE_ARRAY,CP_UTF8);
+   if(count<=1 || ArrayResize(bytes,count-1)!=count-1) return false;
+   ResetLastError();
+   if(CryptEncode(CRYPT_HASH_SHA256,bytes,key,digest)!=32 || GetLastError()!=0 || ArraySize(digest)!=32)
+      return false;
+   string hash=""; for(int i=0;i<32;i++) hash+=StringFormat("%02x",(uint)digest[i]);
+   path="BOOK_CSV_SEEN_"+hash+".state";
+   payload="BOOK_CSV_SEEN_V1\n"+hash+"\n";
+   return true;
+}
+
+// Return 0 only for positively absent metadata, 1 for valid prior presence,
+// -1 for uncertain/corrupt metadata. Never reinterpret uncertainty as absence.
+int BookCsvSentinelStatus()
+{
+   string path,payload;
+   if(!BookCsvSentinelIdentity(path,payload)) return -1;
+   ResetLastError(); bool exists=FileIsExist(path); int probeError=GetLastError();
+   if(!exists) return (probeError==0 || probeError==ERR_FILE_NOT_EXIST)?0:-1;
+   ResetLastError(); int h=FileOpen(path,FILE_READ|FILE_BIN|FILE_SHARE_READ);
+   if(h==INVALID_HANDLE) return -1;
+   ResetLastError(); ulong size=FileSize(h); int sizeError=GetLastError();
+   if(sizeError!=0 || size==0 || size>256) { FileClose(h); return -1; }
+   uchar bytes[];
+   if(ArrayResize(bytes,(int)size)!=(int)size) { FileClose(h); return -1; }
+   ResetLastError(); uint read=FileReadArray(h,bytes,0,(int)size); int readError=GetLastError();
+   ResetLastError(); FileClose(h); int closeError=GetLastError();
+   if(read!=(uint)size || readError!=0 || closeError!=0) return -1;
+   return CharArrayToString(bytes,0,(int)size,CP_UTF8)==payload?1:-1;
+}
+
+void BookCsvEnsureSentinel()
+{
+   int status=BookCsvSentinelStatus();
+   if(status==1) return;
+   string path,payload;
+   if(status==0 && BookCsvSentinelIdentity(path,payload))
+   {
+      // Existing/corrupt markers are preserved. Only positively absent metadata
+      // is created, followed by durable flush and a separate readback.
+      ResetLastError(); int h=FileOpen(path,FILE_WRITE|FILE_BIN);
+      if(h!=INVALID_HANDLE)
+      {
+         uchar encoded[]; int count=StringToCharArray(payload,encoded,0,WHOLE_ARRAY,CP_UTF8);
+         ResetLastError(); uint written=(count>1)?FileWriteArray(h,encoded,0,count-1):0;
+         int writeError=GetLastError();
+         ResetLastError(); FileFlush(h); int flushError=GetLastError();
+         ResetLastError(); FileClose(h); int closeError=GetLastError();
+         if(count>1 && written==(uint)(count-1) && writeError==0 && flushError==0 && closeError==0 &&
+            BookCsvSentinelStatus()==1) return;
+      }
+   }
+   if(!gBookCsvSentinelWarning)
+      Print("[BOOK][CSV_PRESENCE_SENTINEL_UNVERIFIED] valid CSV retained; cross-restart missing-file proof unavailable; existing marker never overwritten");
+   gBookCsvSentinelWarning=true;
+}
+
+bool BookCsvCanCreateMissing(const bool previouslySeen,const bool markerKnownAbsent,
+                             const bool financialEvidence)
+{
+   return !previouslySeen && markerKnownAbsent && !financialEvidence;
+}
 
 bool BookCsvReject(const string fileName,const long logicalRow,const int expected,
                    const int received,const string reason,const long offset=-1)
@@ -182,6 +254,7 @@ bool InitializeTradeCsvIndex(string fileName)
       }
    gTradeCsvIndexLoaded=true; gTradeCsvAppendSafe=true;
    gTradeCsvInfrastructureUnresolved=false; gBookCsvVerifiedSize=size;
+   BookCsvEnsureSentinel();
    if(gBookCsvLastDiagnostic!="")
       PrintFormat("[BOOK][TRADE_CSV_RECOVERED] file=%s logical_rows=%I64d positions=%d; external repair verified without rewriting",fileName,logicalRow,ArraySize(gTradeCsvWrittenPIDs));
    gBookCsvLastDiagnostic="";
@@ -205,7 +278,10 @@ bool BookCsvBeforeAppend()
 bool BookCsvRecoveryPathAllowed()
 {
    ResetLastError(); bool exists=FileIsExist(gTradeCsvFileName); int error=GetLastError();
-   if(!exists && (gBookCsvObservedEver || (error!=0 && error!=ERR_FILE_NOT_EXIST)))
+   bool evidence=(gTradeRecordCount>0 || ordersEnteredToday>0 ||
+      gPendingExec.active || gPendingExit.active || gOpenPos.active);
+   if(!exists && ((error!=0 && error!=ERR_FILE_NOT_EXIST) ||
+      !BookCsvCanCreateMissing(gBookCsvObservedEver,BookCsvSentinelStatus()==0,evidence)))
       return BookCsvReject(gTradeCsvFileName,0,0,0,"PREVIOUS_FINANCIAL_FILE_MISSING_OR_PROBE_UNCERTAIN");
    return true;
 }
@@ -217,8 +293,9 @@ int BookCsvOpenInitialFile()
    { BookCsvReject(gTradeCsvFileName,0,0,0,"INITIAL_PATH_PROBE_UNCERTAIN"); return INVALID_HANDLE; }
    // A missing trade file alongside recovered trade/request evidence is loss of
    // evidence, never an invitation to recreate an empty historical ledger.
-   if(!exists && (gTradeRecordCount>0 || ordersEnteredToday>0 ||
-      gPendingExec.active || gPendingExit.active || gOpenPos.active))
+   bool evidence=(gTradeRecordCount>0 || ordersEnteredToday>0 ||
+      gPendingExec.active || gPendingExit.active || gOpenPos.active);
+   if(!exists && !BookCsvCanCreateMissing(gBookCsvObservedEver,BookCsvSentinelStatus()==0,evidence))
    { BookCsvReject(gTradeCsvFileName,0,0,0,"MISSING_FILE_WITH_RECOVERED_FINANCIAL_EVIDENCE"); return INVALID_HANDLE; }
    ResetLastError();
    int h=FileOpen(gTradeCsvFileName,FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_SHARE_READ|FILE_SHARE_WRITE);
