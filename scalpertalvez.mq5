@@ -211,6 +211,7 @@ input double Inp_DOM_MinDominancePct = 55.0;
 // Phase A: observation only; OBSERVAR retains the original trading capability.
 enum ENUM_RESPONSE_MODE { RESPONSE_ORIGINAL=0, RESPONSE_OBSERVAR=1 };
 input ENUM_RESPONSE_MODE Inp_ResponseMode = RESPONSE_ORIGINAL;
+#include "Include/BookArmedInputs.mqh"
 
 //=====================================================================
 // STRUCTS
@@ -1504,6 +1505,7 @@ void DOMRuntimeDeinit()
 void OnTimer()
 {
    DOMBaseOnTimer();
+   BookDiagTimer();
    DOMGateSubscriptionTimer(); // Only after the original financial timer body.
    if(Inp_DOM_Enable) DOMRuntimeTimer();
    if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseTimer();
@@ -1661,6 +1663,7 @@ bool DOMGateLogAllowed()
 
 void DOMGateReport(const BookGateDecision &decision,const bool confirmed)
 {
+  BookDiagBook(decision,confirmed);
   DOMGateSyncIdentity();
   bool wasWaiting=gBookGateWaiting;
   if(!confirmed)
@@ -1790,6 +1793,7 @@ gBookGateRetryDelayMS=5000;
 
 bool DOMGateRead(const int direction,BookGateDecision &decision)
 {
+  BookDiagBookReadBegin();
   ZeroMemory(decision);
   decision.beginUS=GetMicrosecondCount();
   decision.signalClock=iTime(Symbol(),Inp_SignalTF,0);
@@ -1811,6 +1815,7 @@ else
   MqlBookInfo raw[];
   ResetLastError();
   ulong begin=GetMicrosecondCount();
+  BookDiagBookAttempt();
   bool received=MarketBookGet(gBookGateSymbol,raw);
   decision.apiUS=GetMicrosecondCount()-begin;
   decision.apiError=GetLastError();
@@ -2379,6 +2384,7 @@ void ResetMatrixSnapshot(MatrixSnapshot &s)
 
 void ResetArmedSignal()
 {
+  BookDiagBeforeReset();
   armed.active=false;armed.dir=0;
   armed.regionHigh=0;armed.regionLow=0;
   armed.activeSL_Pts=0;armed.activeTP_Pts=0;
@@ -2724,6 +2730,7 @@ return;
 void CalcSigmaHistory()
 {
   SigmaD1=0;
+  gBookSigmaValidDays=0;
   MqlDateTime todayDT; TimeToStruct(TimeTradeServer(),todayDT);
   todayDT.hour=0;todayDT.min=0;todayDT.sec=0;
   datetime searchDay=StructToTime(todayDT);
@@ -2792,6 +2799,7 @@ copiedTV=CopyTickVolume(Symbol(),PERIOD_M1,dayStart,dayEnd,tickVol);
  double daySigma=(sumVolB>0)?MathSqrt(sumWVar/sumVolB):0.0;
  sigmaArray[validDaysFound++]=daySigma;
  }
+ gBookSigmaValidDays=validDaysFound;
  if(validDaysFound==0) { Print("[SCALPER][SIGMA] CRÍTICO: nenhum dia válido.");
 return; }
  double sumS=0;
@@ -3132,6 +3140,7 @@ bool SpreadOk()
   MqlTick tick;
   if(!SymbolInfoTick(Symbol(),tick) || tick.ask<=0 || tick.bid<=0 || tick.ask<tick.bid)
      return false;
+  BookDiagSpread(tick);
   return tick.ask-tick.bid<=gSpreadMaxPts;
 }
 //=====================================================================
@@ -3854,6 +3863,7 @@ void WriteAuditHeader()
 void WriteAuditRow(string status,string dirStr,string mode,
        double price,double posRel,double distD1,double effort,double trigger)
 {
+  BookDiagAudit(status);
   if(Inp_DOM_Enable) DOMObserveAudit(status,dirStr,mode,price,trigger);
   if(csvAuditHandle == INVALID_HANDLE) return;
   string line = "";
@@ -4124,6 +4134,7 @@ sent=trade.PositionOpen(Symbol(),type,lots,finalExec,sl,tp,"RC1|"+armed.route+"|
  uint ret=trade.ResultRetcode();
  MqlTradeResult executionResult;
  trade.Result(executionResult);
+ BookDiagDispatch(executionResult);
 
 CompletePendingExec(sent,ret,trade.ResultOrder(),trade.ResultDeal(),executionResult.request_id);
  bool accepted=sent && (ret==TRADE_RETCODE_DONE ||
@@ -4170,6 +4181,7 @@ ENUM_MSS SnapshotForSignal(MatrixSnapshot &out)
     gLastTelemetryMatrixValid=true;
     gLastTelemetrySignalBar=iTime(Symbol(),Inp_SignalTF,1);
     RecordPerf(perfMicro,(double)(GetMicrosecondCount()-begin));
+    BookDiagMatrix(gCachedMicroSnapshot,gLastTelemetrySignalBar);
     if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseCaptureSnapshot(gCachedMicroSnapshot,bar);
   }
   out=gCachedMicroSnapshot;
@@ -4303,6 +4315,7 @@ regHigh,regLow,armTrigger,armed.breakoutEffortMin,
 DirStr(gMacro.macroAbsDir),DirStr(gMacro.macroContDir),gMacro.posRel);
 WriteAuditRow("ARMED",DirStr(dirSel),mode,s.price,s.posRel,s.distAbs,s.effort,armTrigger);
   WriteShadowRow("ARMED",s);
+  BookDiagSelected(s,armed,armTrigger);
   if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseSelected(s,armed,armTrigger,gCachedMicroBar);
 }
 
@@ -4314,6 +4327,7 @@ WriteAuditRow("ARMED",DirStr(dirSel),mode,s.price,s.posRel,s.distAbs,s.effort,ar
 ENUM_APS CheckArmedMarketReady(double &curEff,double &trigger,double &last,MqlTick
 &validatedStageTick)
 {
+   BookDiagBeginEvaluation();
    curEff=0.0; trigger=0.0; last=0.0;
    datetime now=TimeTradeServer();
 
@@ -4341,31 +4355,35 @@ if(hhmm>=Inp_StopEntryHHMM)
 
  // Evento de negócio real
  MqlTick tk;
- if(!SymbolInfoTick(Symbol(),tk)) return APS_STILL_ARMED;
+ if(!SymbolInfoTick(Symbol(),tk)) { BookDiagWait(BD_DATA,"WAIT_DATA:TICK_UNAVAILABLE"); return APS_STILL_ARMED; }
  validatedStageTick=tk;
  if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseStageSample(tk);
  bool
 realTradeEvent=((tk.flags&TICK_FLAG_LAST)!=0)||((tk.flags&TICK_FLAG_VOLUME)!=0)||
      ((tk.flags&TICK_FLAG_BUY)!=0)||((tk.flags&TICK_FLAG_SELL)!=0);
-if(!realTradeEvent) return APS_STILL_ARMED;
+if(!realTradeEvent) { BookDiagWait(BD_DATA,"WAIT_DATA:NOT_REAL_TRADE_EVENT"); return APS_STILL_ARMED; }
 
 last=tk.last;
-if(last<=0) return APS_STILL_ARMED;
+if(last<=0) { BookDiagWait(BD_DATA,"WAIT_DATA:LAST_UNAVAILABLE"); return APS_STILL_ARMED; }
+BookDiagPass(BD_DATA);
 // Trigger
 trigger=ComputeTrigger(armed.dir,armed.regionHigh,armed.regionLow);
+BookDiagTick(tk,trigger);
 bool breakout=false;
 if(armed.dir==1&&last>=trigger) breakout=true;
 if(armed.dir==-1&&last<=trigger) breakout=true;
-if(!breakout) return APS_STILL_ARMED;
+if(!breakout) { BookDiagWait(BD_BREAKOUT,"WAIT_BREAKOUT"); return APS_STILL_ARMED; }
+BookDiagPass(BD_BREAKOUT);
 
 // Preço executável
 double execPrice=(armed.dir==1)?tk.ask:tk.bid;
-if(execPrice<=0) return APS_STILL_ARMED;
+if(execPrice<=0) { BookDiagWait(BD_DATA,"WAIT_DATA:EXECUTABLE_PRICE"); return APS_STILL_ARMED; }
 
 // Overshoot
 double overLast=(armed.dir==1)?(last-trigger):(trigger-last);
 double overExec=(armed.dir==1)?(execPrice-trigger):(trigger-execPrice);
 double overshoot=MathMax(overLast,overExec);
+BookDiagOvershoot(overshoot);
 if(overshoot>gMaxOvershoot)
 {
     PrintFormat("[SCALPER][OVERSHOOT_BLOCK] Last=%.4f Exec=%.4f Trig=%.4f Over=%.4f Max=%.4f",
@@ -4377,11 +4395,14 @@ if(overshoot>gMaxOvershoot)
 }
 
 // Onda viva M1 (usa cache M1 — idêntico à v2.44 mas em M1)
-if(!wwValid) return APS_STILL_ARMED;
+if(!wwValid) { BookDiagWait(BD_DATA,"WAIT_DATA:WEIS_CACHE"); return APS_STILL_ARMED; }
 double curVol,avgVol; int waveDir;
 ComputeLiveWaveO1(curEff,curVol,avgVol,waveDir);
-if(waveDir!=armed.dir) return APS_STILL_ARMED;
-if(curEff<armed.breakoutEffortMin) return APS_STILL_ARMED;
+BookDiagLive(curEff,curVol,avgVol,waveDir);
+if(waveDir!=armed.dir) { BookDiagWait(BD_WAVE_DIRECTION,"WAIT_LIVE_WAVE_DIRECTION"); return APS_STILL_ARMED; }
+BookDiagPass(BD_WAVE_DIRECTION);
+if(curEff<armed.breakoutEffortMin) { BookDiagWait(BD_WAVE_EFFORT,"WAIT_LIVE_WAVE_EFFORT"); return APS_STILL_ARMED; }
+BookDiagPass(BD_WAVE_EFFORT);
 
 // VWAP viva
 double liveVwap=0;
@@ -4403,6 +4424,7 @@ if(lateRange<=0)
   return APS_ENDED_FAIL_CLOSED;
 }
 double livePosRel=(last-lateLower)/lateRange;
+BookDiagLiveBands(liveVwap,lateLower,lateUpper,livePosRel);
 
 // New hypothesis, OFF in baseline. Neutrality is also a mismatch.
 int liveDirAbs=0;
@@ -4466,10 +4488,10 @@ ENUM_APS CheckArmedEntryReady(double &curEff,double &trigger,double &last,MqlTic
    ENUM_APS market=CheckArmedMarketReady(curEff,trigger,last,validatedStageTick);
    if(market!=APS_ENTRY_READY) return market;
 // Position, pending execution and daily quota remain operational guards.
-if(HasExecutionInFlight()) { ResetArmedSignal(); return APS_TRADE_OR_POSITION; }
+if(HasExecutionInFlight()) { BookDiagWait(BD_OTHER,"WAIT_OTHER_GATE:EXECUTION_IN_FLIGHT"); BookDiagFinish("CANCEL_EXISTING_EXECUTION"); ResetArmedSignal(); return APS_TRADE_OR_POSITION; }
 // Posição / cota / risco diário
-if(HasOpenPosition())          { ResetArmedSignal(); return APS_TRADE_OR_POSITION; }
-if(ordersEnteredToday>=Inp_MaxTradesDay) { ResetArmedSignal(); return
+if(HasOpenPosition())          { BookDiagWait(BD_OTHER,"WAIT_OTHER_GATE:OPEN_POSITION"); BookDiagFinish("CANCEL_EXISTING_POSITION"); ResetArmedSignal(); return APS_TRADE_OR_POSITION; }
+if(ordersEnteredToday>=Inp_MaxTradesDay) { BookDiagWait(BD_OTHER,"WAIT_OTHER_GATE:DAILY_QUOTA"); BookDiagFinish("CANCEL_DAILY_QUOTA"); ResetArmedSignal(); return
 APS_TRADE_OR_POSITION; }
 if(dailyRiskBlocked)
 {
@@ -4481,6 +4503,7 @@ if(dailyRiskBlocked)
 // Spread
 if(!SpreadOk())
 {
+    BookDiagWait(BD_SPREAD,"WAIT_SPREAD");
     if(!gSpreadHoldLogged)
     {
        gSpreadHoldLogged=true;
@@ -4490,6 +4513,7 @@ if(!SpreadOk())
     return APS_STILL_ARMED;
 }
 
+    BookDiagPass(BD_SPREAD);
     return APS_ENTRY_READY;
 }
 
@@ -4506,6 +4530,7 @@ armed.route,DirStr(armed.dir),trigger,last,curEff,armed.breakoutEffortMin,armed.
    ENUM_SEND_OUTCOME outcome=SendOrder(armed.dir,armed.lots,armed.mode,
     armed.activeSL_Pts,armed.activeTP_Pts,
      armed.posRel,armed.distD1,curEff,trigger);
+   BookDiagSendOutcome(outcome);
    if(outcome==SEND_FINANCIAL_UNRESOLVED)
    {
       // Ending the original signal never clears its financial obligation.
@@ -4821,6 +4846,7 @@ csvTradeHandle=BookCsvOpenInitialFile();
   PrintFormat("[SCALPER RC1.2] %s Magic=%d Context=%s Signal=%s MacroGate=%s LateDirection=%s RejectTies=%s; edge empirical not demonstrated.",
      sym,gMagicCore,EnumToString(Inp_ContextTF),EnumToString(Inp_SignalTF),
 BStr(Inp_EnableMacroDirectionGate),BStr(Inp_EnableLateDirectionBlock),BStr(Inp_RejectPOCTies));
+  BookDiagInit(gBookRunID+"|"+gBookConfigHash);
   DOMRuntimeInit();
   DOMGateInit();
   if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseInit();
@@ -4833,6 +4859,7 @@ BStr(Inp_EnableMacroDirectionGate),BStr(Inp_EnableLateDirectionBlock),BStr(Inp_R
 //=====================================================================
 void OnDeinit(const int reason)
 {
+   BookDiagDeinit();
    EventKillTimer();
    if(csvAuditHandle !=INVALID_HANDLE){ FileFlush(csvAuditHandle);
 FileClose(csvAuditHandle); csvAuditHandle =INVALID_HANDLE; }
@@ -6194,6 +6221,7 @@ r.pnlRValid=false; }
 void SyncOpenPositionFromRecord(int idx)
 {
   TradeRecord r=gTradeRecords[idx];
+  BookDiagConfirmed(r);
   if(r.volumeClosedComplete) return;
   double volume,sl,tp; int direction;
   if(r.totalVolumeIn<=0 || !r.accountingResolved) return;
@@ -9362,6 +9390,7 @@ request.action==TRADE_ACTION_DEAL &&
       gPendingExec.requestID>0 && result.request_id==gPendingExec.requestID);
    if(trans.type==TRADE_TRANSACTION_REQUEST && ownEntryRequest)
    {
+      BookDiagRequestResult(result);
       if(result.order>0) gPendingExec.orderTicket=result.order;
       if(result.deal>0) gPendingExec.resultDeal=result.deal;
       if(IsAcceptedRetcode(result.retcode))
@@ -9392,9 +9421,9 @@ double OnTester() { return 0.0; }
 // No observer runs inside SendOrder or between its final DOM sample and dispatch.
 ENUM_APS ProcessArmedSignal()
 {
-   if(Inp_ResponseMode!=RESPONSE_OBSERVAR) return ResponseBaseProcessArmedSignal();
    ENUM_APS outcome=ResponseBaseProcessArmedSignal();
-   ResponseArmedOutcome(outcome);
+   BookDiagAfterEvaluation();
+   if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseArmedOutcome(outcome);
    return outcome;
 }
 
@@ -10159,3 +10188,5 @@ void ResponseDeinit()
 
 // END EMBEDDED ResponseObserver.mqh
 
+
+#include "Include/BookArmedDiagnostics.mqh"

@@ -74,5 +74,6 @@ void BookCollectInputIdentity(string &canonical)
    BookIdentityAdd(canonical,"bool","Inp_DOM_TradeGateEnable",(Inp_DOM_TradeGateEnable?"1":"0"));
    BookIdentityAdd(canonical,"double","Inp_DOM_MinDominancePct",StringFormat("%.17g",Inp_DOM_MinDominancePct));
    BookIdentityAdd(canonical,"ENUM_RESPONSE_MODE","Inp_ResponseMode",(string)(int)Inp_ResponseMode);
+   BookIdentityAdd(canonical,"bool","Inp_EnableArmedDiagnostics",(Inp_EnableArmedDiagnostics?"1":"0"));
 }
 #endif
