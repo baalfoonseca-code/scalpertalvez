@@ -86,6 +86,17 @@ def tokens(text: str) -> list[str]:
     return re.findall(r'"(?:\\.|[^"\\])*"|[A-Za-z_]\w*|\d+(?:\.\d*)?|[^\s]', lexical_mask(text))
 
 
+def decision_tokens(text: str) -> list[str]:
+    """Canonicalize diagnostic-only braces around a single return statement.
+
+    A block containing exactly a return has the same scope/control flow as that
+    return; no declarations, nested conditions or executable calls are removed.
+    """
+    text = remove_observer_calls(text)
+    text = re.sub(r"\{\s*(return\b[^;{}]*;)\s*\}", r"\1", lexical_mask(text))
+    return tokens(text)
+
+
 def inputs(text: str) -> list[tuple[str, str, str]]:
     return [(m.group(1), m.group(2), " ".join(tokens(m.group(3))))
             for m in re.finditer(r"(?m)^input\s+(\w+)\s+(\w+)\s*=\s*([^;]+);", lexical_mask(text))]
@@ -121,8 +132,27 @@ class CompatibilityTests(unittest.TestCase):
     def test_protected_strategy_function_bodies(self):
         for name in PROTECTED:
             with self.subTest(function=name):
-                self.assertEqual(tokens(remove_observer_calls(function(self.new, name))),
-                                 tokens(function(self.old, name)), name)
+                self.assertEqual(decision_tokens(function(self.new, name)),
+                                 decision_tokens(function(self.old, name)), name)
+
+    def test_observational_modules_cannot_dispatch_or_write_strategy_state(self):
+        files = sorted((ROOT / "Include").glob("BookArmed*.mqh"))
+        files += sorted((ROOT / "Include").glob("BookMicro*.mqh"))
+        self.assertTrue(files, "Observation modules missing")
+        forbidden_calls = ("OrderSend", "OrderSendAsync", "SendOrder", "EvaluateMatrix",
+                           "ResetArmedSignal", "PreparePendingExec", "MarkRequestDispatchPossible",
+                           "ResolveRequestJournal", "BeginExitIntent", "ProcessEOD", "ManageBreakEven")
+        authoritative = ("armed", "gPendingExec", "gPendingExit", "gTradeRecords", "gMacro",
+                         "gCachedMicroSnapshot", "gCachedMicroReady", "dailyRiskBlocked",
+                         "ordersEnteredToday", "lastSignalBarTime", "lastContextBarTime",
+                         "gLastMatrixEvalBar")
+        for path in files:
+            code = lexical_mask(path.read_text(encoding="utf-8"), strings=True)
+            with self.subTest(module=path.name):
+                self.assertNotRegex(code, r"\b(?:" + "|".join(forbidden_calls) + r")\s*\(")
+                self.assertNotRegex(code, r"\btrade\s*\.\s*(?:PositionOpen|Buy|Sell|PositionModify|PositionClose|OrderDelete)\s*\(")
+                for variable in authoritative:
+                    self.assertNotRegex(code, r"\b" + variable + r"\b(?:\[[^\]]*\])?(?:\s*\.\s*\w+)*\s*(?:\+\+|--|[+*/-]?=(?!=))")
 
     def test_legacy_financial_journal_schemas(self):
         # Avoid changing the meaning/shape of existing BE, request, order and
