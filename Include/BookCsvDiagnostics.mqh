@@ -102,6 +102,7 @@ bool InitializeTradeCsvIndex(string fileName)
    int expectedColumns=ArraySize(expected);
    int schema=-1,symbol=-1,magic=-1,pid=-1,closed=-1,accounting=-1;
    bool haveHeader=false,inQuote=false;
+   long positionRows[];
    int recordStart=0,len=StringLen(content); long logicalRow=0;
    for(int i=0;i<len;i++)
    {
@@ -145,10 +146,13 @@ bool InitializeTradeCsvIndex(string fileName)
          ulong positionID=0;
          if(!CsvParsePID(fields[pid],positionID))
             return BookCsvReject(fileName,logicalRow,expectedColumns,ArraySize(fields),"INVALID_OR_OVERFLOW_POSITION_ID",start);
-         if(TradeCsvContainsPID(positionID))
-            return BookCsvReject(fileName,logicalRow,expectedColumns,ArraySize(fields),"DUPLICATE_POSITION_ID_"+fields[pid],start);
-         if(!TradeCsvAddPID(positionID))
+         // Amortized append; a sorted copy below detects duplicates in O(n log n)
+         // instead of repeatedly scanning an entire historical ledger.
+         int count=ArraySize(gTradeCsvWrittenPIDs);
+         if(ArrayResize(gTradeCsvWrittenPIDs,count+1,1024)!=count+1 ||
+            ArrayResize(positionRows,count+1,1024)!=count+1)
             return BookCsvReject(fileName,logicalRow,expectedColumns,ArraySize(fields),"PID_INDEX_ALLOCATION_FAILED",start);
+         gTradeCsvWrittenPIDs[count]=positionID; positionRows[count]=logicalRow;
          if(fields[accounting]=="0")
          {
             if(!PersistEconomicMarker(positionID)) gEconomicMarkerScanUnresolved=true;
@@ -163,6 +167,19 @@ bool InitializeTradeCsvIndex(string fileName)
       return BookCsvReject(fileName,logicalRow+1,expectedColumns,ArraySize(fields)+(parsed?0:1),
             inQuote?"UNTERMINATED_QUOTED_TAIL":"UNTERMINATED_RECORD",recordStart);
    }
+   ulong sorted[];
+   int count=ArraySize(gTradeCsvWrittenPIDs);
+   if(count>0 && (ArrayCopy(sorted,gTradeCsvWrittenPIDs)!=count || !ArraySort(sorted)))
+      return BookCsvReject(fileName,0,expectedColumns,expectedColumns,"DUPLICATE_VALIDATION_ALLOCATION_FAILED");
+   for(int i=1;i<count;i++)
+      if(sorted[i]==sorted[i-1])
+      {
+         bool first=false; long duplicateRow=0;
+         for(int k=0;k<count;k++)
+            if(gTradeCsvWrittenPIDs[k]==sorted[i])
+            { if(first) { duplicateRow=positionRows[k]; break; } first=true; }
+         return BookCsvReject(fileName,duplicateRow,expectedColumns,expectedColumns,"DUPLICATE_POSITION_ID_"+(string)sorted[i]);
+      }
    gTradeCsvIndexLoaded=true; gTradeCsvAppendSafe=true;
    gTradeCsvInfrastructureUnresolved=false; gBookCsvVerifiedSize=size;
    if(gBookCsvLastDiagnostic!="")
