@@ -102,6 +102,28 @@ def inputs(text: str) -> list[tuple[str, str, str]]:
             for m in re.finditer(r"(?m)^input\s+(\w+)\s+(\w+)\s*=\s*([^;]+);", lexical_mask(text))]
 
 
+def expanded_inputs(path: pathlib.Path, seen: set[pathlib.Path] | None = None) -> str:
+    """Expand repository quoted includes in source order for input auditing.
+
+    Standard-library <...> includes do not declare EA inputs and remain external.
+    A repeated local guarded include is visited once, like the preprocessor.
+    """
+    seen = set() if seen is None else seen
+    path = path.resolve()
+    if path in seen:
+        return ""
+    seen.add(path)
+    source = path.read_text(encoding="utf-8")
+    def include(match):
+        target = (path.parent / match.group(1).replace("\\", "/")).resolve()
+        if not target.is_relative_to(ROOT):
+            raise AssertionError(f"Include escapes checkout: {target}")
+        if not target.exists():
+            raise AssertionError(f"Missing include: {target}")
+        return expanded_inputs(target, seen)
+    return re.sub(r'(?m)^\s*#include\s+"([^"\n]+)"[^\n]*', include, source)
+
+
 # These bodies must retain decisions and arithmetic. Standalone BookDiag* calls
 # are the sole allowed instrumentation difference in this list.
 PROTECTED = (
@@ -124,7 +146,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(ORIGINAL.read_bytes()).hexdigest(), ORIGINAL_SHA256)
 
     def test_historical_71_input_types_order_names_and_defaults(self):
-        old, new = inputs(self.old), inputs(self.new)
+        old, new = inputs(self.old), inputs(expanded_inputs(UPDATED))
         self.assertEqual(len(old), 71)
         self.assertEqual(new[:71], old)
         self.assertEqual(len({name for _, name, _ in new}), len(new))
