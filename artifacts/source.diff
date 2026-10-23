@@ -1,0 +1,779 @@
+--- a/scalpertalvez
++++ b/scalpertalvez.mq5
+@@ -1,3 +1,6 @@
++// BOOK1125_SURGERY_EXP1: branch experimental, fonte original preservada em scalpertalvez.
++// Comando mestre comando.pdf lido integralmente. Compilacao nativa/MT5 pendentes.
++// Novos modos financeiros opt-in; microestrutura exclusivamente observacional.
+ // FASE A OBSERVACIONAL - candidata experimental separada; NAO HOMOLOGADA.
+ // Fonte textual de controle: scalperbook; versao-base BOOK 1.125.
+ // Compilacao MetaEditor e replay nativo pendentes; ver docs/relatorio-tecnico.md.
+@@ -30,7 +33,7 @@
+ //+------------------------------------------------------------------+
+ #property copyright "Remora Scalper Research"
+ #property version "1.125" // EXPERIMENTAL: PDF reconstruction + directional DOM confluence.
+-#property description "Experimental PDF-derived 1.123; optional directional DOM gate;compilation and empirical validation pending"
++#property description "BOOK PRO 1.125 experimental surgery; opt-in risk and observational microstructure; native compilation pending"
+ 
+ #include <Trade\Trade.mqh>
+ #include <Trade\PositionInfo.mqh>
+@@ -211,6 +214,18 @@
+ // Phase A: observation only; OBSERVAR retains the original trading capability.
+ enum ENUM_RESPONSE_MODE { RESPONSE_ORIGINAL=0, RESPONSE_OBSERVAR=1 };
+ input ENUM_RESPONSE_MODE Inp_ResponseMode = RESPONSE_ORIGINAL;
++
++// Observational additions: none can authorize, block, cancel or route an order.
++input bool Inp_ObserveMicrostructure = true; // Effective only in RESPONSE_OBSERVAR
++input bool Inp_Obs_TrustAggressorFlags = false; // Explicit feed-quality assumption; not a gate
++input double Inp_Obs_Min_Displ_Sigma = 0.0; // ABS hypothetical M1 multiplier; 0=unconfigured
++input double Inp_Obs_Max_Body_Sigma = 0.0; // ABS hypothetical M1 multiplier; 0=unconfigured
++input double Inp_Obs_Cont_Min_Displ_Sigma = 0.0; // CONT hypothetical M1 multiplier; 0=unconfigured
++input int Inp_Obs_WindowBudgetUS = 5000; // Suspend extension after an over-budget snapshot
++
++
++#include "Include\BookRiskInputs.mqh"
++#include "Include/BookArmedInputs.mqh"
+ 
+ //=====================================================================
+ // STRUCTS
+@@ -681,6 +696,8 @@
+ double gDOMAskVolumes[DOM_RAW_RECORD_LIMIT];
+ DOMSnapshot gDOMCurrent;
+ ulong gDOMSequence=0;
++
++#include "Include\BookAdvancedRisk.mqh"
+ 
+ void DOMClearSnapshot(DOMSnapshot &out)
+ {
+@@ -1503,10 +1520,13 @@
+ // Optional observer runs only AFTER the original financial timer body.
+ void OnTimer()
+ {
++   ulong began=GetMicrosecondCount();
+    DOMBaseOnTimer();
++   BookDiagTimer();
+    DOMGateSubscriptionTimer(); // Only after the original financial timer body.
+    if(Inp_DOM_Enable) DOMRuntimeTimer();
+    if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseTimer();
++   BookPerfTimer(began);
+ }
+ 
+ // BEGIN EXPERIMENTAL DOM CONFLUENCE MODULE
+@@ -1661,6 +1681,7 @@
+ 
+ void DOMGateReport(const BookGateDecision &decision,const bool confirmed)
+ {
++  BookDiagBook(decision,confirmed);
+   DOMGateSyncIdentity();
+   bool wasWaiting=gBookGateWaiting;
+   if(!confirmed)
+@@ -1717,6 +1738,12 @@
+         readiness==APS_ENDED_FAIL_CLOSED) return SEND_ORIGINAL_CANCEL;
+      double sl=NormEntrySL(original.dir,price-original.dir*original.activeSL_Pts);
+      double tp=NormEntryTP(original.dir,price+original.dir*original.activeTP_Pts);
++     if(BookRiskEnabled() && !BookRiskResolveTerms(original.dir,price,original.mode,
++         original.activeSL_Pts,original.activeTP_Pts,false,sl,tp))
++     { ResetArmedSignal(); return SEND_ORIGINAL_CANCEL; }
++     if(BookRiskEnabled() && !BookRiskResolveTerms(original.dir,price,original.mode,
++         original.activeSL_Pts,original.activeTP_Pts,false,sl,tp))
++     { ResetArmedSignal(); return SEND_ORIGINAL_CANCEL; }
+      double lots=ComputeLotsForEntry(original.dir,price,sl);
+      if(!DOMGateTermsCurrent(current,original,price,lots,sl,tp,readiness) &&
+         readiness==APS_ENDED_FAIL_CLOSED) return SEND_ORIGINAL_CANCEL;
+@@ -1790,6 +1817,7 @@
+ 
+ bool DOMGateRead(const int direction,BookGateDecision &decision)
+ {
++  BookDiagBookReadBegin();
+   ZeroMemory(decision);
+   decision.beginUS=GetMicrosecondCount();
+   decision.signalClock=iTime(Symbol(),Inp_SignalTF,0);
+@@ -1811,6 +1839,7 @@
+   MqlBookInfo raw[];
+   ResetLastError();
+   ulong begin=GetMicrosecondCount();
++  BookDiagBookAttempt();
+   bool received=MarketBookGet(gBookGateSymbol,raw);
+   decision.apiUS=GetMicrosecondCount()-begin;
+   decision.apiError=GetLastError();
+@@ -1977,6 +2006,9 @@
+   double currentPrice=(direction==1)?pricedTick.ask:pricedTick.bid;
+   double currentSL=NormEntrySL(direction,currentPrice-direction*original.activeSL_Pts);
+   double currentTP=NormEntryTP(direction,currentPrice+direction*original.activeTP_Pts);
++  if(BookRiskEnabled() && !BookRiskResolveTerms(direction,currentPrice,original.mode,
++      original.activeSL_Pts,original.activeTP_Pts,false,currentSL,currentTP))
++  { ResetArmedSignal(); readiness=APS_ENDED_FAIL_CLOSED; return false; }
+   double currentLots=ComputeLotsForEntry(direction,currentPrice,currentSL);
+   double minDist=(double)SymbolInfoInteger(Symbol(),SYMBOL_TRADE_STOPS_LEVEL)*
+                  SymbolInfoDouble(Symbol(),SYMBOL_POINT);
+@@ -2379,6 +2411,7 @@
+ 
+ void ResetArmedSignal()
+ {
++  BookDiagBeforeReset();
+   armed.active=false;armed.dir=0;
+   armed.regionHigh=0;armed.regionLow=0;
+   armed.activeSL_Pts=0;armed.activeTP_Pts=0;
+@@ -2724,6 +2757,7 @@
+ void CalcSigmaHistory()
+ {
+   SigmaD1=0;
++  gBookSigmaValidDays=0;
+   MqlDateTime todayDT; TimeToStruct(TimeTradeServer(),todayDT);
+   todayDT.hour=0;todayDT.min=0;todayDT.sec=0;
+   datetime searchDay=StructToTime(todayDT);
+@@ -2792,6 +2826,7 @@
+  double daySigma=(sumVolB>0)?MathSqrt(sumWVar/sumVolB):0.0;
+  sigmaArray[validDaysFound++]=daySigma;
+  }
++ gBookSigmaValidDays=validDaysFound;
+  if(validDaysFound==0) { Print("[SCALPER][SIGMA] CRÍTICO: nenhum dia válido.");
+ return; }
+  double sumS=0;
+@@ -2946,8 +2981,8 @@
+     ulong toNow =t0_msc-1;
+     ulong fromPrev=t0_msc-2*win_msc;
+     ulong toPrev =t0_msc-win_msc-1;
+-ComputePOCWithTie(fromNow, toNow, s.pocNow);
+-ComputePOCWithTie(fromPrev, toPrev, s.pocPrev);
++BookMeasuredPOC(fromNow, toNow, s.pocNow);
++BookMeasuredPOC(fromPrev, toPrev, s.pocPrev);
+ 
+ // Optional tie rejection; baseline false preserves canonical deterministic POC
+ // Comportamento como input: frequência real de ties ainda desconhecida
+@@ -3132,6 +3167,7 @@
+   MqlTick tick;
+   if(!SymbolInfoTick(Symbol(),tick) || tick.ask<=0 || tick.bid<=0 || tick.ask<tick.bid)
+      return false;
++  BookDiagSpread(tick);
+   return tick.ask-tick.bid<=gSpreadMaxPts;
+ }
+ //=====================================================================
+@@ -3290,92 +3326,8 @@
+ 
+ // One attach-time scan. Never truncate, repair, or overwrite an existing CSV.
+ // A nonterminated tail is conservatively incomplete, even if fields look valid.
+-bool InitializeTradeCsvIndex(string fileName)
+-{
+-   ArrayResize(gTradeCsvWrittenPIDs,0);
+-   gTradeCsvIndexLoaded=false; gTradeCsvAppendSafe=false;
+-   int
+-h=FileOpen(fileName,FILE_READ|FILE_BIN|FILE_ANSI|FILE_SHARE_READ|FILE_SHARE_WRITE);
+-   if(h==INVALID_HANDLE)
+-   { Print("[RC1][TRADE_CSV_INDEX_UNAVAILABLE] ",fileName); return false; }
+-   ulong size=FileSize(h);
+-    if(size==0 || size>2147483647)
+-    { FileClose(h); Print("[RC1][TRADE_CSV_INDEX_INVALID_SIZE] ",fileName); return
+-false;
+-}
+-  uchar bytes[];
+-  if(ArrayResize(bytes,(int)size)!=(int)size)
+-  { FileClose(h); Print("[RC1][TRADE_CSV_INDEX_MEMORY_FAIL] ",fileName); return
+-false; }
+-  uint read=FileReadArray(h,bytes,0,(int)size);
+-  FileClose(h);
+-  if(read!=(uint)size)
+-  { Print("[RC1][TRADE_CSV_INDEX_READ_FAIL] ",fileName); return false; }
+-  for(int i=0;i<(int)read;i++)
+-     if(bytes[i]==0)
+-     { Print("[RC1][TRADE_CSV_INDEX_INVALID_NUL] ",fileName); return false; }
+-  string content=CharArrayToString(bytes,0,(int)read,CP_ACP);
+-  string expectedLine="";
+-  CsvConfigHeader(expectedLine); CsvTradeHeader(expectedLine);
+-  string expected[],headers[];
+-  if(!CsvParseRecord(expectedLine,expected)) return false;
+-  int schema=-1,symbol=-1,magic=-1,pid=-1,closed=-1,accounting=-1;
+-  bool haveHeader=false,inQuote=false;
+-  int recordStart=0,len=StringLen(content);
+- for(int i=0;i<len;i++)
+- {
+-    ushort c=StringGetCharacter(content,i);
+-   if(c==34)
+-   {
+-   if(inQuote && i+1<len && StringGetCharacter(content,i+1)==34) i++;
+-   else inQuote=!inQuote;
+-   }
+-   if((c!=10 && c!=13) || inQuote) continue;
+-   string record=StringSubstr(content,recordStart,i-recordStart);
+-   if(c==13 && i+1<len && StringGetCharacter(content,i+1)==10) i++;
+-   recordStart=i+1;
+-   if(!haveHeader)
+-   {
+-      if(!CsvParseRecord(record,headers) || ArraySize(headers)!=ArraySize(expected))
+-      { Print("[RC1][TRADE_CSV_SCHEMA_MISMATCH] ",fileName); return false; }
+-      for(int k=0;k<ArraySize(expected);k++)
+-         if(headers[k]!=expected[k])
+-         { Print("[RC1][TRADE_CSV_SCHEMA_MISMATCH] ",fileName); return false; }
+-      schema=CsvColumnIndex(headers,"SCHEMA_VERSION");
+-      symbol=CsvColumnIndex(headers,"SYMBOL");
+-      magic=CsvColumnIndex(headers,"MAGIC");
+-      pid=CsvColumnIndex(headers,"POSITION_ID");
+-      closed=CsvColumnIndex(headers,"CLOSED");
+-      accounting=CsvColumnIndex(headers,"ACCOUNTING_RESOLVED");
+-      if(schema<0 || symbol<0 || magic<0 || pid<0 || closed<0) return false;
+-   haveHeader=true; gTradeCsvIndexLoaded=true;
+-    }
+-    else if(StringLen(record)>0)
+-    {
+-      string fields[];
+-      if(!CsvParseRecord(record,fields) || ArraySize(fields)!=ArraySize(headers))
+-      { Print("[RC1][TRADE_CSV_INCOMPLETE_OR_INVALID_ROW] ",fileName); return
+-false; }
+-      if(fields[schema]=="RC1" && fields[symbol]==Symbol() &&
+-         fields[magic]==IntegerToString(gMagicCore) && fields[closed]=="1")
+-      {
+-         ulong positionID=0;
+-         if(!CsvParsePID(fields[pid],positionID) || !TradeCsvAddPID(positionID))
+-         { Print("[RC1][TRADE_CSV_INDEX_INVALID_PID] ",fileName); return false; }
+-         if(accounting>=0 && fields[accounting]=="0")
+-          {
+-              if(!PersistEconomicMarker(positionID)) gEconomicMarkerScanUnresolved=true;
+-              RememberDeferredAccountingPID(positionID);
+-          }
+-      }
+-  }
+- }
+-  if(!haveHeader || inQuote || recordStart!=len)
+-  { Print("[RC1][TRADE_CSV_INCOMPLETE_TAIL] append disabled: ",fileName); return
+-false; }
+-  gTradeCsvAppendSafe=true;
+-  return true;
+-}
++#include "Include\BookCsvDiagnostics.mqh"
++#include "Include\BookIdentity.mqh"
+ 
+ void CsvConfigHeader(string &line)
+ {
+@@ -3931,12 +3883,14 @@
+   CsvMatrixHeader(line);
+   CsvArmedHeader(line);
+   CsvExecutionHeader(line);
++  BookIdentityAuditHeader(line);
+   FileWriteString(csvAuditHandle,line + "\r\n");
+ }
+ 
+ void WriteAuditRow(string status,string dirStr,string mode,
+        double price,double posRel,double distD1,double effort,double trigger)
+ {
++  BookDiagAudit(status);
+   if(Inp_DOM_Enable) DOMObserveAudit(status,dirStr,mode,price,trigger);
+   if(csvAuditHandle == INVALID_HANDLE) return;
+   string line = "";
+@@ -3947,6 +3901,7 @@
+ CsvMatrixRow(line,gLastTelemetryMatrix,gLastTelemetryMatrixValid,gLastTelemetrySignalBar);
+   CsvArmedRow(line);
+   CsvExecutionRow(line,dirStr,mode,price,posRel,distD1,effort,trigger);
++  BookIdentityAuditRow(line);
+   FileWriteString(csvAuditHandle,line + "\r\n");
+ }
+ void WriteShadowHeader()
+@@ -3957,7 +3912,8 @@
+     CsvMacroHeader(line);
+     CsvMatrixHeader(line);
+     CsvArmedHeader(line);
+-    FileWriteString(csvShadowHandle,line + "\r\n");
++    BookIdentityAuditHeader(line);
++  FileWriteString(csvShadowHandle,line + "\r\n");
+ }
+ 
+ void WriteShadowRow(string event,const MatrixSnapshot &s)
+@@ -3970,7 +3926,8 @@
+   CsvMacroRow(line);
+   CsvMatrixRow(line,s,true,iTime(Symbol(),Inp_SignalTF,1));
+     CsvArmedRow(line);
+-    FileWriteString(csvShadowHandle,line + "\r\n");
++    BookIdentityAuditRow(line);
++  FileWriteString(csvShadowHandle,line + "\r\n");
+ }
+ 
+ void WriteTradeHeader()
+@@ -3989,6 +3946,7 @@
+   if(csvTradeHandle == INVALID_HANDLE || !gTradeCsvIndexLoaded ||
+ !gTradeCsvAppendSafe)
+      return false;
++  if(!BookCsvBeforeAppend()) return false;
+   string line = "";
+   CsvConfigRow(line);
+     CsvTradeRow(line,r);
+@@ -4000,11 +3958,18 @@
+     uint written=FileWriteString(csvTradeHandle,payload);
+     int writeError=GetLastError();
+     if(written!=(uint)expected || writeError!=0)
+-    { gTradeCsvAppendSafe=false; return false; }
++    { return BookCsvReject(gTradeCsvFileName,0,0,0,"WRITE_FAILED_OR_PARTIAL_ROW"); }
+     ResetLastError();
+     FileFlush(csvTradeHandle); // Confirmed trade finalization only.
+-    if(GetLastError()!=0) { gTradeCsvAppendSafe=false; return false; }
+-    if(!TradeCsvAddPID(r.positionID)) gTradeCsvAppendSafe=false;
++    if(GetLastError()!=0) return BookCsvReject(gTradeCsvFileName,0,0,0,"FLUSH_FAILED_OUTCOME_UNCERTAIN");
++    ResetLastError();
++    ulong sizeAfterWrite=FileSize(csvTradeHandle);
++    if(GetLastError()!=0 || sizeAfterWrite!=gBookCsvVerifiedSize+(ulong)expected)
++       return BookCsvReject(gTradeCsvFileName,0,0,0,"SIZE_AFTER_WRITE_UNVERIFIED");
++    gBookCsvVerifiedSize=sizeAfterWrite;
++    if(!TradeCsvAddPID(r.positionID))
++       return BookCsvReject(gTradeCsvFileName,0,0,0,"PID_INDEX_ALLOCATION_AFTER_WRITE");
++    BookIdentityCorrelateTrade(r);
+     if(Inp_DOM_Enable) DOMObserveTrade(r);
+     return true;
+ }
+@@ -4050,6 +4015,8 @@
+ WriteAuditRow("LATE_OVERSHOOT_BLOCK",dStr,mode,finalExec,posRel,distD1,effort,trigger); return Inp_DOM_TradeGateEnable?SEND_ORIGINAL_CANCEL:SEND_FINAL_FAILURE; }
+   double sl=NormEntrySL(direction,finalExec-direction*slPts);
+   double tp=NormEntryTP(direction,finalExec+direction*tpPts);
++  if(BookRiskEnabled() && !BookRiskResolveTerms(direction,finalExec,mode,slPts,tpPts,true,sl,tp))
++     return SEND_FINAL_FAILURE;
+   if(sl<=0 || tp<=0) return SEND_FINAL_FAILURE;
+   double minDist=(double)SymbolInfoInteger(Symbol(),SYMBOL_TRADE_STOPS_LEVEL)*
+       SymbolInfoDouble(Symbol(),SYMBOL_POINT);
+@@ -4090,6 +4057,8 @@
+       finalExec=dispatchExec;
+       sl=NormEntrySL(direction,finalExec-direction*slPts);
+       tp=NormEntryTP(direction,finalExec+direction*tpPts);
++      if(BookRiskEnabled() && !BookRiskResolveTerms(direction,finalExec,mode,slPts,tpPts,false,sl,tp))
++         return SEND_FINAL_FAILURE;
+       lots=ComputeLotsForEntry(direction,finalExec,sl);
+       closingQuote=(direction==1)?dispatchTick.bid:dispatchTick.ask;
+       if(sl<=0 || tp<=0 || lots<=0 || direction*(closingQuote-sl)<minDist ||
+@@ -4144,6 +4113,13 @@
+          gEntryJournalInvalid || gExitJournalInvalid)) return SEND_FINANCIAL_UNRESOLVED;
+       return SEND_FINAL_FAILURE;
+    }
++  if(!BookRiskPrepareEntry())
++  {
++     // Still PREPARED: no entry API has been called. Retain the original guard
++     // if durable no-dispatch cleanup cannot be proved.
++     if(!ReleasePreparedRequest(false)) return SEND_FINANCIAL_UNRESOLVED;
++     return SEND_FINAL_FAILURE;
++  }
+   gPendingExec.breakoutPrice=gLastBreakoutPrice;
+   gPendingExec.breakoutPriceAvailable=gLastBreakoutPrice>0;
+   if(Inp_DOM_TradeGateEnable)
+@@ -4196,6 +4172,7 @@
+  uint ret=trade.ResultRetcode();
+  MqlTradeResult executionResult;
+  trade.Result(executionResult);
++ BookDiagDispatch(executionResult);
+ 
+ CompletePendingExec(sent,ret,trade.ResultOrder(),trade.ResultDeal(),executionResult.request_id);
+  bool accepted=sent && (ret==TRADE_RETCODE_DONE ||
+@@ -4242,6 +4219,7 @@
+     gLastTelemetryMatrixValid=true;
+     gLastTelemetrySignalBar=iTime(Symbol(),Inp_SignalTF,1);
+     RecordPerf(perfMicro,(double)(GetMicrosecondCount()-begin));
++    BookDiagMatrix(gCachedMicroSnapshot,gLastTelemetrySignalBar);
+     if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseCaptureSnapshot(gCachedMicroSnapshot,bar);
+   }
+   out=gCachedMicroSnapshot;
+@@ -4375,6 +4353,7 @@
+ DirStr(gMacro.macroAbsDir),DirStr(gMacro.macroContDir),gMacro.posRel);
+ WriteAuditRow("ARMED",DirStr(dirSel),mode,s.price,s.posRel,s.distAbs,s.effort,armTrigger);
+   WriteShadowRow("ARMED",s);
++  BookDiagSelected(s,armed,armTrigger);
+   if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseSelected(s,armed,armTrigger,gCachedMicroBar);
+ }
+ 
+@@ -4386,6 +4365,7 @@
+ ENUM_APS CheckArmedMarketReady(double &curEff,double &trigger,double &last,MqlTick
+ &validatedStageTick)
+ {
++   BookDiagBeginEvaluation();
+    curEff=0.0; trigger=0.0; last=0.0;
+    datetime now=TimeTradeServer();
+ 
+@@ -4413,31 +4393,35 @@
+ 
+  // Evento de negócio real
+  MqlTick tk;
+- if(!SymbolInfoTick(Symbol(),tk)) return APS_STILL_ARMED;
++ if(!SymbolInfoTick(Symbol(),tk)) { BookDiagWait(BD_DATA,"WAIT_DATA:TICK_UNAVAILABLE"); return APS_STILL_ARMED; }
+  validatedStageTick=tk;
+  if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseStageSample(tk);
+  bool
+ realTradeEvent=((tk.flags&TICK_FLAG_LAST)!=0)||((tk.flags&TICK_FLAG_VOLUME)!=0)||
+      ((tk.flags&TICK_FLAG_BUY)!=0)||((tk.flags&TICK_FLAG_SELL)!=0);
+-if(!realTradeEvent) return APS_STILL_ARMED;
++if(!realTradeEvent) { BookDiagWait(BD_DATA,"WAIT_DATA:NOT_REAL_TRADE_EVENT"); return APS_STILL_ARMED; }
+ 
+ last=tk.last;
+-if(last<=0) return APS_STILL_ARMED;
++if(last<=0) { BookDiagWait(BD_DATA,"WAIT_DATA:LAST_UNAVAILABLE"); return APS_STILL_ARMED; }
++BookDiagPass(BD_DATA);
+ // Trigger
+ trigger=ComputeTrigger(armed.dir,armed.regionHigh,armed.regionLow);
++BookDiagTick(tk,trigger);
+ bool breakout=false;
+ if(armed.dir==1&&last>=trigger) breakout=true;
+ if(armed.dir==-1&&last<=trigger) breakout=true;
+-if(!breakout) return APS_STILL_ARMED;
++if(!breakout) { BookDiagWait(BD_BREAKOUT,"WAIT_BREAKOUT"); return APS_STILL_ARMED; }
++BookDiagPass(BD_BREAKOUT);
+ 
+ // Preço executável
+ double execPrice=(armed.dir==1)?tk.ask:tk.bid;
+-if(execPrice<=0) return APS_STILL_ARMED;
++if(execPrice<=0) { BookDiagWait(BD_DATA,"WAIT_DATA:EXECUTABLE_PRICE"); return APS_STILL_ARMED; }
+ 
+ // Overshoot
+ double overLast=(armed.dir==1)?(last-trigger):(trigger-last);
+ double overExec=(armed.dir==1)?(execPrice-trigger):(trigger-execPrice);
+ double overshoot=MathMax(overLast,overExec);
++BookDiagOvershoot(overshoot);
+ if(overshoot>gMaxOvershoot)
+ {
+     PrintFormat("[SCALPER][OVERSHOOT_BLOCK] Last=%.4f Exec=%.4f Trig=%.4f Over=%.4f Max=%.4f",
+@@ -4449,11 +4433,14 @@
+ }
+ 
+ // Onda viva M1 (usa cache M1 — idêntico à v2.44 mas em M1)
+-if(!wwValid) return APS_STILL_ARMED;
++if(!wwValid) { BookDiagWait(BD_DATA,"WAIT_DATA:WEIS_CACHE"); return APS_STILL_ARMED; }
+ double curVol,avgVol; int waveDir;
+ ComputeLiveWaveO1(curEff,curVol,avgVol,waveDir);
+-if(waveDir!=armed.dir) return APS_STILL_ARMED;
+-if(curEff<armed.breakoutEffortMin) return APS_STILL_ARMED;
++BookDiagLive(curEff,curVol,avgVol,waveDir);
++if(waveDir!=armed.dir) { BookDiagWait(BD_WAVE_DIRECTION,"WAIT_LIVE_WAVE_DIRECTION"); return APS_STILL_ARMED; }
++BookDiagPass(BD_WAVE_DIRECTION);
++if(curEff<armed.breakoutEffortMin) { BookDiagWait(BD_WAVE_EFFORT,"WAIT_LIVE_WAVE_EFFORT"); return APS_STILL_ARMED; }
++BookDiagPass(BD_WAVE_EFFORT);
+ 
+ // VWAP viva
+ double liveVwap=0;
+@@ -4475,6 +4462,7 @@
+   return APS_ENDED_FAIL_CLOSED;
+ }
+ double livePosRel=(last-lateLower)/lateRange;
++BookDiagLiveBands(liveVwap,lateLower,lateUpper,livePosRel);
+ 
+ // New hypothesis, OFF in baseline. Neutrality is also a mismatch.
+ int liveDirAbs=0;
+@@ -4538,10 +4526,10 @@
+    ENUM_APS market=CheckArmedMarketReady(curEff,trigger,last,validatedStageTick);
+    if(market!=APS_ENTRY_READY) return market;
+ // Position, pending execution and daily quota remain operational guards.
+-if(HasExecutionInFlight()) { ResetArmedSignal(); return APS_TRADE_OR_POSITION; }
++if(HasExecutionInFlight()) { BookDiagWait(BD_OTHER,"WAIT_OTHER_GATE:EXECUTION_IN_FLIGHT"); BookDiagFinish("CANCEL_EXISTING_EXECUTION"); ResetArmedSignal(); return APS_TRADE_OR_POSITION; }
+ // Posição / cota / risco diário
+-if(HasOpenPosition())          { ResetArmedSignal(); return APS_TRADE_OR_POSITION; }
+-if(ordersEnteredToday>=Inp_MaxTradesDay) { ResetArmedSignal(); return
++if(HasOpenPosition())          { BookDiagWait(BD_OTHER,"WAIT_OTHER_GATE:OPEN_POSITION"); BookDiagFinish("CANCEL_EXISTING_POSITION"); ResetArmedSignal(); return APS_TRADE_OR_POSITION; }
++if(ordersEnteredToday>=Inp_MaxTradesDay) { BookDiagWait(BD_OTHER,"WAIT_OTHER_GATE:DAILY_QUOTA"); BookDiagFinish("CANCEL_DAILY_QUOTA"); ResetArmedSignal(); return
+ APS_TRADE_OR_POSITION; }
+ if(dailyRiskBlocked)
+ {
+@@ -4553,6 +4541,7 @@
+ // Spread
+ if(!SpreadOk())
+ {
++    BookDiagWait(BD_SPREAD,"WAIT_SPREAD");
+     if(!gSpreadHoldLogged)
+     {
+        gSpreadHoldLogged=true;
+@@ -4562,6 +4551,7 @@
+     return APS_STILL_ARMED;
+ }
+ 
++    BookDiagPass(BD_SPREAD);
+     return APS_ENTRY_READY;
+ }
+ 
+@@ -4578,6 +4568,7 @@
+    ENUM_SEND_OUTCOME outcome=SendOrder(armed.dir,armed.lots,armed.mode,
+     armed.activeSL_Pts,armed.activeTP_Pts,
+      armed.posRel,armed.distD1,curEff,trigger);
++   BookDiagSendOutcome(outcome);
+    if(outcome==SEND_FINANCIAL_UNRESOLVED)
+    {
+       // Ending the original signal never clears its financial obligation.
+@@ -4832,7 +4823,7 @@
+   if(!Positive(gTickSize) || !ValidateRC1Inputs())
+   { Print("[SCALPER][FATAL] Invalid RC1 parameters; no silent correction."); return
+ INIT_PARAMETERS_INCORRECT; }
+-  if(!DOMGateValidateInputs()) return INIT_PARAMETERS_INCORRECT;
++  if(!DOMGateValidateInputs() || !BookRiskInputsValid()) return INIT_PARAMETERS_INCORRECT;
+   if(!IsFokSupported())
+   { Print("[SCALPER][FATAL] FOK unsupported."); return
+ INIT_PARAMETERS_INCORRECT; }
+@@ -4849,6 +4840,7 @@
+   gDayKey=now.year*1000+now.day_of_year;
+   ResetMacroContext(gMacro); ResetArmedSignal(); ResetVwapCache(); ResetOpenPos();
+   InitializeAccounting();
++  BookRiskManage(false); // Load/reconcile durable optional state before transactions.
+   wwValid=false; wwCurrentWaveBars=0; wwWaveStartPrice=0;
+  lastContextBarTime=0; lastSignalBarTime=0; gLastMatrixEvalBar=0;
+  gCachedMicroReady=false; gCachedMicroBar=0;
+@@ -4863,23 +4855,23 @@
+  RestoreDailyPersistence();
+  TryCalcD1();
+  BootstrapCachesNoTrade();
++ BookIdentityInit();
+ // A configurable label cannot remove the explicit schema namespace.
+ string prefix="Scalper01_RC1_";
+ if(CSVFileName!="Scalper01_RC1" && CSVFileName!="") prefix+=CSVFileName+"_";
+ string suffix=Symbol()+"_"+IntegerToString(gMagicCore);
+ gTradeCsvFileName=prefix+suffix+"_Trades.csv";
+-csvAuditHandle=FileOpen(prefix+suffix+"_Audit.csv",FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI);
++if(gBookIdentityReady) csvAuditHandle=FileOpen("BOOK1125_"+gBookRunID+"_"+suffix+"_Audit.csv",FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI);
+  if(csvAuditHandle!=INVALID_HANDLE)
+  { if(FileSize(csvAuditHandle)==0) WriteAuditHeader();
+ FileSeek(csvAuditHandle,0,SEEK_END); FileFlush(csvAuditHandle); }
+ 
+-csvShadowHandle=FileOpen(prefix+suffix+"_Shadow.csv",FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI);
++if(gBookIdentityReady) csvShadowHandle=FileOpen("BOOK1125_"+gBookRunID+"_"+suffix+"_Shadow.csv",FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI);
+  if(csvShadowHandle!=INVALID_HANDLE)
+ { if(FileSize(csvShadowHandle)==0) WriteShadowHeader();
+ FileSeek(csvShadowHandle,0,SEEK_END); FileFlush(csvShadowHandle); }
+ 
+-csvTradeHandle=FileOpen(prefix+suffix+"_Trades.csv",FILE_READ|FILE_WRITE|FILE_TXT
+-|FILE_ANSI|FILE_SHARE_READ|FILE_SHARE_WRITE);
++csvTradeHandle=BookCsvOpenInitialFile();
+   if(csvTradeHandle!=INVALID_HANDLE)
+   {
+      if(FileSize(csvTradeHandle)==0) WriteTradeHeader();
+@@ -4893,9 +4885,11 @@
+   PrintFormat("[SCALPER RC1.2] %s Magic=%d Context=%s Signal=%s MacroGate=%s LateDirection=%s RejectTies=%s; edge empirical not demonstrated.",
+      sym,gMagicCore,EnumToString(Inp_ContextTF),EnumToString(Inp_SignalTF),
+ BStr(Inp_EnableMacroDirectionGate),BStr(Inp_EnableLateDirectionBlock),BStr(Inp_RejectPOCTies));
++  BookDiagInit(gBookRunID+"|"+gBookConfigHash);
+   DOMRuntimeInit();
+   DOMGateInit();
+   if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseInit();
++  RecomputeAccountingBlock();
+   return INIT_SUCCEEDED;
+ }
+ 
+@@ -4904,6 +4898,7 @@
+ //=====================================================================
+ void OnDeinit(const int reason)
+ {
++   BookDiagDeinit();
+    EventKillTimer();
+    if(csvAuditHandle !=INVALID_HANDLE){ FileFlush(csvAuditHandle);
+ FileClose(csvAuditHandle); csvAuditHandle =INVALID_HANDLE; }
+@@ -4962,6 +4957,7 @@
+  int hhmm=day.hour*100+day.min;
+  ProcessEOD(hhmm);
+  ManageBreakEven();
++ BookRiskManage();
+  if(hhmm>=Inp_StopEntryHHMM && armed.active) ResetArmedSignal();
+  datetime btCtx=iTime(Symbol(),Inp_ContextTF,0);
+  datetime btSig=iTime(Symbol(),Inp_SignalTF,0);
+@@ -5058,6 +5054,7 @@
+  if(key!=gDayKey) { gDayKey=key; DailyReset(); }
+  SyncAccountingState(true);
+  ReconcileBreakEvenProofs(); // Proof/persistence only; never dispatches a stop modification.
++ BookRiskManage(false); // Proof/persistence only, including after restart.
+  if(!d1Ready && TimeTradeServer()>=nextD1Retry) TryCalcD1();
+  if(hhmm>=Inp_StopEntryHHMM && armed.active) ResetArmedSignal();
+  ProcessEOD(hhmm);
+@@ -5121,7 +5118,7 @@
+ 
+ bool BETriggerReached(const TradeRecord &r,const MqlTick &tick)
+ {
+-  double trigger=r.weightedEntryPrice+r.direction*BERiskPoints(r);
++  double trigger=r.weightedEntryPrice+r.direction*BERiskPoints(r)*BE_Trigger_R;
+   return r.direction==1 ? tick.bid>=trigger : tick.ask<=trigger;
+ }
+ 
+@@ -5130,7 +5127,7 @@
+   PrintFormat("[SCALPER][%s] POSITION_ID=%I64u ticket=%I64u dir=%s entry=%.16f initialSL=%.16f R_points=%.16f trigger=%.16f newSL=%.16f TP_preserved=%.16f %s",
+   event,r.positionID,r.be.ticket,DirStr(r.be.direction),r.be.entryPrice,r.be.initialSL,
+   MathAbs(r.be.entryPrice-r.be.initialSL),
+-  r.be.entryPrice+r.be.direction*MathAbs(r.be.entryPrice-r.be.initialSL),
++  r.be.entryPrice+r.be.direction*MathAbs(r.be.entryPrice-r.be.initialSL)*BE_Trigger_R,
+   r.be.price,r.be.tp,detail);
+ }
+ 
+@@ -5417,7 +5414,7 @@
+   for(int i=0;i<gTradeRecordCount;i++)
+   {
+     TradeRecord r=gTradeRecords[i];
+-    if(r.be.stage==BE_ACKNOWLEDGED || r.be.stage==BE_CONFIRMED ||
++    if(BookRiskBlocksBE(r.positionID) || r.be.stage==BE_ACKNOWLEDGED || r.be.stage==BE_CONFIRMED ||
+ r.be.stage==BE_UNRESOLVED ||
+        r.be.stage==BE_REQUEST_PENDING || !Inp_EnableBreakEven || r.closed ||
+        r.volumeClosedComplete || r.historyRefreshPending || !r.accountingResolved ||
+@@ -5984,7 +5981,7 @@
+         SaveTradeMetadata(r);
+         // A durable PID obligation must replace the request guard before it is
+         // released; Positions can still lag this confirmed IN, including at restart.
+-        if(PersistEconomicMarker(r.positionID)) ResetPendingExec();
++        if(BookRiskAttachEntry(r) && PersistEconomicMarker(r.positionID)) ResetPendingExec();
+         else r.economicMarkerPending=true;
+ }
+ 
+@@ -6265,6 +6262,7 @@
+ void SyncOpenPositionFromRecord(int idx)
+ {
+   TradeRecord r=gTradeRecords[idx];
++  BookDiagConfirmed(r);
+   if(r.volumeClosedComplete) return;
+   double volume,sl,tp; int direction;
+   if(r.totalVolumeIn<=0 || !r.accountingResolved) return;
+@@ -7304,6 +7302,7 @@
+     ArraySize(gDeferredDeals)>0 || gDeferredDealFallbackCount>0 ||
+ gDeferredDealOverflow ||
+     !gDailyEconomicsValid || gEconomicMarkerScanUnresolved ||
++    gTradeCsvInfrastructureUnresolved ||
+     gIdentityLossUnresolved || gRequestJournalUnresolved ||
+     gRequestJournalWritePending || gEntryJournalCleanupPending ||
+ gExitJournalCleanupPending;
+@@ -7445,13 +7444,13 @@
+   datetime now=TimeTradeServer();
+   if(now<gNextTradeCsvRecovery) return;
+   gNextTradeCsvRecovery=now+30;
++  gTradeCsvInfrastructureUnresolved=true;
++  if(!BookCsvRecoveryPathAllowed()) return;
+   // Reopen the current path after unavailable I/O or external repair. Never
+   // truncate/repair an existing file, and never trust metadata as CSV presence.
+ if(csvTradeHandle!=INVALID_HANDLE)
+ { FileClose(csvTradeHandle); csvTradeHandle=INVALID_HANDLE; }
+-csvTradeHandle=FileOpen(gTradeCsvFileName,
+-
+-FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_SHARE_READ|FILE_SHARE_WRITE);
++csvTradeHandle=BookCsvOpenInitialFile();
+  if(csvTradeHandle==INVALID_HANDLE) return;
+  ResetLastError();
+  ulong size=FileSize(csvTradeHandle);
+@@ -7465,7 +7464,8 @@
+  // Invalid schema/tail stays append-disabled. A later full successful scan
+  // can recognize an authoritative external repair without destroying rows.
+  if(!InitializeTradeCsvIndex(gTradeCsvFileName)) return;
+- if(!FileSeek(csvTradeHandle,0,SEEK_END)) gTradeCsvAppendSafe=false;
++ if(!FileSeek(csvTradeHandle,0,SEEK_END))
++    BookCsvReject(gTradeCsvFileName,0,0,0,"RECOVERY_SEEK_FAILED");
+ }
+ 
+ void MarkTemporaryAccountingHistory()
+@@ -9416,6 +9416,7 @@
+ {
+   EMRInvalidateTransaction(trans);
+   BEHandleTransaction(trans,request,result);
++  BookRiskTransaction(trans,request,result);
+   bool ownEntryRequest=(gPendingExec.active && request.position==0 &&
+ request.position_by==0 &&
+   request.symbol==Symbol() && request.magic==gMagicCore &&
+@@ -9431,6 +9432,7 @@
+       gPendingExec.requestID>0 && result.request_id==gPendingExec.requestID);
+    if(trans.type==TRADE_TRANSACTION_REQUEST && ownEntryRequest)
+    {
++      BookDiagRequestResult(result);
+       if(result.order>0) gPendingExec.orderTicket=result.order;
+       if(result.deal>0) gPendingExec.resultDeal=result.deal;
+       if(IsAcceptedRetcode(result.retcode))
+@@ -9461,17 +9463,18 @@
+ // No observer runs inside SendOrder or between its final DOM sample and dispatch.
+ ENUM_APS ProcessArmedSignal()
+ {
+-   if(Inp_ResponseMode!=RESPONSE_OBSERVAR) return ResponseBaseProcessArmedSignal();
+    ENUM_APS outcome=ResponseBaseProcessArmedSignal();
+-   ResponseArmedOutcome(outcome);
++   BookDiagAfterEvaluation();
++   if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseArmedOutcome(outcome);
+    return outcome;
+ }
+ 
+ void OnTick()
+ {
+-   if(Inp_ResponseMode!=RESPONSE_OBSERVAR) { ResponseBaseOnTick(); return; }
++   ulong began=GetMicrosecondCount();
+    ResponseBaseOnTick();
+-   ResponseAfterTick();
++   if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseAfterTick();
++   BookPerfTick(began);
+ }
+ 
+ // BEGIN EMBEDDED ResponseObserver.mqh
+@@ -9493,8 +9496,10 @@
+ double ResponseAbs(double x) { return MathAbs(x); }
+ #endif
+ 
++#include "Include/BookMicroMath.mqh"
+ struct ResponseFlow
+ {
++   BookMicroFlow micro;
+    long from_msc,to_msc,first_msc,last_msc;
+    double first_price,last_price,vb,vs,vu;
+    long eligible,known,invalid,rejected,zero_real;
+@@ -9508,6 +9513,7 @@
+ };
+ void ResponseFlowReset(ResponseFlow &f,long from_msc,long to_msc)
+ {
++   BookMicroFlowReset(f.micro,from_msc,to_msc,0,0,0);
+    f.from_msc=from_msc; f.to_msc=to_msc; f.first_msc=0; f.last_msc=0;
+    f.first_price=0; f.last_price=0; f.vb=0; f.vs=0; f.vu=0;
+    f.eligible=0; f.known=0; f.invalid=0; f.rejected=0; f.zero_real=0;
+@@ -9526,6 +9532,7 @@
+    if(msc<f.from_msc || msc>f.to_msc || msc<=0 ||
+       (f.eligible>0 && msc<f.last_msc))
+    { f.invalid++; return; }
++   BookMicroFlowTick(f.micro,price,volume,msc);
+    if(f.eligible==0) { f.first_msc=msc; f.first_price=price; }
+    f.last_msc=msc; f.last_price=price; f.eligible++;
+    if(real_volume==0) f.zero_real++;
+@@ -9610,6 +9617,7 @@
+    string suspension_reason;
+    ulong after_last,after_count,after_total,after_max,timer_last,timer_count,timer_total,timer_max;
+    MatrixSnapshot snapshot;
++   BookMicroSnapshot micro;
+    ResponseFlow now,prev;
+    ArmedSignal identity;
+ };
+@@ -9646,6 +9654,8 @@
+ ulong gResponseSelectionGeneration=0,gResponseLiveGeneration=0,gResponseStageGeneration=0;
+ double gResponseLivePrice=0,gResponseLiveStart=0;
+ 
++#include "Include/BookMicrostructure.mqh"
++
+ bool ResponseEnabled()
+ { return Inp_ResponseMode==RESPONSE_OBSERVAR; }
+ 
+@@ -9673,6 +9683,7 @@
+    if(index<0) { index=gResponseWindowNext; gResponseWindowNext=(index+1)%RESPONSE_WINDOW_CAP; }
+    gResponseWindows[index].used=true;
+    ResponseFlowReset(gResponseWindows[index].flow,(long)from_msc,(long)to_msc);
++   BookMicroFreezeWindow(gResponseWindows[index].flow.micro);
+ }
+ void ResponseWindowTick(ulong from_msc,ulong to_msc,const MqlTick &tick)
+ {
+@@ -9817,6 +9828,7 @@
+    if(!r.have_now || !r.have_prev) gResponseGaps++;
+    gResponseLatestSnapshot=s; gResponseLatestSnapshotKnown=true;
+    gResponseLatestLiveBar=live_bar;
++   BookMicroCapture(r); // immutable observer metrics; original snapshot unchanged
+    ResponseQueue(r);
+ }
+ void ResponseSelected(const MatrixSnapshot &s,const ArmedSignal &identity,double trigger,
+@@ -9916,7 +9928,7 @@
+ }
+ string ResponseHeader()
+ {
+-   return "schema;event;run_id;server_day;observed_time_msc;account;server;symbol;magic;signal_bar;route;mode;direction;armed_at;region_end;region_high;region_low;trigger;armed_age_sec;c1_current_status;outcome;window_role;window_from_msc;window_to_msc;first_msc;last_msc;first_price;last_price;vb;vs;vu;v;delta;delta_pct_total;known_volume_pct;known_record_pct;r_window;r_between;impact_signed;flow_balance_strength;d_r_window;d_delta;eligible_records;known_records;invalid_records;zero_real_volume_records;availability;coverage_status;volume_source;ww_accum_volume;ww_net_distance;ww_wave_bars;ww_wave_age_sec;ww_direction;ww_effort;ww_state;ww_volume_per_point;abs_divergence;abs_stall_strict;abs_following_reaction;abs_following_extension;abs_valid;cont_valid;abs_c1;cont_c1;matrix_status;dropped;gaps;io_errors;rejected_records;live_bar;bar_changed;aftertick_last_us;aftertick_count;aftertick_total_us;aftertick_max_us;timer_last_us;timer_count;timer_total_us;timer_max_us;live_wave_available;live_wave_volume;live_wave_average;live_wave_effort;live_wave_direction;live_wave_state;live_wave_sample_time_status;stage_sample_time_msc;stage_bid;stage_ask;stage_last;stage_flags;stage_directional_last_minus_trigger;trajectory_coverage;dwell_time_status;integral_volume_status;sample_overwrites;hard_flips_per_day;armed_cancel_hard;suspension_reason;live_wave_price;live_wave_start_reference;live_wave_net_displacement;live_wave_volume_per_point;live_wave_age_status;ww_volume_status;ww_volume_source;live_volume_status";
++   return "schema;event;run_id;server_day;observed_time_msc;account;server;symbol;magic;signal_bar;route;mode;direction;armed_at;region_end;region_high;region_low;trigger;armed_age_sec;c1_current_status;outcome;window_role;window_from_msc;window_to_msc;first_msc;last_msc;first_price;last_price;vb;vs;vu;v;delta;delta_pct_total;known_volume_pct;known_record_pct;r_window;r_between;impact_signed;flow_balance_strength;d_r_window;d_delta;eligible_records;known_records;invalid_records;zero_real_volume_records;availability;coverage_status;volume_source;ww_accum_volume;ww_net_distance;ww_wave_bars;ww_wave_age_sec;ww_direction;ww_effort;ww_state;ww_volume_per_point;abs_divergence;abs_stall_strict;abs_following_reaction;abs_following_extension;abs_valid;cont_valid;abs_c1;cont_c1;matrix_status;dropped;gaps;io_errors;rejected_records;live_bar;bar_changed;aftertick_last_us;aftertick_count;aftertick_total_us;aftertick_max_us;timer_last_us;timer_count;timer_total_us;timer_max_us;live_wave_available;live_wave_volume;live_wave_average;live_wave_effort;live_wave_direction;live_wave_state;live_wave_sample_time_status;stage_sample_time_msc;stage_bid;stage_ask;stage_last;stage_flags;stage_directional_last_minus_trigger;trajectory_coverage;dwell_time_status;integral_volume_status;sample_overwrites;hard_flips_per_day;armed_cancel_hard;suspension_reason;live_wave_price;live_wave_start_reference;live_wave_net_displacement;live_wave_volume_per_point;live_wave_age_status;ww_volume_status;ww_volume_source;live_volume_status;"+BookMicroHeader();
+ }
+ string ResponseFormat(const ResponseRecord &r,int window_role)
+ {
+@@ -10056,6 +10068,7 @@
+    ResponseCell(row,ww_volume_status);
+    ResponseCell(row,ww?(r.wave_real?"WW_REAL":"WW_TICK"):"");
+    ResponseCell(row,live_volume_status);
++   BookMicroCells(row,r.micro); // explicit micro_window timestamps identify NOW metrics
+    return row+"\r\n";
+ }
+ 
+@@ -10194,6 +10207,7 @@
+    gResponseTester=(MQLInfoInteger(MQL_TESTER)!=0);
+    gResponseSampleIntervalSec=gResponseTester?60:1;
+    gResponseInitialized=true;
++   BookMicroInit();
+    if(StringLen(gResponsePathBase)>210)
+    { gResponseSuspended=true; gResponseIOErrors++; gResponseGaps++;
+      gResponseSuspendReason="ENCODED_NAMESPACE_TOO_LONG"; }
+@@ -10228,3 +10242,7 @@
+ 
+ // END EMBEDDED ResponseObserver.mqh
+ 
++
++#include "Include/BookArmedDiagnostics.mqh"
++
++#include "Include/BookRuntimePerf.mqh"

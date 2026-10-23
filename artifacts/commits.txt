@@ -1,0 +1,13 @@
+02a8465 chore: checkpoint BOOK PRO 1.125 source as editable mq5
+da2fee4 test: compare original BOOK decision bodies on controlled host fixtures
+35d7d6b test: enforce observer isolation and normalize diagnostic return blocks
+b5d06d9 feat(infra): preserve and diagnose trade CSV evidence and record loaded input identity
+d0575fa fix: wire fail-closed CSV validation and execution context identity
+24aa7a2 test: audit inputs across local module includes
+f059e8d perf(infra): bound historical CSV duplicate detection to sorting
+b1eb8a4 feat: instrument ARMED lifecycle and original VWAP band references
+bd63372 feat(observability): add bounded ARMED gate traces and band diagnostics
+95532f7 fix(infra): persist prior CSV presence across restarts
+cab2cc8 feat(risk): add opt-in capped sigma stops and durable profit locks and route targets
+f538a34 feat(observer): extend causal ResponseObserver metrics and bounded runtime telemetry
+bdf3804 test: record integrated compatibility evidence and experimental deployment limits
