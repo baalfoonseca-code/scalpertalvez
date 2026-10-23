@@ -211,6 +211,8 @@ input double Inp_DOM_MinDominancePct = 55.0;
 // Phase A: observation only; OBSERVAR retains the original trading capability.
 enum ENUM_RESPONSE_MODE { RESPONSE_ORIGINAL=0, RESPONSE_OBSERVAR=1 };
 input ENUM_RESPONSE_MODE Inp_ResponseMode = RESPONSE_ORIGINAL;
+
+#include "Include\BookRiskInputs.mqh"
 #include "Include/BookArmedInputs.mqh"
 
 //=====================================================================
@@ -682,6 +684,8 @@ double gDOMAskPrices[DOM_RAW_RECORD_LIMIT];
 double gDOMAskVolumes[DOM_RAW_RECORD_LIMIT];
 DOMSnapshot gDOMCurrent;
 ulong gDOMSequence=0;
+
+#include "Include\BookAdvancedRisk.mqh"
 
 void DOMClearSnapshot(DOMSnapshot &out)
 {
@@ -1720,6 +1724,9 @@ ENUM_SEND_OUTCOME DOMGateDefer(const BookGateDecision &decision,const string rea
         readiness==APS_ENDED_FAIL_CLOSED) return SEND_ORIGINAL_CANCEL;
      double sl=NormEntrySL(original.dir,price-original.dir*original.activeSL_Pts);
      double tp=NormEntryTP(original.dir,price+original.dir*original.activeTP_Pts);
+     if(BookRiskEnabled() && !BookRiskResolveTerms(original.dir,price,original.mode,
+         original.activeSL_Pts,original.activeTP_Pts,false,sl,tp))
+     { ResetArmedSignal(); return SEND_ORIGINAL_CANCEL; }
      double lots=ComputeLotsForEntry(original.dir,price,sl);
      if(!DOMGateTermsCurrent(current,original,price,lots,sl,tp,readiness) &&
         readiness==APS_ENDED_FAIL_CLOSED) return SEND_ORIGINAL_CANCEL;
@@ -1982,6 +1989,9 @@ bool DOMGateTermsCurrent(const MqlTick &pricedTick,const ArmedSignal &original,
   double currentPrice=(direction==1)?pricedTick.ask:pricedTick.bid;
   double currentSL=NormEntrySL(direction,currentPrice-direction*original.activeSL_Pts);
   double currentTP=NormEntryTP(direction,currentPrice+direction*original.activeTP_Pts);
+  if(BookRiskEnabled() && !BookRiskResolveTerms(direction,currentPrice,original.mode,
+      original.activeSL_Pts,original.activeTP_Pts,false,currentSL,currentTP))
+  { ResetArmedSignal(); readiness=APS_ENDED_FAIL_CLOSED; return false; }
   double currentLots=ComputeLotsForEntry(direction,currentPrice,currentSL);
   double minDist=(double)SymbolInfoInteger(Symbol(),SYMBOL_TRADE_STOPS_LEVEL)*
                  SymbolInfoDouble(Symbol(),SYMBOL_POINT);
@@ -3988,6 +3998,8 @@ WriteAuditRow("LATE_BREAKOUT_LOST",dStr,mode,finalExec,posRel,distD1,effort,trig
 WriteAuditRow("LATE_OVERSHOOT_BLOCK",dStr,mode,finalExec,posRel,distD1,effort,trigger); return Inp_DOM_TradeGateEnable?SEND_ORIGINAL_CANCEL:SEND_FINAL_FAILURE; }
   double sl=NormEntrySL(direction,finalExec-direction*slPts);
   double tp=NormEntryTP(direction,finalExec+direction*tpPts);
+  if(BookRiskEnabled() && !BookRiskResolveTerms(direction,finalExec,mode,slPts,tpPts,true,sl,tp))
+     return SEND_FINAL_FAILURE;
   if(sl<=0 || tp<=0) return SEND_FINAL_FAILURE;
   double minDist=(double)SymbolInfoInteger(Symbol(),SYMBOL_TRADE_STOPS_LEVEL)*
       SymbolInfoDouble(Symbol(),SYMBOL_POINT);
@@ -4028,6 +4040,8 @@ WriteAuditRow("LATE_OVERSHOOT_BLOCK",dStr,mode,dispatchExec,posRel,distD1,effort
       finalExec=dispatchExec;
       sl=NormEntrySL(direction,finalExec-direction*slPts);
       tp=NormEntryTP(direction,finalExec+direction*tpPts);
+      if(BookRiskEnabled() && !BookRiskResolveTerms(direction,finalExec,mode,slPts,tpPts,false,sl,tp))
+         return SEND_FINAL_FAILURE;
       lots=ComputeLotsForEntry(direction,finalExec,sl);
       closingQuote=(direction==1)?dispatchTick.bid:dispatchTick.ask;
       if(sl<=0 || tp<=0 || lots<=0 || direction*(closingQuote-sl)<minDist ||
@@ -4082,6 +4096,13 @@ DOMGateDefer(bookDecision,"CURRENT_CONDITIONS_NOT_READY_BEFORE_INTENT");
          gEntryJournalInvalid || gExitJournalInvalid)) return SEND_FINANCIAL_UNRESOLVED;
       return SEND_FINAL_FAILURE;
    }
+  if(!BookRiskPrepareEntry())
+  {
+     // Still PREPARED: no entry API has been called. Retain the original guard
+     // if durable no-dispatch cleanup cannot be proved.
+     if(!ReleasePreparedRequest(false)) return SEND_FINANCIAL_UNRESOLVED;
+     return SEND_FINAL_FAILURE;
+  }
   gPendingExec.breakoutPrice=gLastBreakoutPrice;
   gPendingExec.breakoutPriceAvailable=gLastBreakoutPrice>0;
   if(Inp_DOM_TradeGateEnable)
@@ -4785,7 +4806,7 @@ gCONT_MinDisplPts=gIsIndexFamily?Inp_CONT_MinPriceMovePts_WIN:Inp_CONT_MinPriceM
   if(!Positive(gTickSize) || !ValidateRC1Inputs())
   { Print("[SCALPER][FATAL] Invalid RC1 parameters; no silent correction."); return
 INIT_PARAMETERS_INCORRECT; }
-  if(!DOMGateValidateInputs()) return INIT_PARAMETERS_INCORRECT;
+  if(!DOMGateValidateInputs() || !BookRiskInputsValid()) return INIT_PARAMETERS_INCORRECT;
   if(!IsFokSupported())
   { Print("[SCALPER][FATAL] FOK unsupported."); return
 INIT_PARAMETERS_INCORRECT; }
@@ -4802,6 +4823,7 @@ mm=(ENUM_ACCOUNT_MARGIN_MODE)AccountInfoInteger(ACCOUNT_MARGIN_MODE);
   gDayKey=now.year*1000+now.day_of_year;
   ResetMacroContext(gMacro); ResetArmedSignal(); ResetVwapCache(); ResetOpenPos();
   InitializeAccounting();
+  BookRiskManage(false); // Load/reconcile durable optional state before transactions.
   wwValid=false; wwCurrentWaveBars=0; wwWaveStartPrice=0;
  lastContextBarTime=0; lastSignalBarTime=0; gLastMatrixEvalBar=0;
  gCachedMicroReady=false; gCachedMicroBar=0;
@@ -4918,6 +4940,7 @@ void ResponseBaseOnTick()
  int hhmm=day.hour*100+day.min;
  ProcessEOD(hhmm);
  ManageBreakEven();
+ BookRiskManage();
  if(hhmm>=Inp_StopEntryHHMM && armed.active) ResetArmedSignal();
  datetime btCtx=iTime(Symbol(),Inp_ContextTF,0);
  datetime btSig=iTime(Symbol(),Inp_SignalTF,0);
@@ -5014,6 +5037,7 @@ void DOMBaseOnTimer()
  if(key!=gDayKey) { gDayKey=key; DailyReset(); }
  SyncAccountingState(true);
  ReconcileBreakEvenProofs(); // Proof/persistence only; never dispatches a stop modification.
+ BookRiskManage(false); // Proof/persistence only, including after restart.
  if(!d1Ready && TimeTradeServer()>=nextD1Retry) TryCalcD1();
  if(hhmm>=Inp_StopEntryHHMM && armed.active) ResetArmedSignal();
  ProcessEOD(hhmm);
@@ -5077,7 +5101,7 @@ bool BEReferenceValid(const TradeRecord &r)
 
 bool BETriggerReached(const TradeRecord &r,const MqlTick &tick)
 {
-  double trigger=r.weightedEntryPrice+r.direction*BERiskPoints(r);
+  double trigger=r.weightedEntryPrice+r.direction*BERiskPoints(r)*BE_Trigger_R;
   return r.direction==1 ? tick.bid>=trigger : tick.ask<=trigger;
 }
 
@@ -5086,7 +5110,7 @@ void BELog(const TradeRecord &r,string event,string detail="")
   PrintFormat("[SCALPER][%s] POSITION_ID=%I64u ticket=%I64u dir=%s entry=%.16f initialSL=%.16f R_points=%.16f trigger=%.16f newSL=%.16f TP_preserved=%.16f %s",
   event,r.positionID,r.be.ticket,DirStr(r.be.direction),r.be.entryPrice,r.be.initialSL,
   MathAbs(r.be.entryPrice-r.be.initialSL),
-  r.be.entryPrice+r.be.direction*MathAbs(r.be.entryPrice-r.be.initialSL),
+  r.be.entryPrice+r.be.direction*MathAbs(r.be.entryPrice-r.be.initialSL)*BE_Trigger_R,
   r.be.price,r.be.tp,detail);
 }
 
@@ -5373,7 +5397,7 @@ void ManageBreakEven()
   for(int i=0;i<gTradeRecordCount;i++)
   {
     TradeRecord r=gTradeRecords[i];
-    if(r.be.stage==BE_ACKNOWLEDGED || r.be.stage==BE_CONFIRMED ||
+    if(BookRiskBlocksBE(r.positionID) || r.be.stage==BE_ACKNOWLEDGED || r.be.stage==BE_CONFIRMED ||
 r.be.stage==BE_UNRESOLVED ||
        r.be.stage==BE_REQUEST_PENDING || !Inp_EnableBreakEven || r.closed ||
        r.volumeClosedComplete || r.historyRefreshPending || !r.accountingResolved ||
@@ -5940,7 +5964,7 @@ void AttachPendingToRecord(TradeRecord &r,ulong deal)
         SaveTradeMetadata(r);
         // A durable PID obligation must replace the request guard before it is
         // released; Positions can still lag this confirmed IN, including at restart.
-        if(PersistEconomicMarker(r.positionID)) ResetPendingExec();
+        if(BookRiskAttachEntry(r) && PersistEconomicMarker(r.positionID)) ResetPendingExec();
         else r.economicMarkerPending=true;
 }
 
@@ -9375,6 +9399,7 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
 {
   EMRInvalidateTransaction(trans);
   BEHandleTransaction(trans,request,result);
+  BookRiskTransaction(trans,request,result);
   bool ownEntryRequest=(gPendingExec.active && request.position==0 &&
 request.position_by==0 &&
   request.symbol==Symbol() && request.magic==gMagicCore &&
