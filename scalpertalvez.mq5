@@ -3290,92 +3290,8 @@ int CsvColumnIndex(string &headers[],string name)
 
 // One attach-time scan. Never truncate, repair, or overwrite an existing CSV.
 // A nonterminated tail is conservatively incomplete, even if fields look valid.
-bool InitializeTradeCsvIndex(string fileName)
-{
-   ArrayResize(gTradeCsvWrittenPIDs,0);
-   gTradeCsvIndexLoaded=false; gTradeCsvAppendSafe=false;
-   int
-h=FileOpen(fileName,FILE_READ|FILE_BIN|FILE_ANSI|FILE_SHARE_READ|FILE_SHARE_WRITE);
-   if(h==INVALID_HANDLE)
-   { Print("[RC1][TRADE_CSV_INDEX_UNAVAILABLE] ",fileName); return false; }
-   ulong size=FileSize(h);
-    if(size==0 || size>2147483647)
-    { FileClose(h); Print("[RC1][TRADE_CSV_INDEX_INVALID_SIZE] ",fileName); return
-false;
-}
-  uchar bytes[];
-  if(ArrayResize(bytes,(int)size)!=(int)size)
-  { FileClose(h); Print("[RC1][TRADE_CSV_INDEX_MEMORY_FAIL] ",fileName); return
-false; }
-  uint read=FileReadArray(h,bytes,0,(int)size);
-  FileClose(h);
-  if(read!=(uint)size)
-  { Print("[RC1][TRADE_CSV_INDEX_READ_FAIL] ",fileName); return false; }
-  for(int i=0;i<(int)read;i++)
-     if(bytes[i]==0)
-     { Print("[RC1][TRADE_CSV_INDEX_INVALID_NUL] ",fileName); return false; }
-  string content=CharArrayToString(bytes,0,(int)read,CP_ACP);
-  string expectedLine="";
-  CsvConfigHeader(expectedLine); CsvTradeHeader(expectedLine);
-  string expected[],headers[];
-  if(!CsvParseRecord(expectedLine,expected)) return false;
-  int schema=-1,symbol=-1,magic=-1,pid=-1,closed=-1,accounting=-1;
-  bool haveHeader=false,inQuote=false;
-  int recordStart=0,len=StringLen(content);
- for(int i=0;i<len;i++)
- {
-    ushort c=StringGetCharacter(content,i);
-   if(c==34)
-   {
-   if(inQuote && i+1<len && StringGetCharacter(content,i+1)==34) i++;
-   else inQuote=!inQuote;
-   }
-   if((c!=10 && c!=13) || inQuote) continue;
-   string record=StringSubstr(content,recordStart,i-recordStart);
-   if(c==13 && i+1<len && StringGetCharacter(content,i+1)==10) i++;
-   recordStart=i+1;
-   if(!haveHeader)
-   {
-      if(!CsvParseRecord(record,headers) || ArraySize(headers)!=ArraySize(expected))
-      { Print("[RC1][TRADE_CSV_SCHEMA_MISMATCH] ",fileName); return false; }
-      for(int k=0;k<ArraySize(expected);k++)
-         if(headers[k]!=expected[k])
-         { Print("[RC1][TRADE_CSV_SCHEMA_MISMATCH] ",fileName); return false; }
-      schema=CsvColumnIndex(headers,"SCHEMA_VERSION");
-      symbol=CsvColumnIndex(headers,"SYMBOL");
-      magic=CsvColumnIndex(headers,"MAGIC");
-      pid=CsvColumnIndex(headers,"POSITION_ID");
-      closed=CsvColumnIndex(headers,"CLOSED");
-      accounting=CsvColumnIndex(headers,"ACCOUNTING_RESOLVED");
-      if(schema<0 || symbol<0 || magic<0 || pid<0 || closed<0) return false;
-   haveHeader=true; gTradeCsvIndexLoaded=true;
-    }
-    else if(StringLen(record)>0)
-    {
-      string fields[];
-      if(!CsvParseRecord(record,fields) || ArraySize(fields)!=ArraySize(headers))
-      { Print("[RC1][TRADE_CSV_INCOMPLETE_OR_INVALID_ROW] ",fileName); return
-false; }
-      if(fields[schema]=="RC1" && fields[symbol]==Symbol() &&
-         fields[magic]==IntegerToString(gMagicCore) && fields[closed]=="1")
-      {
-         ulong positionID=0;
-         if(!CsvParsePID(fields[pid],positionID) || !TradeCsvAddPID(positionID))
-         { Print("[RC1][TRADE_CSV_INDEX_INVALID_PID] ",fileName); return false; }
-         if(accounting>=0 && fields[accounting]=="0")
-          {
-              if(!PersistEconomicMarker(positionID)) gEconomicMarkerScanUnresolved=true;
-              RememberDeferredAccountingPID(positionID);
-          }
-      }
-  }
- }
-  if(!haveHeader || inQuote || recordStart!=len)
-  { Print("[RC1][TRADE_CSV_INCOMPLETE_TAIL] append disabled: ",fileName); return
-false; }
-  gTradeCsvAppendSafe=true;
-  return true;
-}
+#include "Include\BookCsvDiagnostics.mqh"
+#include "Include\BookIdentity.mqh"
 
 void CsvConfigHeader(string &line)
 {
@@ -3931,6 +3847,7 @@ void WriteAuditHeader()
   CsvMatrixHeader(line);
   CsvArmedHeader(line);
   CsvExecutionHeader(line);
+  BookIdentityAuditHeader(line);
   FileWriteString(csvAuditHandle,line + "\r\n");
 }
 
@@ -3947,6 +3864,7 @@ void WriteAuditRow(string status,string dirStr,string mode,
 CsvMatrixRow(line,gLastTelemetryMatrix,gLastTelemetryMatrixValid,gLastTelemetrySignalBar);
   CsvArmedRow(line);
   CsvExecutionRow(line,dirStr,mode,price,posRel,distD1,effort,trigger);
+  BookIdentityAuditRow(line);
   FileWriteString(csvAuditHandle,line + "\r\n");
 }
 void WriteShadowHeader()
@@ -3957,7 +3875,8 @@ void WriteShadowHeader()
     CsvMacroHeader(line);
     CsvMatrixHeader(line);
     CsvArmedHeader(line);
-    FileWriteString(csvShadowHandle,line + "\r\n");
+    BookIdentityAuditHeader(line);
+  FileWriteString(csvShadowHandle,line + "\r\n");
 }
 
 void WriteShadowRow(string event,const MatrixSnapshot &s)
@@ -3970,7 +3889,8 @@ void WriteShadowRow(string event,const MatrixSnapshot &s)
   CsvMacroRow(line);
   CsvMatrixRow(line,s,true,iTime(Symbol(),Inp_SignalTF,1));
     CsvArmedRow(line);
-    FileWriteString(csvShadowHandle,line + "\r\n");
+    BookIdentityAuditRow(line);
+  FileWriteString(csvShadowHandle,line + "\r\n");
 }
 
 void WriteTradeHeader()
@@ -3989,6 +3909,7 @@ bool WriteTradeRow(const TradeRecord &r)
   if(csvTradeHandle == INVALID_HANDLE || !gTradeCsvIndexLoaded ||
 !gTradeCsvAppendSafe)
      return false;
+  if(!BookCsvBeforeAppend()) return false;
   string line = "";
   CsvConfigRow(line);
     CsvTradeRow(line,r);
@@ -4000,11 +3921,18 @@ bool WriteTradeRow(const TradeRecord &r)
     uint written=FileWriteString(csvTradeHandle,payload);
     int writeError=GetLastError();
     if(written!=(uint)expected || writeError!=0)
-    { gTradeCsvAppendSafe=false; return false; }
+    { return BookCsvReject(gTradeCsvFileName,0,0,0,"WRITE_FAILED_OR_PARTIAL_ROW"); }
     ResetLastError();
     FileFlush(csvTradeHandle); // Confirmed trade finalization only.
-    if(GetLastError()!=0) { gTradeCsvAppendSafe=false; return false; }
-    if(!TradeCsvAddPID(r.positionID)) gTradeCsvAppendSafe=false;
+    if(GetLastError()!=0) return BookCsvReject(gTradeCsvFileName,0,0,0,"FLUSH_FAILED_OUTCOME_UNCERTAIN");
+    ResetLastError();
+    ulong sizeAfterWrite=FileSize(csvTradeHandle);
+    if(GetLastError()!=0 || sizeAfterWrite!=gBookCsvVerifiedSize+(ulong)expected)
+       return BookCsvReject(gTradeCsvFileName,0,0,0,"SIZE_AFTER_WRITE_UNVERIFIED");
+    gBookCsvVerifiedSize=sizeAfterWrite;
+    if(!TradeCsvAddPID(r.positionID))
+       return BookCsvReject(gTradeCsvFileName,0,0,0,"PID_INDEX_ALLOCATION_AFTER_WRITE");
+    BookIdentityCorrelateTrade(r);
     if(Inp_DOM_Enable) DOMObserveTrade(r);
     return true;
 }
@@ -4863,23 +4791,23 @@ mm=(ENUM_ACCOUNT_MARGIN_MODE)AccountInfoInteger(ACCOUNT_MARGIN_MODE);
  RestoreDailyPersistence();
  TryCalcD1();
  BootstrapCachesNoTrade();
+ BookIdentityInit();
 // A configurable label cannot remove the explicit schema namespace.
 string prefix="Scalper01_RC1_";
 if(CSVFileName!="Scalper01_RC1" && CSVFileName!="") prefix+=CSVFileName+"_";
 string suffix=Symbol()+"_"+IntegerToString(gMagicCore);
 gTradeCsvFileName=prefix+suffix+"_Trades.csv";
-csvAuditHandle=FileOpen(prefix+suffix+"_Audit.csv",FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI);
+if(gBookIdentityReady) csvAuditHandle=FileOpen("BOOK1125_"+gBookRunID+"_"+suffix+"_Audit.csv",FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI);
  if(csvAuditHandle!=INVALID_HANDLE)
  { if(FileSize(csvAuditHandle)==0) WriteAuditHeader();
 FileSeek(csvAuditHandle,0,SEEK_END); FileFlush(csvAuditHandle); }
 
-csvShadowHandle=FileOpen(prefix+suffix+"_Shadow.csv",FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI);
+if(gBookIdentityReady) csvShadowHandle=FileOpen("BOOK1125_"+gBookRunID+"_"+suffix+"_Shadow.csv",FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI);
  if(csvShadowHandle!=INVALID_HANDLE)
 { if(FileSize(csvShadowHandle)==0) WriteShadowHeader();
 FileSeek(csvShadowHandle,0,SEEK_END); FileFlush(csvShadowHandle); }
 
-csvTradeHandle=FileOpen(prefix+suffix+"_Trades.csv",FILE_READ|FILE_WRITE|FILE_TXT
-|FILE_ANSI|FILE_SHARE_READ|FILE_SHARE_WRITE);
+csvTradeHandle=BookCsvOpenInitialFile();
   if(csvTradeHandle!=INVALID_HANDLE)
   {
      if(FileSize(csvTradeHandle)==0) WriteTradeHeader();
@@ -4896,6 +4824,7 @@ BStr(Inp_EnableMacroDirectionGate),BStr(Inp_EnableLateDirectionBlock),BStr(Inp_R
   DOMRuntimeInit();
   DOMGateInit();
   if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseInit();
+  RecomputeAccountingBlock();
   return INIT_SUCCEEDED;
 }
 
@@ -7304,6 +7233,7 @@ void RecomputeAccountingBlock()
     ArraySize(gDeferredDeals)>0 || gDeferredDealFallbackCount>0 ||
 gDeferredDealOverflow ||
     !gDailyEconomicsValid || gEconomicMarkerScanUnresolved ||
+    gTradeCsvInfrastructureUnresolved ||
     gIdentityLossUnresolved || gRequestJournalUnresolved ||
     gRequestJournalWritePending || gEntryJournalCleanupPending ||
 gExitJournalCleanupPending;
@@ -7445,13 +7375,13 @@ gTradeCsvAppendSafe)) return;
   datetime now=TimeTradeServer();
   if(now<gNextTradeCsvRecovery) return;
   gNextTradeCsvRecovery=now+30;
+  gTradeCsvInfrastructureUnresolved=true;
+  if(!BookCsvRecoveryPathAllowed()) return;
   // Reopen the current path after unavailable I/O or external repair. Never
   // truncate/repair an existing file, and never trust metadata as CSV presence.
 if(csvTradeHandle!=INVALID_HANDLE)
 { FileClose(csvTradeHandle); csvTradeHandle=INVALID_HANDLE; }
-csvTradeHandle=FileOpen(gTradeCsvFileName,
-
-FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_SHARE_READ|FILE_SHARE_WRITE);
+csvTradeHandle=BookCsvOpenInitialFile();
  if(csvTradeHandle==INVALID_HANDLE) return;
  ResetLastError();
  ulong size=FileSize(csvTradeHandle);
@@ -7465,7 +7395,8 @@ FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_SHARE_READ|FILE_SHARE_WRITE);
  // Invalid schema/tail stays append-disabled. A later full successful scan
  // can recognize an authoritative external repair without destroying rows.
  if(!InitializeTradeCsvIndex(gTradeCsvFileName)) return;
- if(!FileSeek(csvTradeHandle,0,SEEK_END)) gTradeCsvAppendSafe=false;
+ if(!FileSeek(csvTradeHandle,0,SEEK_END))
+    BookCsvReject(gTradeCsvFileName,0,0,0,"RECOVERY_SEEK_FAILED");
 }
 
 void MarkTemporaryAccountingHistory()
