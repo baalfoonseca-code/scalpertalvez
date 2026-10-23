@@ -74,6 +74,25 @@ void BookCollectInputIdentity(string &canonical)
    BookIdentityAdd(canonical,"bool","Inp_DOM_TradeGateEnable",(Inp_DOM_TradeGateEnable?"1":"0"));
    BookIdentityAdd(canonical,"double","Inp_DOM_MinDominancePct",StringFormat("%.17g",Inp_DOM_MinDominancePct));
    BookIdentityAdd(canonical,"ENUM_RESPONSE_MODE","Inp_ResponseMode",(string)(int)Inp_ResponseMode);
+   BookIdentityAdd(canonical,"bool","Inp_ObserveMicrostructure",(Inp_ObserveMicrostructure?"1":"0"));
+   BookIdentityAdd(canonical,"bool","Inp_Obs_TrustAggressorFlags",(Inp_Obs_TrustAggressorFlags?"1":"0"));
+   BookIdentityAdd(canonical,"double","Inp_Obs_Min_Displ_Sigma",StringFormat("%.17g",Inp_Obs_Min_Displ_Sigma));
+   BookIdentityAdd(canonical,"double","Inp_Obs_Max_Body_Sigma",StringFormat("%.17g",Inp_Obs_Max_Body_Sigma));
+   BookIdentityAdd(canonical,"double","Inp_Obs_Cont_Min_Displ_Sigma",StringFormat("%.17g",Inp_Obs_Cont_Min_Displ_Sigma));
+   BookIdentityAdd(canonical,"int","Inp_Obs_WindowBudgetUS",(string)(int)Inp_Obs_WindowBudgetUS);
+   BookIdentityAdd(canonical,"ENUM_BOOK_SL_MODE","Inp_SL_Mode",(string)(int)Inp_SL_Mode);
+   BookIdentityAdd(canonical,"double","Inp_Mult_SL",StringFormat("%.17g",Inp_Mult_SL));
+   BookIdentityAdd(canonical,"double","Inp_Max_SL_Pts_WIN",StringFormat("%.17g",Inp_Max_SL_Pts_WIN));
+   BookIdentityAdd(canonical,"double","Inp_Max_SL_Pts_WDO",StringFormat("%.17g",Inp_Max_SL_Pts_WDO));
+   BookIdentityAdd(canonical,"double","BE_Trigger_R",StringFormat("%.17g",BE_Trigger_R));
+   BookIdentityAdd(canonical,"bool","EnableProfitLocks",(EnableProfitLocks?"1":"0"));
+   BookIdentityAdd(canonical,"double","Lock1_Trigger_R",StringFormat("%.17g",Lock1_Trigger_R));
+   BookIdentityAdd(canonical,"double","Lock1_Protected_R",StringFormat("%.17g",Lock1_Protected_R));
+   BookIdentityAdd(canonical,"double","Lock2_Trigger_R",StringFormat("%.17g",Lock2_Trigger_R));
+   BookIdentityAdd(canonical,"double","Lock2_Protected_R",StringFormat("%.17g",Lock2_Protected_R));
+   BookIdentityAdd(canonical,"ENUM_BOOK_TP_MODE","Inp_TP_Mode",(string)(int)Inp_TP_Mode);
+   BookIdentityAdd(canonical,"double","TP_BASE_R",StringFormat("%.17g",TP_BASE_R));
+   BookIdentityAdd(canonical,"double","TP_TURBO_R",StringFormat("%.17g",TP_TURBO_R));
    BookIdentityAdd(canonical,"bool","Inp_EnableArmedDiagnostics",(Inp_EnableArmedDiagnostics?"1":"0"));
 }
 #endif

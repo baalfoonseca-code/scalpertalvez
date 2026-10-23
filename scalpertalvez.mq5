@@ -1,3 +1,6 @@
+// BOOK1125_SURGERY_EXP1: branch experimental, fonte original preservada em scalpertalvez.
+// Comando mestre comando.pdf lido integralmente. Compilacao nativa/MT5 pendentes.
+// Novos modos financeiros opt-in; microestrutura exclusivamente observacional.
 // FASE A OBSERVACIONAL - candidata experimental separada; NAO HOMOLOGADA.
 // Fonte textual de controle: scalperbook; versao-base BOOK 1.125.
 // Compilacao MetaEditor e replay nativo pendentes; ver docs/relatorio-tecnico.md.
@@ -30,7 +33,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Remora Scalper Research"
 #property version "1.125" // EXPERIMENTAL: PDF reconstruction + directional DOM confluence.
-#property description "Experimental PDF-derived 1.123; optional directional DOM gate;compilation and empirical validation pending"
+#property description "BOOK PRO 1.125 experimental surgery; opt-in risk and observational microstructure; native compilation pending"
 
 #include <Trade\Trade.mqh>
 #include <Trade\PositionInfo.mqh>
@@ -211,6 +214,15 @@ input double Inp_DOM_MinDominancePct = 55.0;
 // Phase A: observation only; OBSERVAR retains the original trading capability.
 enum ENUM_RESPONSE_MODE { RESPONSE_ORIGINAL=0, RESPONSE_OBSERVAR=1 };
 input ENUM_RESPONSE_MODE Inp_ResponseMode = RESPONSE_ORIGINAL;
+
+// Observational additions: none can authorize, block, cancel or route an order.
+input bool Inp_ObserveMicrostructure = true; // Effective only in RESPONSE_OBSERVAR
+input bool Inp_Obs_TrustAggressorFlags = false; // Explicit feed-quality assumption; not a gate
+input double Inp_Obs_Min_Displ_Sigma = 0.0; // ABS hypothetical M1 multiplier; 0=unconfigured
+input double Inp_Obs_Max_Body_Sigma = 0.0; // ABS hypothetical M1 multiplier; 0=unconfigured
+input double Inp_Obs_Cont_Min_Displ_Sigma = 0.0; // CONT hypothetical M1 multiplier; 0=unconfigured
+input int Inp_Obs_WindowBudgetUS = 5000; // Suspend extension after an over-budget snapshot
+
 
 #include "Include\BookRiskInputs.mqh"
 #include "Include/BookArmedInputs.mqh"
@@ -1508,11 +1520,13 @@ void DOMRuntimeDeinit()
 // Optional observer runs only AFTER the original financial timer body.
 void OnTimer()
 {
+   ulong began=GetMicrosecondCount();
    DOMBaseOnTimer();
    BookDiagTimer();
    DOMGateSubscriptionTimer(); // Only after the original financial timer body.
    if(Inp_DOM_Enable) DOMRuntimeTimer();
    if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseTimer();
+   BookPerfTimer(began);
 }
 
 // BEGIN EXPERIMENTAL DOM CONFLUENCE MODULE
@@ -1724,6 +1738,9 @@ ENUM_SEND_OUTCOME DOMGateDefer(const BookGateDecision &decision,const string rea
         readiness==APS_ENDED_FAIL_CLOSED) return SEND_ORIGINAL_CANCEL;
      double sl=NormEntrySL(original.dir,price-original.dir*original.activeSL_Pts);
      double tp=NormEntryTP(original.dir,price+original.dir*original.activeTP_Pts);
+     if(BookRiskEnabled() && !BookRiskResolveTerms(original.dir,price,original.mode,
+         original.activeSL_Pts,original.activeTP_Pts,false,sl,tp))
+     { ResetArmedSignal(); return SEND_ORIGINAL_CANCEL; }
      if(BookRiskEnabled() && !BookRiskResolveTerms(original.dir,price,original.mode,
          original.activeSL_Pts,original.activeTP_Pts,false,sl,tp))
      { ResetArmedSignal(); return SEND_ORIGINAL_CANCEL; }
@@ -2964,8 +2981,8 @@ if(t0_msc>2*win_msc)
     ulong toNow =t0_msc-1;
     ulong fromPrev=t0_msc-2*win_msc;
     ulong toPrev =t0_msc-win_msc-1;
-ComputePOCWithTie(fromNow, toNow, s.pocNow);
-ComputePOCWithTie(fromPrev, toPrev, s.pocPrev);
+BookMeasuredPOC(fromNow, toNow, s.pocNow);
+BookMeasuredPOC(fromPrev, toPrev, s.pocPrev);
 
 // Optional tie rejection; baseline false preserves canonical deterministic POC
 // Comportamento como input: frequência real de ties ainda desconhecida
@@ -9454,9 +9471,10 @@ ENUM_APS ProcessArmedSignal()
 
 void OnTick()
 {
-   if(Inp_ResponseMode!=RESPONSE_OBSERVAR) { ResponseBaseOnTick(); return; }
+   ulong began=GetMicrosecondCount();
    ResponseBaseOnTick();
-   ResponseAfterTick();
+   if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseAfterTick();
+   BookPerfTick(began);
 }
 
 // BEGIN EMBEDDED ResponseObserver.mqh
@@ -9478,8 +9496,10 @@ bool ResponseFinite(double x) { return MathIsValidNumber(x); }
 double ResponseAbs(double x) { return MathAbs(x); }
 #endif
 
+#include "Include/BookMicroMath.mqh"
 struct ResponseFlow
 {
+   BookMicroFlow micro;
    long from_msc,to_msc,first_msc,last_msc;
    double first_price,last_price,vb,vs,vu;
    long eligible,known,invalid,rejected,zero_real;
@@ -9493,6 +9513,7 @@ struct ResponseMetrics
 };
 void ResponseFlowReset(ResponseFlow &f,long from_msc,long to_msc)
 {
+   BookMicroFlowReset(f.micro,from_msc,to_msc,0,0,0);
    f.from_msc=from_msc; f.to_msc=to_msc; f.first_msc=0; f.last_msc=0;
    f.first_price=0; f.last_price=0; f.vb=0; f.vs=0; f.vu=0;
    f.eligible=0; f.known=0; f.invalid=0; f.rejected=0; f.zero_real=0;
@@ -9511,6 +9532,7 @@ void ResponseFlowTick(ResponseFlow &f,double price,double volume,double real_vol
    if(msc<f.from_msc || msc>f.to_msc || msc<=0 ||
       (f.eligible>0 && msc<f.last_msc))
    { f.invalid++; return; }
+   BookMicroFlowTick(f.micro,price,volume,msc);
    if(f.eligible==0) { f.first_msc=msc; f.first_price=price; }
    f.last_msc=msc; f.last_price=price; f.eligible++;
    if(real_volume==0) f.zero_real++;
@@ -9595,6 +9617,7 @@ struct ResponseRecord
    string suspension_reason;
    ulong after_last,after_count,after_total,after_max,timer_last,timer_count,timer_total,timer_max;
    MatrixSnapshot snapshot;
+   BookMicroSnapshot micro;
    ResponseFlow now,prev;
    ArmedSignal identity;
 };
@@ -9631,6 +9654,8 @@ long gResponseLiveOverwrites=0,gResponseStageOverwrites=0;
 ulong gResponseSelectionGeneration=0,gResponseLiveGeneration=0,gResponseStageGeneration=0;
 double gResponseLivePrice=0,gResponseLiveStart=0;
 
+#include "Include/BookMicrostructure.mqh"
+
 bool ResponseEnabled()
 { return Inp_ResponseMode==RESPONSE_OBSERVAR; }
 
@@ -9658,6 +9683,7 @@ void ResponseWindowBegin(ulong from_msc,ulong to_msc)
    if(index<0) { index=gResponseWindowNext; gResponseWindowNext=(index+1)%RESPONSE_WINDOW_CAP; }
    gResponseWindows[index].used=true;
    ResponseFlowReset(gResponseWindows[index].flow,(long)from_msc,(long)to_msc);
+   BookMicroFreezeWindow(gResponseWindows[index].flow.micro);
 }
 void ResponseWindowTick(ulong from_msc,ulong to_msc,const MqlTick &tick)
 {
@@ -9802,6 +9828,7 @@ void ResponseCaptureSnapshot(const MatrixSnapshot &s,datetime live_bar)
    if(!r.have_now || !r.have_prev) gResponseGaps++;
    gResponseLatestSnapshot=s; gResponseLatestSnapshotKnown=true;
    gResponseLatestLiveBar=live_bar;
+   BookMicroCapture(r); // immutable observer metrics; original snapshot unchanged
    ResponseQueue(r);
 }
 void ResponseSelected(const MatrixSnapshot &s,const ArmedSignal &identity,double trigger,
@@ -9901,7 +9928,7 @@ string ResponseOutcome(int outcome)
 }
 string ResponseHeader()
 {
-   return "schema;event;run_id;server_day;observed_time_msc;account;server;symbol;magic;signal_bar;route;mode;direction;armed_at;region_end;region_high;region_low;trigger;armed_age_sec;c1_current_status;outcome;window_role;window_from_msc;window_to_msc;first_msc;last_msc;first_price;last_price;vb;vs;vu;v;delta;delta_pct_total;known_volume_pct;known_record_pct;r_window;r_between;impact_signed;flow_balance_strength;d_r_window;d_delta;eligible_records;known_records;invalid_records;zero_real_volume_records;availability;coverage_status;volume_source;ww_accum_volume;ww_net_distance;ww_wave_bars;ww_wave_age_sec;ww_direction;ww_effort;ww_state;ww_volume_per_point;abs_divergence;abs_stall_strict;abs_following_reaction;abs_following_extension;abs_valid;cont_valid;abs_c1;cont_c1;matrix_status;dropped;gaps;io_errors;rejected_records;live_bar;bar_changed;aftertick_last_us;aftertick_count;aftertick_total_us;aftertick_max_us;timer_last_us;timer_count;timer_total_us;timer_max_us;live_wave_available;live_wave_volume;live_wave_average;live_wave_effort;live_wave_direction;live_wave_state;live_wave_sample_time_status;stage_sample_time_msc;stage_bid;stage_ask;stage_last;stage_flags;stage_directional_last_minus_trigger;trajectory_coverage;dwell_time_status;integral_volume_status;sample_overwrites;hard_flips_per_day;armed_cancel_hard;suspension_reason;live_wave_price;live_wave_start_reference;live_wave_net_displacement;live_wave_volume_per_point;live_wave_age_status;ww_volume_status;ww_volume_source;live_volume_status";
+   return "schema;event;run_id;server_day;observed_time_msc;account;server;symbol;magic;signal_bar;route;mode;direction;armed_at;region_end;region_high;region_low;trigger;armed_age_sec;c1_current_status;outcome;window_role;window_from_msc;window_to_msc;first_msc;last_msc;first_price;last_price;vb;vs;vu;v;delta;delta_pct_total;known_volume_pct;known_record_pct;r_window;r_between;impact_signed;flow_balance_strength;d_r_window;d_delta;eligible_records;known_records;invalid_records;zero_real_volume_records;availability;coverage_status;volume_source;ww_accum_volume;ww_net_distance;ww_wave_bars;ww_wave_age_sec;ww_direction;ww_effort;ww_state;ww_volume_per_point;abs_divergence;abs_stall_strict;abs_following_reaction;abs_following_extension;abs_valid;cont_valid;abs_c1;cont_c1;matrix_status;dropped;gaps;io_errors;rejected_records;live_bar;bar_changed;aftertick_last_us;aftertick_count;aftertick_total_us;aftertick_max_us;timer_last_us;timer_count;timer_total_us;timer_max_us;live_wave_available;live_wave_volume;live_wave_average;live_wave_effort;live_wave_direction;live_wave_state;live_wave_sample_time_status;stage_sample_time_msc;stage_bid;stage_ask;stage_last;stage_flags;stage_directional_last_minus_trigger;trajectory_coverage;dwell_time_status;integral_volume_status;sample_overwrites;hard_flips_per_day;armed_cancel_hard;suspension_reason;live_wave_price;live_wave_start_reference;live_wave_net_displacement;live_wave_volume_per_point;live_wave_age_status;ww_volume_status;ww_volume_source;live_volume_status;"+BookMicroHeader();
 }
 string ResponseFormat(const ResponseRecord &r,int window_role)
 {
@@ -10041,6 +10068,7 @@ string ResponseFormat(const ResponseRecord &r,int window_role)
    ResponseCell(row,ww_volume_status);
    ResponseCell(row,ww?(r.wave_real?"WW_REAL":"WW_TICK"):"");
    ResponseCell(row,live_volume_status);
+   BookMicroCells(row,r.micro); // explicit micro_window timestamps identify NOW metrics
    return row+"\r\n";
 }
 
@@ -10179,6 +10207,7 @@ void ResponseInit()
    gResponseTester=(MQLInfoInteger(MQL_TESTER)!=0);
    gResponseSampleIntervalSec=gResponseTester?60:1;
    gResponseInitialized=true;
+   BookMicroInit();
    if(StringLen(gResponsePathBase)>210)
    { gResponseSuspended=true; gResponseIOErrors++; gResponseGaps++;
      gResponseSuspendReason="ENCODED_NAMESPACE_TOO_LONG"; }
@@ -10215,3 +10244,5 @@ void ResponseDeinit()
 
 
 #include "Include/BookArmedDiagnostics.mqh"
+
+#include "Include/BookRuntimePerf.mqh"
