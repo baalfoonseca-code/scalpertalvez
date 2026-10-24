@@ -305,7 +305,7 @@ bool BookDecisionFresh(const BookDecisionConfig &c,const BookDecisionWindow &w,c
       now_msc-w.flow.to_msc<=(long)c.window_sec*2000;
 }
 void BookDecisionAssess(const BookDecisionConfig &c,const BookDecisionEvidence &e,
-   const int direction,const bool route_cont,const bool armed,BookDecisionVerdict &v)
+   const int direction,const bool route_cont,const bool isArmedSignal,BookDecisionVerdict &v)
 {
    BookDecisionVerdictReset(v);
    if(!BookDecisionConfigValid(c)) { v.reason="CONFIG_INVALID";return; }
@@ -341,7 +341,7 @@ void BookDecisionAssess(const BookDecisionConfig &c,const BookDecisionEvidence &
    if(route_cont && e.have_forward) context=e.forward.flow.level;
    if(BookDecisionOppositePredicate(c,e.current,direction,context))
    {
-      v.result=armed?DECISION_INVALIDAR_ARMED:DECISION_VETAR_CANDIDATO;
+      v.result=isArmedSignal?DECISION_INVALIDAR_ARMED:DECISION_VETAR_CANDIDATO;
       v.reason=route_cont?"CONT_ACCEPTED_OPPOSITE_REJECTION":"ABS_ACCEPTED_OPPOSITE_CONTINUATION";
       return;
    }

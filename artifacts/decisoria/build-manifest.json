@@ -4,8 +4,8 @@
   "control_sha256": "c3a2e1bd2ea4f9f04eeafa48a2c8fb70cd20af441d2c09b296e41f44c30534ae",
   "source": "scalpertalvez.mq5",
   "target": "REMORA_BOOK_PRO_DECISORIA.mq5",
-  "sha256": "1ab4e35f97f1808a182e3e94630fcc7238130b068f7d7ee939a9e86299f6f521",
-  "bytes": 649019,
+  "sha256": "28916a80aed75b2f6e1ee807d18588386b9d216e725ddf82722242e8eeed8e0b",
+  "bytes": 649035,
   "lines": 14249,
   "include_order": [
     {
@@ -54,7 +54,7 @@
       "owner": "Include/BookIdentity.mqh",
       "line": 3,
       "path": "Include/BookBuildIdentity.mqh",
-      "sha256": "f4a1abcff5d643b9b55fe2e72ffb7294dca61af7226c1b353bafc978d6b645d6"
+      "sha256": "7f564bbfb8959fa766aa936e58eb4c1d5677740367bf6ceca1374c0d76feca0b"
     },
     {
       "owner": "Include/BookIdentity.mqh",
@@ -102,7 +102,7 @@
       "owner": "Include/BookDecisionRuntime.mqh",
       "line": 3,
       "path": "Include/BookDecisionCore.mqh",
-      "sha256": "c9cad21697b35c808c172d692798e5b8e94787e21234aaabcbfabcba6b70d1a3"
+      "sha256": "7f7ea7aec509aede37bc182575257399befc3a47cad5fe386d6e1a1cfa040d03"
     }
   ],
   "official_includes": [
@@ -114,7 +114,7 @@
     "active_tokens_equal": true,
     "inventories_equal": true,
     "active_token_count": 121370,
-    "active_tokens_sha256": "a56d06ec2d842965304ef4e23b2df1428256ab6470751706767526acad49e641",
+    "active_tokens_sha256": "f91d3f51800dbb03d208aab9d776fa546d996946d67fa08c5952766a2a3d3780",
     "counts": {
       "inputs": 103,
       "functions": 542,
@@ -152,9 +152,9 @@
     "Include/BookArmedDiagnostics.mqh": "3cd7215a9da16abfcb2dd789d5f0e4f21dd8da6a0cf71816108ac8109f9dd25c",
     "Include/BookArmedInputs.mqh": "03b1d3e95a73a09b401b97e8da42c3de7b499d448593876df7c471ecc33dd3c7",
     "Include/BookArmedMath.mqh": "9dec02c161855d12b6c6e80dda706450581f9a7609a202523a56351911708d45",
-    "Include/BookBuildIdentity.mqh": "f4a1abcff5d643b9b55fe2e72ffb7294dca61af7226c1b353bafc978d6b645d6",
+    "Include/BookBuildIdentity.mqh": "7f564bbfb8959fa766aa936e58eb4c1d5677740367bf6ceca1374c0d76feca0b",
     "Include/BookCsvDiagnostics.mqh": "36940610fcd99f45efb2d3267e5bf1a686fdc4b0c1de33b3190f33c244f24c9f",
-    "Include/BookDecisionCore.mqh": "c9cad21697b35c808c172d692798e5b8e94787e21234aaabcbfabcba6b70d1a3",
+    "Include/BookDecisionCore.mqh": "7f7ea7aec509aede37bc182575257399befc3a47cad5fe386d6e1a1cfa040d03",
     "Include/BookDecisionInputs.mqh": "296055c372f39bdbea02073282499c70a464634e351b0ebb1752b14b54f5196c",
     "Include/BookDecisionRuntime.mqh": "48c4350e519341ea3ae6fbb01dc3d6645eca2a9578e77379bc894d6fb7fb58c0",
     "Include/BookIdentity.mqh": "90ab63b6e4339eaa9a2127b6279d3dd655ff679f89298707c65cbeb5f99f6e6c",

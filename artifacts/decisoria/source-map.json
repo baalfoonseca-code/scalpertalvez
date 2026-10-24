@@ -1,6 +1,6 @@
 {
   "schema": "BOOK_DECISION_SOURCE_MAP_V1",
-  "target_sha256": "1ab4e35f97f1808a182e3e94630fcc7238130b068f7d7ee939a9e86299f6f521",
+  "target_sha256": "28916a80aed75b2f6e1ee807d18588386b9d216e725ddf82722242e8eeed8e0b",
   "segments": [
     {
       "generated_start_line": 8,

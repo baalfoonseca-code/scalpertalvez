@@ -4375,9 +4375,9 @@ int BookCsvOpenInitialFile()
 #ifndef BOOK_BUILD_IDENTITY_MQH
 #define BOOK_BUILD_IDENTITY_MQH
 #define BOOK_BASELINE_REVISION "a31f7b03701dd13b5c26801669552001d3ed634c"
-#define BOOK_REVISION_AT_GENERATION "7a2fcce33d2f6bddbcec6931aa7a4a85c0f185d0"
+#define BOOK_REVISION_AT_GENERATION "30bf0d70c7b1f397497c36a5eb2dcf4d640718f3"
 #define BOOK_BUILD_ID "BOOK1125_SURGERY_EXP1"
-#define BOOK_SOURCE_BUNDLE_SHA256 "e082a3c51aa474f28f4595e491a0d1be509f4090ee1f4e4a967f5358ad420f76"
+#define BOOK_SOURCE_BUNDLE_SHA256 "1b0f9c8294dd6fa399312befefd3f3e8ca3728174104c6db21d1ba882f91d6ca"
 #endif
 // END_INCORPORATED Include/BookBuildIdentity.mqh
 // Identity is telemetry only: failure never authorizes or changes an order.
@@ -13505,7 +13505,7 @@ bool BookDecisionFresh(const BookDecisionConfig &c,const BookDecisionWindow &w,c
       now_msc-w.flow.to_msc<=(long)c.window_sec*2000;
 }
 void BookDecisionAssess(const BookDecisionConfig &c,const BookDecisionEvidence &e,
-   const int direction,const bool route_cont,const bool armed,BookDecisionVerdict &v)
+   const int direction,const bool route_cont,const bool isArmedSignal,BookDecisionVerdict &v)
 {
    BookDecisionVerdictReset(v);
    if(!BookDecisionConfigValid(c)) { v.reason="CONFIG_INVALID";return; }
@@ -13541,7 +13541,7 @@ void BookDecisionAssess(const BookDecisionConfig &c,const BookDecisionEvidence &
    if(route_cont && e.have_forward) context=e.forward.flow.level;
    if(BookDecisionOppositePredicate(c,e.current,direction,context))
    {
-      v.result=armed?DECISION_INVALIDAR_ARMED:DECISION_VETAR_CANDIDATO;
+      v.result=isArmedSignal?DECISION_INVALIDAR_ARMED:DECISION_VETAR_CANDIDATO;
       v.reason=route_cont?"CONT_ACCEPTED_OPPOSITE_REJECTION":"ABS_ACCEPTED_OPPOSITE_CONTINUATION";
       return;
    }
