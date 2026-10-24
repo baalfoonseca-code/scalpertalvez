@@ -18,16 +18,18 @@ import verify_monolithic_independent as independent
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = '815077efec40adf1897bcf64640756bb46c4c118'
+RESEARCH_BASE = '94fddd73f0455c63a6cd238d6cb9f8924e9a497a'
 CONTROL = ROOT / 'scalpertalvez_MONOLITICO.mq5'
 CONTROL_SHA256 = 'c3a2e1bd2ea4f9f04eeafa48a2c8fb70cd20af441d2c09b296e41f44c30534ae'
 SOURCE = ROOT / 'scalpertalvez.mq5'
 TARGET = ROOT / 'REMORA_BOOK_PRO_DECISORIA.mq5'
-ARTIFACTS = ROOT / 'artifacts/decisoria'
+ARTIFACTS = ROOT / 'artifacts/research'
 PREAMBLE = (
     '// GENERATED: REMORA_BOOK_PRO_DECISORIA.mq5; integral modular expansion.\n'
     '// EXPERIMENTAL: operational ABS/CONT validation; DECISION_APLICAR is the source default.\n'
     '// Audited control: '+BASE+'; its monolithic file remains unchanged.\n'
     '// CORRETIVA: runtime-qualified flags are a declared hypothesis, not broker certification.\n'
+    '// Decision Research: optional observation only; Inp_ResearchEnable defaults to false.\n'
     '// Only official MQL5 headers remain external; no custom repository include is required.\n'
     '// Native MetaEditor compilation NOT verified; no production deployment or approval.\n\n'
 )
@@ -63,13 +65,12 @@ def preserved_inputs(active: str) -> list[str]:
     if len(baseline) != 91 or current[:91] != baseline:
         raise ValueError('The historical 91 input types/names/order/defaults were changed')
     previous = subprocess.check_output(['git', 'show',
-        '7a2fcce33d2f6bddbcec6931aa7a4a85c0f185d0:REMORA_BOOK_PRO_DECISORIA.mq5'], cwd=ROOT).decode('utf-8')
-    decision_inputs = independent.inventory(previous)['inputs'][91:]
-    expected = [declaration.replace('Inp_DecisionAggressorSource = DECISION_FLAGS_UNVERIFIED',
-                                   'Inp_DecisionAggressorSource = DECISION_FLAGS_RUNTIME_QUALIFIED')
-                for declaration in decision_inputs]
-    if len(current) != 103 or current[91:] != expected:
-        raise ValueError('The 12 decision controls changed outside the authorized aggressor-source default')
+        RESEARCH_BASE+':REMORA_BOOK_PRO_DECISORIA.mq5'], cwd=ROOT).decode('utf-8')
+    research_control = independent.inventory(previous)['inputs']
+    if len(research_control) != 103 or current[:103] != research_control:
+        raise ValueError('The audited 103 input types/names/order/defaults were changed')
+    if len(current) != 104 or current[103:] != ['input bool Inp_ResearchEnable = false']:
+        raise ValueError('Only Inp_ResearchEnable=false may be appended to the 103 controls')
     return current
 
 
@@ -117,6 +118,7 @@ def equivalent(content: bytes) -> dict:
                 'active_token_count': len(a), 'active_tokens_sha256': independent.sha256_json(a),
                 'counts': inv_a['counts'], 'input_count': len(inputs),
                 'historical_inputs_preserved': 91, 'new_inputs': inputs[91:],
+                'research_reference_inputs_preserved': 103, 'research_new_inputs': inputs[103:],
                 'duplicates': inv_a['duplicates'], 'native_compilation_executed': False}
 
 
@@ -129,7 +131,8 @@ def payloads():
     for row in mapping:
         row['generated_start_line'] += offset
         row['generated_end_line'] += offset
-    manifest = {'schema': 'BOOK_DECISION_STANDALONE_V1', 'control_commit': BASE,
+    manifest = {'schema': 'BOOK_RESEARCH_STANDALONE_V1', 'control_commit': BASE,
+                'research_reference_commit': RESEARCH_BASE,
                 'control_sha256': CONTROL_SHA256, 'source': SOURCE.name,
                 'target': TARGET.name, 'sha256': sha(content), 'bytes': len(content),
                 'lines': len(content.splitlines()), 'include_order': graph,

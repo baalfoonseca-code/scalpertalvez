@@ -17,6 +17,10 @@ def control_source():
 def compile_run(text: str) -> str:
     with tempfile.TemporaryDirectory(prefix="decision-entry-") as td:
         cpp=Path(td)/"entry.cpp";exe=Path(td)/"entry"
+        # Only the observer API boundary is adapted for the preexisting isolated
+        # operational fixtures. Dedicated research integration opts into reality.
+        if '#define BOOK_RESEARCH_INTEGRATION_HOST' not in text:
+            text=f'#include "{ROOT}/tests/research_noop_hooks.hpp"\n'+text
         cpp.write_text(text)
         built=subprocess.run(["g++","-std=c++17","-O2","-Wall","-Wextra",str(cpp),"-o",str(exe)],capture_output=True,text=True)
         if built.returncode:

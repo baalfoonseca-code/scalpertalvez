@@ -106,5 +106,6 @@ void BookCollectInputIdentity(string &canonical)
    BookIdentityAdd(canonical,"double","Inp_DecisionMinObservedCoverage",StringFormat("%.17g",Inp_DecisionMinObservedCoverage));
    BookIdentityAdd(canonical,"double","Inp_DecisionMinProgressTicks",StringFormat("%.17g",Inp_DecisionMinProgressTicks));
    BookIdentityAdd(canonical,"double","Inp_DecisionComparableEffortFactor",StringFormat("%.17g",Inp_DecisionComparableEffortFactor));
+   BookIdentityAdd(canonical,"bool","Inp_ResearchEnable",(Inp_ResearchEnable?"1":"0"));
 }
 #endif

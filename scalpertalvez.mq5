@@ -228,6 +228,8 @@ input int Inp_Obs_WindowBudgetUS = 5000; // Suspend extension after an over-budg
 #include "Include/BookArmedInputs.mqh"
 // New experimental controls are appended after all 91 historical inputs.
 #include "Include/BookDecisionInputs.mqh"
+// Independent observational research, appended after all 103 preserved inputs.
+input bool Inp_ResearchEnable = false;
 
 //=====================================================================
 // STRUCTS
@@ -1530,6 +1532,7 @@ void OnTimer()
    if(Inp_DOM_Enable) DOMRuntimeTimer();
    if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseTimer();
    BookPerfTimer(began);
+   BookResearchTimer();
 }
 
 // BEGIN EXPERIMENTAL DOM CONFLUENCE MODULE
@@ -2453,6 +2456,7 @@ to_msc);
     // Reuse the exact acquired trade batch; independent of observation/export.
     if(Inp_DecisionMode!=DECISION_ORIGINAL)
        BookDecisionIngestBatch(from_msc,to_msc,ticksOut,copied);
+    BookResearchBorrowedTicks(from_msc,to_msc,ticksOut,copied);
     return copied;
 }
 
@@ -3983,6 +3987,7 @@ bool WriteTradeRow(const TradeRecord &r)
        return BookCsvReject(gTradeCsvFileName,0,0,0,"PID_INDEX_ALLOCATION_AFTER_WRITE");
     BookIdentityCorrelateTrade(r);
     if(Inp_DOM_Enable) DOMObserveTrade(r);
+    BookResearchCaptureTrade(r);
     return true;
 }
 
@@ -4379,6 +4384,7 @@ sent=trade.PositionOpen(Symbol(),type,lots,finalExec,sl,tp,"RC1|"+armed.route+"|
  BookDiagDispatch(executionResult);
 
 CompletePendingExec(sent,ret,trade.ResultOrder(),trade.ResultDeal(),executionResult.request_id);
+ BookResearchRecordDispatch(executionResult,bookOriginal,finalExec,lots,sl,tp,sent,ret,dispatchTick.time_msc);
  bool accepted=sent && (ret==TRADE_RETCODE_DONE ||
 ret==TRADE_RETCODE_PLACED || ret==TRADE_RETCODE_DONE_PARTIAL);
 
@@ -4436,6 +4442,7 @@ void EvaluateMatrix()
   gLastBreakoutPrice=0;
  MatrixSnapshot s;
  ENUM_MSS status=SnapshotForSignal(s);
+ BookResearchObserveMatrix(s,status);
 
 // Gates fail-closed
 if(status==MSS_VWAP_D1_INVALID)
@@ -4517,9 +4524,11 @@ if(regionRates[i].high<=0||regionRates[i].low<=0||regionRates[i].high<regionRate
 
 WriteAuditRow("REGION_INVALID",DirStr(dirSel),mode,s.price,s.posRel,s.distAbs,s.effort,0)
 ;
+    BookResearchRegionInvalid(s,dirSel,useCont,mode);
     return;
   }
 
+ BookResearchCaptureCandidate(s,dirSel,useCont,mode,regHigh,regLow);
  // Assess only the already-selected original route; conflicts returned above.
  if(Inp_DecisionMode!=DECISION_ORIGINAL &&
     !BookDecisionCandidate(s,dirSel,useCont,gCachedMicroBar)) return;
@@ -4552,6 +4561,7 @@ armed.c4=(int)(useCont?s.c4Cont:s.c4);
 armed.c5=(int)(useCont?s.c5ContOk:s.c5AbsOk);
 armed.scoreEff=scoreSel;
   BookDecisionBind(); // Freeze identity without changing armedAt or timeout.
+  BookResearchCaptureArmed();
 
 double armTrigger=ComputeTrigger(dirSel,regHigh,regLow);
 PrintFormat("[SCALPER][ARMED_%s] %s %s %.2f lots SCORE=%d/3 SL=%.1f "
@@ -4782,6 +4792,7 @@ armed.route,DirStr(armed.dir),trigger,last,curEff,armed.breakoutEffortMin,armed.
     armed.activeSL_Pts,armed.activeTP_Pts,
      armed.posRel,armed.distD1,curEff,trigger);
    BookDiagSendOutcome(outcome);
+   BookResearchAfterSend(outcome);
    if(outcome==SEND_FINANCIAL_UNRESOLVED)
    {
       // Ending the original signal never clears its financial obligation.
@@ -5109,6 +5120,7 @@ BStr(Inp_EnableMacroDirectionGate),BStr(Inp_EnableLateDirectionBlock),BStr(Inp_R
   DOMGateInit();
   if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseInit();
   RecomputeAccountingBlock();
+  BookResearchInit();
   return INIT_SUCCEEDED;
 }
 
@@ -5129,6 +5141,7 @@ FileClose(csvTradeHandle); csvTradeHandle =INVALID_HANDLE; }
    DOMRuntimeDeinit();
    DOMGateDeinit();
    if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseDeinit();
+   BookResearchDeinit(reason);
 }
 
 //=====================================================================
@@ -5162,6 +5175,7 @@ return;
   }
   if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseCaptureSnapshot(observation,signalBar);
   WriteShadowRow("MATRIX_READ_ONLY_ACCOUNTING_BLOCK",observation);
+  BookResearchObserveBlockedMatrix(observation,signalBar);
   PrintFormat("[SCALPER][MATRIX_READ_ONLY_ACCOUNTING_BLOCK] Status=%s ExecutionInFlight=%s; observation only, entries remain blocked.",
        MssStr(observation.status),BStr(HasExecutionInFlight()));
 }
@@ -9674,6 +9688,7 @@ MatchesExitRequest(request,result))
     // Every transaction may reconcile a position state that lagged DEAL_ADD.
     gNeedsAccountingSync=true;
     SyncAccountingState(true);
+    BookResearchCaptureTransaction(trans,request,result);
 }
 
 
@@ -9696,6 +9711,7 @@ void OnTick()
    ResponseBaseOnTick();
    if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseAfterTick();
    BookPerfTick(began);
+   BookResearchAfterTick();
 }
 
 // BEGIN EMBEDDED ResponseObserver.mqh
@@ -10470,3 +10486,7 @@ void ResponseDeinit()
 
 // Operational validation shares arithmetic, never the observer CSV queue.
 #include "Include/BookDecisionRuntime.mqh"
+
+// Isolated research modules: no return value feeds the trading strategy.
+#include "Include/BookResearchRuntime.mqh"
+#include "Include/BookResearchBridge.mqh"

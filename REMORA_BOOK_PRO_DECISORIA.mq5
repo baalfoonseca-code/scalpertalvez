@@ -2,6 +2,7 @@
 // EXPERIMENTAL: operational ABS/CONT validation; DECISION_APLICAR is the source default.
 // Audited control: 815077efec40adf1897bcf64640756bb46c4c118; its monolithic file remains unchanged.
 // CORRETIVA: runtime-qualified flags are a declared hypothesis, not broker certification.
+// Decision Research: optional observation only; Inp_ResearchEnable defaults to false.
 // Only official MQL5 headers remain external; no custom repository include is required.
 // Native MetaEditor compilation NOT verified; no production deployment or approval.
 
@@ -304,6 +305,8 @@ input double Inp_DecisionMinProgressTicks = 1.0;
 input double Inp_DecisionComparableEffortFactor = 2.0;
 #endif
 // END_INCORPORATED Include/BookDecisionInputs.mqh
+// Independent observational research, appended after all 103 preserved inputs.
+input bool Inp_ResearchEnable = false;
 
 //=====================================================================
 // STRUCTS
@@ -2217,6 +2220,7 @@ void OnTimer()
    if(Inp_DOM_Enable) DOMRuntimeTimer();
    if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseTimer();
    BookPerfTimer(began);
+   BookResearchTimer();
 }
 
 // BEGIN EXPERIMENTAL DOM CONFLUENCE MODULE
@@ -3140,6 +3144,7 @@ to_msc);
     // Reuse the exact acquired trade batch; independent of observation/export.
     if(Inp_DecisionMode!=DECISION_ORIGINAL)
        BookDecisionIngestBatch(from_msc,to_msc,ticksOut,copied);
+    BookResearchBorrowedTicks(from_msc,to_msc,ticksOut,copied);
     return copied;
 }
 
@@ -4375,9 +4380,9 @@ int BookCsvOpenInitialFile()
 #ifndef BOOK_BUILD_IDENTITY_MQH
 #define BOOK_BUILD_IDENTITY_MQH
 #define BOOK_BASELINE_REVISION "a31f7b03701dd13b5c26801669552001d3ed634c"
-#define BOOK_REVISION_AT_GENERATION "30bf0d70c7b1f397497c36a5eb2dcf4d640718f3"
-#define BOOK_BUILD_ID "BOOK1125_SURGERY_EXP1"
-#define BOOK_SOURCE_BUNDLE_SHA256 "1b0f9c8294dd6fa399312befefd3f3e8ca3728174104c6db21d1ba882f91d6ca"
+#define BOOK_REVISION_AT_GENERATION "94fddd73f0455c63a6cd238d6cb9f8924e9a497a"
+#define BOOK_BUILD_ID "BOOK1125_DECISION_RESEARCH_EXP1"
+#define BOOK_SOURCE_BUNDLE_SHA256 "70e54416d09c794465e62f32c8e979610a995c56f928149645baa3e54201b4eb"
 #endif
 // END_INCORPORATED Include/BookBuildIdentity.mqh
 // Identity is telemetry only: failure never authorizes or changes an order.
@@ -4518,6 +4523,7 @@ void BookCollectInputIdentity(string &canonical)
    BookIdentityAdd(canonical,"double","Inp_DecisionMinObservedCoverage",StringFormat("%.17g",Inp_DecisionMinObservedCoverage));
    BookIdentityAdd(canonical,"double","Inp_DecisionMinProgressTicks",StringFormat("%.17g",Inp_DecisionMinProgressTicks));
    BookIdentityAdd(canonical,"double","Inp_DecisionComparableEffortFactor",StringFormat("%.17g",Inp_DecisionComparableEffortFactor));
+   BookIdentityAdd(canonical,"bool","Inp_ResearchEnable",(Inp_ResearchEnable?"1":"0"));
 }
 #endif
 // END_INCORPORATED Include/BookInputSnapshot.mqh
@@ -5284,6 +5290,7 @@ bool WriteTradeRow(const TradeRecord &r)
        return BookCsvReject(gTradeCsvFileName,0,0,0,"PID_INDEX_ALLOCATION_AFTER_WRITE");
     BookIdentityCorrelateTrade(r);
     if(Inp_DOM_Enable) DOMObserveTrade(r);
+    BookResearchCaptureTrade(r);
     return true;
 }
 
@@ -5680,6 +5687,7 @@ sent=trade.PositionOpen(Symbol(),type,lots,finalExec,sl,tp,"RC1|"+armed.route+"|
  BookDiagDispatch(executionResult);
 
 CompletePendingExec(sent,ret,trade.ResultOrder(),trade.ResultDeal(),executionResult.request_id);
+ BookResearchRecordDispatch(executionResult,bookOriginal,finalExec,lots,sl,tp,sent,ret,dispatchTick.time_msc);
  bool accepted=sent && (ret==TRADE_RETCODE_DONE ||
 ret==TRADE_RETCODE_PLACED || ret==TRADE_RETCODE_DONE_PARTIAL);
 
@@ -5737,6 +5745,7 @@ void EvaluateMatrix()
   gLastBreakoutPrice=0;
  MatrixSnapshot s;
  ENUM_MSS status=SnapshotForSignal(s);
+ BookResearchObserveMatrix(s,status);
 
 // Gates fail-closed
 if(status==MSS_VWAP_D1_INVALID)
@@ -5818,9 +5827,11 @@ if(regionRates[i].high<=0||regionRates[i].low<=0||regionRates[i].high<regionRate
 
 WriteAuditRow("REGION_INVALID",DirStr(dirSel),mode,s.price,s.posRel,s.distAbs,s.effort,0)
 ;
+    BookResearchRegionInvalid(s,dirSel,useCont,mode);
     return;
   }
 
+ BookResearchCaptureCandidate(s,dirSel,useCont,mode,regHigh,regLow);
  // Assess only the already-selected original route; conflicts returned above.
  if(Inp_DecisionMode!=DECISION_ORIGINAL &&
     !BookDecisionCandidate(s,dirSel,useCont,gCachedMicroBar)) return;
@@ -5853,6 +5864,7 @@ armed.c4=(int)(useCont?s.c4Cont:s.c4);
 armed.c5=(int)(useCont?s.c5ContOk:s.c5AbsOk);
 armed.scoreEff=scoreSel;
   BookDecisionBind(); // Freeze identity without changing armedAt or timeout.
+  BookResearchCaptureArmed();
 
 double armTrigger=ComputeTrigger(dirSel,regHigh,regLow);
 PrintFormat("[SCALPER][ARMED_%s] %s %s %.2f lots SCORE=%d/3 SL=%.1f "
@@ -6083,6 +6095,7 @@ armed.route,DirStr(armed.dir),trigger,last,curEff,armed.breakoutEffortMin,armed.
     armed.activeSL_Pts,armed.activeTP_Pts,
      armed.posRel,armed.distD1,curEff,trigger);
    BookDiagSendOutcome(outcome);
+   BookResearchAfterSend(outcome);
    if(outcome==SEND_FINANCIAL_UNRESOLVED)
    {
       // Ending the original signal never clears its financial obligation.
@@ -6410,6 +6423,7 @@ BStr(Inp_EnableMacroDirectionGate),BStr(Inp_EnableLateDirectionBlock),BStr(Inp_R
   DOMGateInit();
   if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseInit();
   RecomputeAccountingBlock();
+  BookResearchInit();
   return INIT_SUCCEEDED;
 }
 
@@ -6430,6 +6444,7 @@ FileClose(csvTradeHandle); csvTradeHandle =INVALID_HANDLE; }
    DOMRuntimeDeinit();
    DOMGateDeinit();
    if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseDeinit();
+   BookResearchDeinit(reason);
 }
 
 //=====================================================================
@@ -6463,6 +6478,7 @@ return;
   }
   if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseCaptureSnapshot(observation,signalBar);
   WriteShadowRow("MATRIX_READ_ONLY_ACCOUNTING_BLOCK",observation);
+  BookResearchObserveBlockedMatrix(observation,signalBar);
   PrintFormat("[SCALPER][MATRIX_READ_ONLY_ACCOUNTING_BLOCK] Status=%s ExecutionInFlight=%s; observation only, entries remain blocked.",
        MssStr(observation.status),BStr(HasExecutionInFlight()));
 }
@@ -10975,6 +10991,7 @@ MatchesExitRequest(request,result))
     // Every transaction may reconcile a position state that lagged DEAL_ADD.
     gNeedsAccountingSync=true;
     SyncAccountingState(true);
+    BookResearchCaptureTransaction(trans,request,result);
 }
 
 
@@ -10997,6 +11014,7 @@ void OnTick()
    ResponseBaseOnTick();
    if(Inp_ResponseMode==RESPONSE_OBSERVAR) ResponseAfterTick();
    BookPerfTick(began);
+   BookResearchAfterTick();
 }
 
 // BEGIN EMBEDDED ResponseObserver.mqh
@@ -13795,6 +13813,7 @@ void BookDecisionCloseCurrent()
    { slot=gBookDecisionClosedHead; gBookDecisionClosedHead=(gBookDecisionClosedHead+1)%BOOK_DECISION_WINDOW_CAP; }
    else gBookDecisionClosedCount++;
    gBookDecisionClosed[slot]=closed;
+   BookResearchArchiveOperationalWindow(closed.window,gBookDecisionHistory);
    BookDecisionHistoryInsert(gBookDecisionConfig,gBookDecisionHistory,closed.window);
    double level=closed.window.flow.count>0?closed.window.flow.last:0;
    long reference=closed.window.flow.last_msc;
@@ -14136,12 +14155,14 @@ void BookDecisionAssessCurrent(const int direction,const bool cont,const bool bo
       else if(gBookDecisionFault) gBookDecisionVerdict.reason=gBookDecisionFaultReason;
       else if(gBookDecisionAcquisitionIncomplete) gBookDecisionVerdict.reason="COLLECTION_BACKLOG_OR_THROTTLED";
       else gBookDecisionVerdict.reason="TRADED_DATA_STALE_OR_UNAVAILABLE";
+      BookResearchOperationalUnavailable(gBookDecisionVerdict,direction,cont,bound);
    }
    else
    {
       BookDecisionEvidence evidence;
       BookDecisionEvidenceFor(direction,cont,bound,evidence);
       BookDecisionAssess(gBookDecisionConfig,evidence,direction,cont,bound,gBookDecisionVerdict);
+      BookResearchOperationalEvidence(evidence,gBookDecisionVerdict,direction,cont,bound);
    }
    gBookDecisionResult=gBookDecisionVerdict.result;
    gBookDecisionReason=gBookDecisionVerdict.reason;
@@ -14247,3 +14268,2544 @@ void BookDecisionDeinit()
 }
 #endif
 // END_INCORPORATED Include/BookDecisionRuntime.mqh
+
+// Isolated research modules: no return value feeds the trading strategy.
+// ORIGINAL_INCLUDE | #include "Include/BookResearchRuntime.mqh"
+// BEGIN_INCORPORATED Include/BookResearchRuntime.mqh
+#ifndef BOOK_RESEARCH_RUNTIME_MQH
+#define BOOK_RESEARCH_RUNTIME_MQH
+// ORIGINAL_INCLUDE | #include "BookResearchCore.mqh"
+// BEGIN_INCORPORATED Include/BookResearchCore.mqh
+#ifndef BOOK_RESEARCH_CORE_MQH
+#define BOOK_RESEARCH_CORE_MQH
+// ORIGINAL_INCLUDE | #include "BookRiskCore.mqh"
+// BEGIN_INCORPORATED Include/BookRiskCore.mqh
+#ifndef BOOK_RISK_CORE_MQH
+#define BOOK_RISK_CORE_MQH
+// The same numerical/state kernel is compiled by host tests and MQL5.
+// HOST_CPP_INACTIVE | #ifdef BOOK_RISK_HOST
+// HOST_CPP_INACTIVE | #include <cmath>
+// HOST_CPP_INACTIVE | bool BRFinite(double x) { return std::isfinite(x); }
+// HOST_CPP_INACTIVE | double BRFloor(double x) { return std::floor(x); }
+// HOST_CPP_INACTIVE | double BRCeil(double x) { return std::ceil(x); }
+// HOST_CPP_INACTIVE | double BRAbs(double x) { return std::fabs(x); }
+// HOST_CPP_INACTIVE | #else
+bool BRFinite(double x) { return MathIsValidNumber(x) && x!=EMPTY_VALUE; }
+double BRFloor(double x) { return MathFloor(x); }
+double BRCeil(double x) { return MathCeil(x); }
+double BRAbs(double x) { return MathAbs(x); }
+// HOST_CPP_INACTIVE | #endif
+bool BRPositive(double x) { return BRFinite(x) && x>0.0; }
+bool BRActiveLadderValid(bool enableBE,double be,double t1,double p1,double t2,double p2)
+{
+   return BRPositive(be) && BRPositive(t1) && BRPositive(p1) &&
+      BRPositive(t2) && BRPositive(p2) && (!enableBE || be<t1) && t1<t2 &&
+      p1<t1 && p2<t2 && p1<p2;
+}
+bool BRLadderValid(double be,double t1,double p1,double t2,double p2)
+{ return BRActiveLadderValid(true,be,t1,p1,t2,p2); }
+// Returns an absolute tick-grid stop INSIDE the capped distance. Never rounds
+// an outward SL past the cap. A sub-tick/invalid/stops-level result is rejected.
+bool BRSigmaStop(int dir,double entry,double sigma,double multiplier,double cap,
+                 double tick,double &sl,double &raw,double &distance,bool &capped)
+{
+   sl=0; raw=0; distance=0; capped=false;
+   if((dir!=1 && dir!=-1) || !BRPositive(entry) || !BRPositive(sigma) ||
+      !BRPositive(multiplier) || !BRPositive(cap) || !BRPositive(tick)) return false;
+   raw=sigma*multiplier;
+   if(!BRPositive(raw)) return false;
+   capped=raw>cap;
+   double target=raw<cap?raw:cap;
+   double unrounded=entry-dir*target;
+   sl=(dir==1?BRCeil(unrounded/tick):BRFloor(unrounded/tick))*tick;
+   distance=dir*(entry-sl);
+   // No epsilon can authorize exceeding the cap. Input arithmetic may reject
+   // a borderline price rather than silently increase financial risk.
+   return BRPositive(sl) && BRPositive(distance) && distance<=target && distance<=cap;
+}
+int BRHighestLock(double progressR,double t1,double t2)
+{
+   if(!BRFinite(progressR)) return 0;
+   if(progressR>=t2) return 2;
+   if(progressR>=t1) return 1;
+   return 0;
+}
+bool BRImproves(int dir,double candidate,double liveSL,double tick)
+{
+   return (dir==1 || dir==-1) && BRPositive(candidate) && BRPositive(liveSL) &&
+      BRPositive(tick) && dir*(candidate-liveSL)>tick*0.000001;
+}
+bool BRBrokerDistances(int dir,double bid,double ask,double point,int stops,int freeze,
+                       double targetSL,double targetTP,double liveSL,double liveTP)
+{
+   if((dir!=1 && dir!=-1) || !BRPositive(bid) || !BRPositive(ask) || ask<bid ||
+      !BRPositive(point) || stops<0 || freeze<0 || !BRPositive(targetSL) ||
+      !BRPositive(targetTP) || !BRPositive(liveSL) || !BRFinite(liveTP) || liveTP<0) return false;
+   double quote=(dir==1?bid:ask);
+   double dSL=dir*(quote-targetSL),dTP=dir*(targetTP-quote);
+   if(dSL<=0 || dTP<=0 || dSL<stops*point || dTP<stops*point) return false;
+   if(freeze>0 && (dSL<=freeze*point || dTP<=freeze*point ||
+      dir*(quote-liveSL)<=freeze*point || (liveTP>0 && dir*(liveTP-quote)<=freeze*point))) return false;
+   return true;
+}
+bool BRLockPrice(int dir,double entry,double initialR,double protectedR,double tick,double &price)
+{
+   price=0;
+   if((dir!=1 && dir!=-1) || !BRPositive(entry) || !BRPositive(initialR) ||
+      !BRPositive(protectedR) || !BRPositive(tick)) return false;
+   double raw=entry+dir*protectedR*initialR;
+   if(!BRPositive(raw)) return false;
+   price=(dir==1?BRFloor(raw/tick):BRCeil(raw/tick))*tick;
+   return BRPositive(price) && dir*(price-entry)>=0;
+}
+// States intentionally distinct from SCALPER_BE1. PENDING and UNCERTAIN never
+// authorize retransmission; a definitive rejection or confirmed server proof
+// is required before a subsequent request.
+enum ENUM_BR_STAGE
+{
+   BR_WAIT_FILL=0, BR_IDLE=1, BR_PENDING=2, BR_ACK=3,
+   BR_CONFIRMED=4, BR_REJECTED=5, BR_UNCERTAIN=6, BR_CLOSED=7, BR_CORRUPT=8
+};
+bool BRMayDispatch(int stage)
+{ return stage==BR_IDLE || stage==BR_CONFIRMED || stage==BR_REJECTED; }
+bool BRPending(int stage)
+{ return stage==BR_PENDING || stage==BR_ACK || stage==BR_UNCERTAIN || stage==BR_CORRUPT; }
+// Exact requested SL/TP corroboration is separate from request acceptance.
+bool BRServerProof(int stage,bool done,bool slProof,bool tpProof)
+{ return (stage==BR_ACK || stage==BR_PENDING || stage==BR_UNCERTAIN) && done && slProof && tpProof; }
+#endif
+// END_INCORPORATED Include/BookRiskCore.mqh
+// Pure observational model. The caller owns EVERY value below; no access to
+// strategy globals, terminal state, journals, execution functions or files.
+// Price units match the native source (not cash); clocks are ms and seconds.
+enum ENUM_BOOK_RESEARCH_STAGE
+{
+   RESEARCH_WAIT_STAGE2=0, RESEARCH_STAGE2_READY=1, RESEARCH_TRACKING=2,
+   RESEARCH_FINISHED=3
+};
+struct BookResearchCandidate
+{
+   string id,symbol,route,mode;
+   int direction,timeout_sec,stop_entry_hhmm;
+   long created_msc,armed_at_sec,signal_bar;
+   double trigger,sl_distance,tp_distance,tick_size,max_spread,max_overshoot,region_high,region_low;
+   double effort_min,inner_pct,outer_pct;
+   bool late_direction_block,original_eligible;
+   bool risk_parameters_frozen,sigma_stop,tp_by_r;
+   double frozen_sigma,sl_multiplier,sl_cap,tp_multiplier;int price_digits;
+};
+struct BookResearchMarketSample
+{
+   long now_msc,server_sec,ordinal,signal_bar;
+   int hhmm;
+   double bid,ask,last,live_effort,live_vwap,sigma,band_multiplier;
+   int live_wave_direction;
+   bool quote_available,real_trade,weis_valid,vwap_valid,context_causal;
+   bool new_signal_bar,hard_snapshot_valid,hard_contradiction;
+   // Completeness is evidence, never inferred from quote equality or timestamps.
+   bool path_complete;
+   bool financial_known,financial_possible,execution_terms_known,execution_terms_valid;
+   bool book_required,book_known,book_confirmed;
+   bool directional_terms,buy_terms_known,buy_terms_valid,sell_terms_known,sell_terms_valid;
+   bool route_terms;bool terms_known[4],terms_valid[4];
+   bool raw_identity_available;ulong raw_volume;uint raw_flags;double raw_volume_real;long raw_time_sec;
+   bool hard_abs_valid,hard_cont_valid;int hard_abs_direction,hard_cont_direction;
+   // Read-only closed-cache base captured at this callback, never a future bar.
+   double vwap_base_pv,vwap_base_volume;long vwap_from;bool vwap_base_valid;
+};
+struct BookResearchTrack
+{
+   ENUM_BOOK_RESEARCH_STAGE stage;
+   string reason,barrier,possibility,original_reason;
+   bool stage2_demonstrated,entry_reference_available,path_ambiguous,dispatch_eligible_observed;
+   bool eligibility_reconstructable,financial_possible,original_ended,context_incomplete,hard_context_pending;long last_signal_bar;
+   long last_msc,last_ordinal,stage2_msc,stage2_ordinal,entry_msc,entry_ordinal;
+   long sl_touch_msc,tp_touch_msc,finished_msc;
+   double entry,sl,tp,mfe,mae,origin_mfe,origin_mae;
+   double origin_price,last_exit_quote;
+   long samples;
+   double horizon_mfe[3],horizon_mae[3];
+   bool horizon_done[3];
+};
+
+bool BookResearchFinite(const double x)
+{
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |    return std::isfinite(x);
+// HOST_CPP_INACTIVE | #else
+   return MathIsValidNumber(x) && x!=EMPTY_VALUE;
+// HOST_CPP_INACTIVE | #endif
+}
+double BookResearchAbs(const double x) { return x<0?-x:x; }
+double BookResearchMax(const double x,const double y) { return x>y?x:y; }
+// Exact arithmetic of ComputeLiveWaveO1 without ResponseLiveWave side effects.
+void BookResearchLiveWave(const double current_volume,const double current_close,
+   const double close_ref,const int closed_direction,const double accumulated_closed,
+   const double average_closed,const double average_flip,
+   double &effort,double &volume,double &average,int &direction)
+{
+   int current_direction=current_close>close_ref?1:(current_close<close_ref?-1:closed_direction);
+   if(current_direction==0) current_direction=closed_direction;
+   if(current_direction==closed_direction)
+   { volume=accumulated_closed+current_volume;direction=closed_direction;average=average_closed; }
+   else { volume=current_volume;direction=current_direction;average=average_flip; }
+   effort=average>0?volume/average:0;
+}
+// Same tick-grid arithmetic as the native normalization helpers; financial
+// state is never read or frozen through the operational risk candidate.
+double BookResearchRoundGrid(const double price,const double tick,const bool up,const int digits)
+{
+   if(!BookResearchFinite(price) || tick<=0)return 0;
+   double ratio=price/tick;
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |    double nearest=std::round(ratio);
+// HOST_CPP_INACTIVE |    double n=BookResearchAbs(ratio-nearest)<1e-6?nearest:(up?std::ceil(ratio):std::floor(ratio));
+// HOST_CPP_INACTIVE |    double scale=std::pow(10.0,digits);return std::round(n*tick*scale)/scale;
+// HOST_CPP_INACTIVE | #else
+   double nearest=MathRound(ratio);
+   double n=BookResearchAbs(ratio-nearest)<1e-6?nearest:(up?MathCeil(ratio):MathFloor(ratio));
+   return NormalizeDouble(n*tick,digits);
+// HOST_CPP_INACTIVE | #endif
+}
+bool BookResearchStops(const BookResearchCandidate &c,const double entry,double &sl,double &tp)
+{
+   sl=entry-c.direction*c.sl_distance;tp=entry+c.direction*c.tp_distance;
+   if(!c.risk_parameters_frozen)return sl>0 && tp>0;
+   if(c.tick_size<=0)return false;
+   if(c.sigma_stop)
+   {
+      // Exact native pure sigma kernel: STRICT ceil/floor, without the legacy
+      // point-mode near-grid tolerance. Never mutate BookRiskCandidate.
+      double raw,distance;bool capped;
+      if(!BRSigmaStop(c.direction,entry,c.frozen_sigma,c.sl_multiplier,c.sl_cap,c.tick_size,sl,raw,distance,capped))return false;
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |       double scale=std::pow(10.0,c.price_digits);sl=std::round(sl*scale)/scale;
+// HOST_CPP_INACTIVE | #else
+      sl=NormalizeDouble(sl,c.price_digits);
+// HOST_CPP_INACTIVE | #endif
+      if(c.direction*(entry-sl)>c.sl_cap || c.direction*(entry-sl)<=0)return false;
+   }
+   else sl=BookResearchRoundGrid(sl,c.tick_size,c.direction==-1,c.price_digits);
+   double distance=BookResearchAbs(entry-sl);
+   if(c.tp_by_r)tp=entry+c.direction*distance*c.tp_multiplier;
+   tp=BookResearchRoundGrid(tp,c.tick_size,c.direction==1,c.price_digits);
+   return BookResearchFinite(sl) && BookResearchFinite(tp) && sl>0 && tp>0 &&
+      c.direction*(entry-sl)>0 && c.direction*(tp-entry)>0;
+}
+void BookResearchTrackReset(BookResearchTrack &t)
+{
+   t.stage=RESEARCH_WAIT_STAGE2;t.reason="WAIT_STAGE2";t.barrier="NOT_ENTERED";
+   t.possibility="NOT_EVALUATED";t.original_reason="";t.stage2_demonstrated=false;t.entry_reference_available=false;t.dispatch_eligible_observed=false;
+   t.path_ambiguous=false;t.eligibility_reconstructable=true;t.financial_possible=false;t.original_ended=false;t.context_incomplete=false;t.hard_context_pending=false;t.last_signal_bar=0;
+   t.last_msc=0;t.last_ordinal=0;t.stage2_msc=0;t.stage2_ordinal=0;t.entry_msc=0;
+   t.entry_ordinal=0;t.sl_touch_msc=0;t.tp_touch_msc=0;t.finished_msc=0;
+   t.entry=0;t.sl=0;t.tp=0;t.mfe=0;t.mae=0;t.origin_mfe=0;t.origin_mae=0;
+   t.origin_price=0;t.last_exit_quote=0;t.samples=0;
+   for(int i=0;i<3;i++) { t.horizon_mfe[i]=0;t.horizon_mae[i]=0;t.horizon_done[i]=false; }
+}
+
+// Research horizons are fixed descriptive choices, never trading thresholds.
+int BookResearchHorizonSec(const int index)
+{ return index==0?60:(index==1?300:900); }
+void BookResearchFinish(BookResearchTrack &t,const long now_msc,const string reason)
+{
+   if(t.stage==RESEARCH_FINISHED) return;
+   t.stage=RESEARCH_FINISHED;t.finished_msc=now_msc;t.reason=reason;
+   if(!t.entry_reference_available)
+      t.barrier=t.path_ambiguous?"INSUFFICIENT_MARKET_DATA":"NOT_ENTERED";
+   else if(t.path_ambiguous) t.barrier="AMBIGUOUS_PATH";
+   else if(t.sl_touch_msc==0 && t.tp_touch_msc==0)
+   {
+      long origin=t.entry_reference_available?t.entry_msc:0;
+      t.barrier=origin>0 && now_msc-origin>=900000 && reason!="EOD_INCOMPLETE" && reason!="DEINIT_INCOMPLETE" && reason!="INSUFFICIENT_MARKET_DATA"?
+         "NO_BARRIER_OBSERVED":"HORIZON_INCOMPLETE";
+   }
+}
+// Exact inherited Stage2 price/Weis/VWAP/glass predicates. Outputs are purely
+// descriptive: -1 original terminal cancellation; 0 waiting; 1 market-ready.
+// Original temporal/session cancellation precedes tick-data waits. Hard snapshot
+// applies only on an observed new M1 bar, as in ResponseBaseOnTick.
+int BookResearchOriginalMarket(const BookResearchCandidate &c,
+   const BookResearchMarketSample &x,string &reason)
+{
+   if(!c.original_eligible || (c.direction!=1 && c.direction!=-1))
+   { reason="ORIGINAL_MATRIX_INELIGIBLE";return -1; }
+   if(x.new_signal_bar && x.hard_snapshot_valid && (x.hard_contradiction ||
+      (x.hard_abs_valid && x.hard_abs_direction==-c.direction) ||
+      (x.hard_cont_valid && x.hard_cont_direction==-c.direction)))
+   { reason="ARMED_CANCEL_HARD";return -1; }
+   if(c.armed_at_sec>0 && x.server_sec-c.armed_at_sec>=c.timeout_sec)
+   { reason="TIMEOUT_ARMED";return -1; }
+   if(x.hhmm>=c.stop_entry_hhmm)
+   { reason="ABORT_SESSION_END";return -1; }
+   if(!x.context_causal || (x.new_signal_bar && !x.hard_snapshot_valid))
+   { reason="ORIGINAL_ENTRY_NOT_RECONSTRUCTABLE";return 0; }
+   if(!x.quote_available || !x.real_trade || !BookResearchFinite(x.last) || x.last<=0)
+   { reason="INSUFFICIENT_MARKET_DATA";return 0; }
+   if(c.direction*(x.last-c.trigger)<0) { reason="WAIT_BREAKOUT";return 0; }
+   double executable=c.direction==1?x.ask:x.bid;
+   if(!BookResearchFinite(executable) || executable<=0)
+   { reason="INSUFFICIENT_MARKET_DATA";return 0; }
+   double overshoot=BookResearchMax(c.direction*(x.last-c.trigger),c.direction*(executable-c.trigger));
+   if(overshoot>c.max_overshoot) { reason="OVERSHOOT_BLOCK";return -1; }
+   if(!x.weis_valid) { reason="WAIT_DATA:WEIS_CACHE";return 0; }
+   if(x.live_wave_direction!=c.direction) { reason="WAIT_LIVE_WAVE_DIRECTION";return 0; }
+   if(!BookResearchFinite(x.live_effort))
+   { reason="ORIGINAL_ENTRY_NOT_RECONSTRUCTABLE";return 0; }
+   if(x.live_effort<c.effort_min) { reason="WAIT_LIVE_WAVE_EFFORT";return 0; }
+   if(!x.vwap_valid || !BookResearchFinite(x.live_vwap) || x.live_vwap<=0 ||
+      !BookResearchFinite(x.sigma) || !BookResearchFinite(x.band_multiplier))
+   { reason="LATE_VWAP_INVALID";return -1; }
+   double upper=x.live_vwap+x.sigma*x.band_multiplier;
+   double lower=x.live_vwap-x.sigma*x.band_multiplier;
+   double range=upper-lower;
+   if(!BookResearchFinite(range) || range<=0) { reason="LATE_VWAP_INVALID";return -1; }
+   double pos=(x.last-lower)/range;
+   int abs_dir=pos>=c.inner_pct?-1:(pos<=1.0-c.inner_pct?1:0);
+   int cont_dir=abs_dir==0?0:-abs_dir;
+   bool mismatch=(c.route=="ABS"?abs_dir:cont_dir)!=c.direction;
+   if(c.late_direction_block && mismatch) { reason="LATE_DIRECTION_BLOCK";return -1; }
+   bool glass=pos>c.outer_pct || pos<1.0-c.outer_pct;
+   bool opposite_abs=(c.direction==-1 && pos<1.0-c.outer_pct) ||
+                     (c.direction==1 && pos>c.outer_pct);
+   if(c.route=="ABS"?opposite_abs:glass) { reason="LATE_GLASS_BLOCK";return -1; }
+   // Financial guards remain SEPARATE from this market proof.
+   reason="ORIGINAL_STAGE2_MARKET_READY";return 1;
+}
+void BookResearchPossibility(const BookResearchMarketSample &x,BookResearchTrack &t)
+{
+   t.financial_possible=x.financial_known && x.financial_possible;
+   if(!x.financial_known) t.possibility="FINANCIAL_STATE_NOT_RECONSTRUCTABLE";
+   else if(!x.financial_possible) t.possibility="REAL_STATE_OR_CAPITAL_COLLISION";
+   else if(!x.execution_terms_known) t.possibility="ORIGINAL_ENTRY_NOT_RECONSTRUCTABLE";
+   else if(!x.execution_terms_valid) t.possibility="ORIGINAL_SIZING_STOPS_MARGIN_BLOCK";
+   else if(x.book_required && !x.book_known) t.possibility="BOOK_NOT_RECONSTRUCTABLE";
+   else if(x.book_required && !x.book_confirmed) t.possibility="ORIGINAL_BOOK_NOT_CONFIRMED";
+   else t.possibility="ORIGINAL_DISPATCH_ELIGIBLE_OBSERVED";
+   t.eligibility_reconstructable=x.financial_known && x.execution_terms_known &&
+      (!x.book_required || x.book_known);
+}
+// A candidate and a possible executable quote are DIFFERENT observations.
+// The first eligible Stage2 quote freezes a causal trigger witness. Only the
+// next observed ordinal can supply an executable-price reference, after the
+// original predicates have been revalidated. No best-price search is performed.
+// Slippage/latency/costs/fill are unknown; a barrier is a QUOTE TOUCH, never PnL.
+void BookResearchObserveQuote(const BookResearchCandidate &c,const BookResearchMarketSample &x,
+   BookResearchTrack &t)
+{
+   if(t.stage==RESEARCH_FINISHED || x.now_msc<c.created_msc) return;
+   if(t.last_ordinal>0 && x.ordinal<=t.last_ordinal)
+   {
+      if(x.ordinal<t.last_ordinal || x.now_msc<t.last_msc) t.path_ambiguous=true;
+      return; // repeated callback identity, not equal price/time de-duplication
+   }
+   if(t.last_msc>0 && x.now_msc<t.last_msc) { t.path_ambiguous=true;return; }
+   if(!x.path_complete) t.path_ambiguous=true;
+   t.last_msc=x.now_msc;t.last_ordinal=x.ordinal;t.samples++;
+   bool quote=x.quote_available && BookResearchFinite(x.bid) && BookResearchFinite(x.ask) &&
+      x.bid>0 && x.ask>0 && x.ask>=x.bid;
+   if(!quote)t.path_ambiguous=true;
+   double exit_quote=c.direction==1?x.bid:x.ask;
+   if(quote)
+   {
+      if(t.origin_price<=0) t.origin_price=c.direction==1?x.ask:x.bid;
+      double move=c.direction*(exit_quote-t.origin_price);
+      if(move>t.origin_mfe) t.origin_mfe=move;
+      if(-move>t.origin_mae) t.origin_mae=-move;
+      for(int h=0;h<3;h++)
+      {
+         if(t.horizon_done[h]) continue;
+         // An event after a boundary cannot retroactively enter that horizon.
+         if(x.now_msc-c.created_msc<=BookResearchHorizonSec(h)*1000)
+         {
+            if(move>t.horizon_mfe[h]) t.horizon_mfe[h]=move;
+            if(-move>t.horizon_mae[h]) t.horizon_mae[h]=-move;
+         }
+         if(x.now_msc-c.created_msc>=BookResearchHorizonSec(h)*1000) t.horizon_done[h]=true;
+      }
+   }
+   if(t.stage==RESEARCH_TRACKING)
+   {
+      if(quote && x.now_msc-t.entry_msc<=900000)
+      {
+         double move=c.direction*(exit_quote-t.entry);
+         if(move>t.mfe) t.mfe=move;
+         if(-move>t.mae) t.mae=-move;
+         bool hit_sl=c.direction*(exit_quote-t.sl)<=0;
+         bool hit_tp=c.direction*(exit_quote-t.tp)>=0;
+         if(hit_sl && t.sl_touch_msc==0) t.sl_touch_msc=x.now_msc;
+         if(hit_tp && t.tp_touch_msc==0) t.tp_touch_msc=x.now_msc;
+         if(t.barrier=="PENDING")
+         {
+            if(hit_sl && hit_tp) { t.path_ambiguous=true;t.barrier="AMBIGUOUS_PATH"; }
+            else if(hit_sl) t.barrier=t.path_ambiguous?"AMBIGUOUS_PATH":"SL_QUOTE_TOUCH_FIRST";
+            else if(hit_tp) t.barrier=t.path_ambiguous?"AMBIGUOUS_PATH":"TP_QUOTE_TOUCH_FIRST";
+         }
+         t.last_exit_quote=exit_quote;
+      }
+      if(x.now_msc-t.entry_msc>=900000) BookResearchFinish(t,x.now_msc,"ENTRY_HORIZON_END");
+      return;
+   }
+   if(x.now_msc-c.created_msc>=900000)
+   { BookResearchFinish(t,x.now_msc,"CANDIDATE_HORIZON_END");return; }
+}
+void BookResearchStep(const BookResearchCandidate &c,const BookResearchMarketSample &x,
+   BookResearchTrack &t)
+{
+   long before=t.samples;
+   BookResearchObserveQuote(c,x,t);
+   if(t.samples==before || t.stage==RESEARCH_FINISHED || t.stage==RESEARCH_TRACKING) return;
+   bool quote=x.quote_available && BookResearchFinite(x.bid) && BookResearchFinite(x.ask) &&
+      x.bid>0 && x.ask>0 && x.ask>=x.bid;
+   if(t.original_ended) return; // trajectory still measured above after cancellation
+   if(!x.context_causal && c.original_eligible && x.real_trade && x.last>0 && c.direction*(x.last-c.trigger)>=0)t.context_incomplete=true;
+   BookResearchMarketSample evaluated=x;
+   bool crossed=t.last_signal_bar>0 && x.signal_bar>0 && x.signal_bar!=t.last_signal_bar;
+   evaluated.new_signal_bar=x.new_signal_bar || crossed || t.hard_context_pending;
+   if(evaluated.new_signal_bar && !x.hard_snapshot_valid){t.hard_context_pending=true;t.context_incomplete=true;}
+   else if(evaluated.new_signal_bar && x.hard_snapshot_valid)t.hard_context_pending=false;
+   if(x.signal_bar>0)t.last_signal_bar=x.signal_bar;
+   string original_reason;
+   int readiness=BookResearchOriginalMarket(c,evaluated,original_reason);
+   if(readiness<0)
+   { t.original_ended=true;t.reason=original_reason;t.original_reason=original_reason;return; }
+   if(readiness==0) { t.reason=original_reason;return; }
+   BookResearchMarketSample terms=x;
+   if(x.directional_terms)
+   {terms.execution_terms_known=c.direction==1?x.buy_terms_known:x.sell_terms_known;
+    terms.execution_terms_valid=c.direction==1?x.buy_terms_valid:x.sell_terms_valid;}
+   if(x.route_terms)
+   {int term_index=(c.direction==1?0:2)+((c.mode=="TURBO" || c.mode=="TURBO_CONT")?1:0);
+    terms.execution_terms_known=x.terms_known[term_index];terms.execution_terms_valid=x.terms_valid[term_index];}
+   BookResearchPossibility(terms,t);
+   if(!quote || x.ask-x.bid>c.max_spread) { t.reason="WAIT_SPREAD";return; }
+   if(t.stage==RESEARCH_WAIT_STAGE2)
+   {
+      t.stage=RESEARCH_STAGE2_READY;t.stage2_demonstrated=true;
+      t.stage2_msc=x.now_msc;t.stage2_ordinal=x.ordinal;
+      t.reason="ORIGINAL_STAGE2_MARKET_READY";return;
+   }
+   if(x.ordinal<=t.stage2_ordinal || x.now_msc<t.stage2_msc) return;
+   // Unknown financial/terms/book evidence cannot prove dispatch. A separately
+   // labelled MARKET reference can still measure the quoted path under frozen
+   // distance assumptions; it is excluded from executable-ORIGINAL statistics.
+   if(x.financial_known && !x.financial_possible)
+   { t.original_ended=true;t.reason=t.possibility;t.original_reason=t.reason;return; }
+   if(terms.execution_terms_known && !terms.execution_terms_valid)
+   { t.original_ended=true;t.reason=t.possibility;t.original_reason=t.reason;return; }
+   if(x.book_required && x.book_known && !x.book_confirmed)
+   { t.reason=t.possibility;return; }
+   double executable=c.direction==1?x.ask:x.bid;
+   // Preserve the two final dispatch guards descriptively, without journal use.
+   if(c.direction*(executable-c.trigger)<0)
+   { t.original_ended=true;t.reason="LATE_BREAKOUT_LOST";t.original_reason=t.reason;return; }
+   if(c.direction*(executable-c.trigger)>c.max_overshoot)
+   { t.original_ended=true;t.reason="LATE_OVERSHOOT_BLOCK";t.original_reason=t.reason;return; }
+   if(!BookResearchFinite(c.sl_distance) || !BookResearchFinite(c.tp_distance) ||
+      c.sl_distance<=0 || c.tp_distance<=0)
+   { t.reason="ORIGINAL_ENTRY_NOT_RECONSTRUCTABLE";return; }
+   double sl,tp;if(!BookResearchStops(c,executable,sl,tp))
+   {t.original_ended=true;t.reason="ORIGINAL_STOPS_UNRECONSTRUCTABLE";t.original_reason=t.reason;return;}
+   t.entry=executable;t.sl=sl;t.tp=tp;t.entry_msc=x.now_msc;t.entry_ordinal=x.ordinal;
+   t.entry_reference_available=true;t.stage=RESEARCH_TRACKING;t.barrier="PENDING";
+   t.dispatch_eligible_observed=!t.context_incomplete && t.eligibility_reconstructable && t.financial_possible &&
+      terms.execution_terms_valid && (!x.book_required || x.book_confirmed);
+   t.reason=t.dispatch_eligible_observed?"HYPOTHETICAL_EXECUTABLE_REFERENCE_NOT_A_FILL":
+      "CONDITIONAL_MARKET_REFERENCE_ORIGINAL_ENTRY_NOT_RECONSTRUCTABLE";
+}
+#endif
+// END_INCORPORATED Include/BookResearchCore.mqh
+// ORIGINAL_INCLUDE | #include "BookDecisionCore.mqh"
+// BEGIN_INCORPORATED Include/BookDecisionCore.mqh
+#ifndef BOOK_DECISION_CORE_MQH
+#define BOOK_DECISION_CORE_MQH
+// Prerequisites: BookDecisionInputs and BookMicroMath. Pure shared arithmetic:
+// no terminal API, logger, CSV queue, strategy mutation or financial dispatch.
+// Units: price progress/path/reclaim in asset ticks; effort in original integer
+// TRADE-volume units; timestamps/dwell in milliseconds; ranks/fractions unitless.
+// PREDICATES (also exercised in tests/decision_policy_cases.hpp):
+// Q: configured TRADE-flag interpretation AND ordered, complete known segment AND no invalid or
+// ambiguous rows AND KnownCoverage>=coverage AND observed_ms/duration>=observed.
+// Material: Q AND robust DeltaInterval AND abs(Delta)/V>=directional_share.
+// HighT: Material in -entry_direction AND effort_upper_ECDF>=effort_q.
+// Resistance_T = 1-max(midrank(NetProgress),midrank(MaxProgress)); require
+// Resistance_T>=1-result_q, using >=min_refs PRIOR same-duration/source/bucket/
+// direction/pressure-direction/tick-size samples within effort/factor..effort*factor.
+// Accept(d): Q AND causal frozen level AND observed_ms>0 AND both traded-volume
+// fraction and observed-dwell fraction beyond level+tolerance >=acceptance.
+// R: Accept(entry_d) AND NetProgress>=progress_ticks AND reclaim>=progress_ticks.
+// No low-progress requirement is applied to R, and its delta need not invert.
+// CONT forward: Material AND Accept(d) AND NetProgress>=progress_ticks AND
+// d*(window_VWAP-prior_window_VWAP)/tick_size>=progress_ticks AND conditional
+// net-result rank>result_q. High volume/ER alone never satisfies this predicate.
+// Rejection: Material in -d AND Accept(-d) AND opposite NetProgress>=progress_ticks
+// AND last beyond the ORIGINAL forward context level by progress_ticks. A pause
+// or opposite delta without these produced-price/acceptance terms cannot cancel.
+// Fresh: 0<=now-window_end<=2*window_sec*1000ms. Evidence epochs must match and
+// no evidence end can be in the future. These never extend the original timeout.
+#define BOOK_DECISION_HISTORY_CAP 384
+
+enum ENUM_BOOK_DECISION_ABS_SUBTYPE
+{
+   DECISION_ABS_STALL_STRICT=0,
+   DECISION_ABS_DIVERGENCE=1,
+   DECISION_ABS_FOLLOWING_REACTION=2
+};
+struct BookDecisionConfig
+{
+   int source,window_sec,min_refs;
+   double effort_q,result_q,coverage,directional_share,acceptance;
+   double observed_coverage,progress_ticks,effort_factor,tick_size;
+};
+struct BookDecisionWindow
+{
+   BookMicroFlow flow;
+   double vb,vs,vu,pv,previous_vwap;
+   long invalid,ambiguous,generation;
+   int source,bucket;
+   bool complete,ordered,source_ok,previous_available;
+};
+struct BookDecisionRanks
+{
+   bool available;
+   int count,conditional_count;
+   double effort_rank,net_rank,max_rank,resistance;
+};
+struct BookDecisionReference
+{
+   long from_msc,to_msc,duration,generation;
+   int source,bucket,direction,pressure_direction;
+   double tick_size,effort,net_progress,max_progress;
+};
+struct BookDecisionHistory
+{
+   BookDecisionReference samples[BOOK_DECISION_HISTORY_CAP];
+   int count,next;
+   long last_insert_to_msc;
+};
+struct BookDecisionEvidence
+{
+   bool have_test,have_reaction,have_forward,have_current;
+   BookDecisionWindow test,reaction,forward,current;
+   BookDecisionRanks test_ranks,forward_ranks,current_ranks;
+   long now_msc;
+   int original_subtype;
+};
+struct BookDecisionVerdict
+{
+   ENUM_BOOK_DECISION_RESULT result;
+   string reason;
+   double resistance,net_progress,max_progress,er;
+   double volume_acceptance,time_acceptance,pressure_share,coverage;
+   int conditional_count;
+};
+
+double BookDecisionMax(const double a,const double b) { return a>b?a:b; }
+double BookDecisionMin(const double a,const double b) { return a<b?a:b; }
+void BookDecisionConfigDefaults(BookDecisionConfig &c)
+{
+   c.source=DECISION_FLAGS_RUNTIME_QUALIFIED;c.window_sec=5;c.min_refs=16;
+   c.effort_q=0.80;c.result_q=0.20;c.coverage=0.80;
+   c.directional_share=0.20;c.acceptance=0.60;c.observed_coverage=0.50;
+   c.progress_ticks=1.0;c.effort_factor=2.0;c.tick_size=1.0;
+}
+// Runtime qualification establishes only structural usability of terminal trade
+// batches under the explicit BUY/SELL interpretation, never provider accuracy.
+bool BookDecisionSourceOperational(const int source)
+{ return source==DECISION_FLAGS_PROVIDER_ASSERTED || source==DECISION_FLAGS_RUNTIME_QUALIFIED; }
+bool BookDecisionConfigValid(const BookDecisionConfig &c)
+{
+   return (c.source==DECISION_FLAGS_UNVERIFIED || BookDecisionSourceOperational(c.source)) &&
+      c.window_sec>=1 && c.window_sec<=10 && c.min_refs>=4 && c.min_refs<=64 &&
+      BookMicroFinite(c.effort_q) && c.effort_q>0 && c.effort_q<1 &&
+      BookMicroFinite(c.result_q) && c.result_q>0 && c.result_q<1 &&
+      c.result_q<c.effort_q &&
+      BookMicroFinite(c.coverage) && c.coverage>0 && c.coverage<=1 &&
+      BookMicroFinite(c.directional_share) && c.directional_share>0 && c.directional_share<=1 &&
+      BookMicroFinite(c.acceptance) && c.acceptance>0.5 && c.acceptance<=1 &&
+      BookMicroFinite(c.observed_coverage) && c.observed_coverage>0 && c.observed_coverage<=1 &&
+      BookMicroFinite(c.progress_ticks) && c.progress_ticks>0 &&
+      BookMicroFinite(c.effort_factor) && c.effort_factor>=1 && c.effort_factor<=4 &&
+      BookMicroFinite(c.tick_size) && c.tick_size>0;
+}
+void BookDecisionRanksReset(BookDecisionRanks &r)
+{
+   r.available=false;r.count=0;r.conditional_count=0;
+   r.effort_rank=-1;r.net_rank=-1;r.max_rank=-1;r.resistance=-1;
+}
+void BookDecisionWindowReset(BookDecisionWindow &w,const long from_msc,const long to_msc,
+   const double level,const double tolerance,const long reference_msc,
+   const double previous_vwap,const bool previous_available,const int source,
+   const int bucket,const long generation)
+{
+   BookMicroFlowReset(w.flow,from_msc,to_msc,level,tolerance,reference_msc);
+   w.vb=0;w.vs=0;w.vu=0;w.pv=0;w.previous_vwap=previous_vwap;
+   w.invalid=0;w.ambiguous=0;w.generation=generation;w.source=source;w.bucket=bucket;
+   w.complete=false;w.ordered=true;w.source_ok=true;w.previous_available=previous_available;
+}
+void BookDecisionWindowTick(BookDecisionWindow &w,const double price,const double volume,
+   const long msc,const int aggressor)
+{
+   if(!BookMicroFinite(price) || !BookMicroFinite(volume) || price<=0 || volume<=0 ||
+      msc<w.flow.from_msc || msc>w.flow.to_msc)
+   { w.invalid++;return; }
+   if(w.flow.count>0 && msc<w.flow.last_msc)
+   { w.invalid++;w.ordered=false;return; }
+   if(aggressor!=1 && aggressor!=-1 && aggressor!=0 && aggressor!=2)
+   { w.invalid++;w.source_ok=false;return; }
+   // Identical prints, including identical millisecond, are distinct rows.
+   // Ordinal de-duplication belongs to the shared acquisition cursor, not price.
+   BookMicroFlowTick(w.flow,price,volume,msc);
+   if(aggressor==1) w.vb+=volume;
+   else if(aggressor==-1) w.vs+=volume;
+   else { w.vu+=volume;if(aggressor==2) w.ambiguous++; }
+   w.pv+=price*volume;
+   if(!BookMicroFinite(w.vb) || !BookMicroFinite(w.vs) || !BookMicroFinite(w.vu) ||
+      !BookMicroFinite(w.pv)) w.invalid++;
+}
+bool BookDecisionWindowQuality(const BookDecisionConfig &c,const BookDecisionWindow &w,
+   BookMicroMetrics &m,const int direction)
+{
+   BookMicroCompute(w.flow,w.vb,w.vs,w.vu,w.complete,w.invalid,c.tick_size,direction,
+      BookDecisionSourceOperational(c.source),m);
+   // Keep the inherited raw/observational implementation untouched. This
+   // operational copy uses the exact path ratio, without its roundoff clamp.
+   m.efficiency=0;m.er_available=false;
+   if(w.flow.path>0)
+   {
+      m.efficiency=BookMicroAbs(w.flow.last-w.flow.first)/w.flow.path;
+      m.er_available=BookMicroFinite(m.efficiency) && m.efficiency>=0 && m.efficiency<=1;
+   }
+   long duration=w.flow.to_msc-w.flow.from_msc+1;
+   // Operational coverage is observed adjacent traded time, never the count of
+   // occupied seconds. No trade and silence cannot manufacture dwell.
+   if(duration>0)
+      m.temporal_coverage=(double)w.flow.observed_msc/(double)duration;
+   return BookDecisionConfigValid(c) && BookDecisionSourceOperational(c.source) &&
+      w.source==c.source && w.source_ok && w.ordered && w.complete &&
+      w.invalid==0 && w.ambiguous==0 && w.flow.count>=2 && duration>0 &&
+      w.flow.from_msc>0 &&
+      m.available && m.ratio_available && m.known_coverage>=c.coverage &&
+      m.temporal_coverage>=c.observed_coverage && m.temporal_coverage<=1;
+}
+bool BookDecisionMaterial(const BookDecisionConfig &c,const BookMicroMetrics &m)
+{
+   return m.available && m.ratio_available && m.pressure_robust &&
+      m.delta_interval_excludes_zero && m.small_delta_scale>=c.directional_share;
+}
+bool BookDecisionAcceptance(const BookDecisionConfig &c,const BookMicroMetrics &m)
+{
+   return m.level_available && m.time_available &&
+      m.acceptance_volume_ratio>=c.acceptance && m.acceptance_time_ratio>=c.acceptance;
+}
+void BookDecisionHistoryReset(BookDecisionHistory &h)
+{ h.count=0;h.next=0;h.last_insert_to_msc=0; }
+void BookDecisionHistoryInsert(const BookDecisionConfig &c,BookDecisionHistory &h,
+   const BookDecisionWindow &w)
+{
+   if(w.flow.to_msc<=h.last_insert_to_msc ||
+      w.flow.to_msc-w.flow.from_msc+1!=(long)c.window_sec*1000) return;
+   BookMicroMetrics m;
+   if(!BookDecisionWindowQuality(c,w,m,1) || !BookDecisionMaterial(c,m)) return;
+   for(int d=-1;d<=1;d+=2)
+   {
+      BookMicroCompute(w.flow,w.vb,w.vs,w.vu,true,0,c.tick_size,d,true,m);
+      BookDecisionReference s;
+      s.from_msc=w.flow.from_msc;s.to_msc=w.flow.to_msc;
+      s.duration=w.flow.to_msc-w.flow.from_msc+1;s.generation=w.generation;
+      s.source=w.source;s.bucket=w.bucket;s.direction=d;
+      s.pressure_direction=m.pressure_direction;s.tick_size=c.tick_size;
+      s.effort=BookMicroAbs(m.delta);s.net_progress=m.net_ticks;s.max_progress=m.max_ticks;
+      h.samples[h.next]=s;h.next=(h.next+1)%BOOK_DECISION_HISTORY_CAP;
+      if(h.count<BOOK_DECISION_HISTORY_CAP) h.count++;
+   }
+   h.last_insert_to_msc=w.flow.to_msc;
+}
+void BookDecisionCompare(const BookDecisionConfig &c,const BookDecisionHistory &h,
+   const BookDecisionWindow &w,const int direction,BookDecisionRanks &r)
+{
+   BookDecisionRanksReset(r);
+   BookMicroMetrics m;
+   if(!BookDecisionWindowQuality(c,w,m,direction) || !BookDecisionMaterial(c,m) ||
+      w.flow.to_msc-w.flow.from_msc+1!=(long)c.window_sec*1000) return;
+   double nets[BOOK_DECISION_HISTORY_CAP],maxs[BOOK_DECISION_HISTORY_CAP];
+   double effort=BookMicroAbs(m.delta),upper=effort*c.effort_factor;
+   double lower=effort/c.effort_factor;
+   if(!BookMicroFinite(upper) || !BookMicroFinite(lower)) return;
+   int less_or_equal=0;
+   for(int i=0;i<h.count;i++)
+   {
+      BookDecisionReference s=h.samples[i];
+      if(s.to_msc>=w.flow.from_msc || s.duration!=(long)c.window_sec*1000 ||
+         s.source!=w.source || s.bucket!=w.bucket || s.generation!=w.generation || s.direction!=direction ||
+         s.pressure_direction!=m.pressure_direction || s.tick_size!=c.tick_size) continue;
+      if(s.effort<=effort) less_or_equal++;
+      r.count++;
+      if(s.effort>=lower && s.effort<=upper)
+      {
+         nets[r.conditional_count]=s.net_progress;
+         maxs[r.conditional_count]=s.max_progress;r.conditional_count++;
+      }
+   }
+   if(r.count<c.min_refs || r.conditional_count<c.min_refs) return;
+   // Upper empirical CDF expresses >= the configured effort quantile and lets
+   // a constant historical effort reach that empirical quantile without epsilon.
+   r.effort_rank=(double)less_or_equal/(double)r.count;
+   r.net_rank=BookMicroRank(m.net_ticks,nets,r.conditional_count);
+   r.max_rank=BookMicroRank(m.max_ticks,maxs,r.conditional_count);
+   r.resistance=1.0-BookDecisionMax(r.net_rank,r.max_rank);
+   r.available=true;
+}
+bool BookDecisionTestPredicate(const BookDecisionConfig &c,const BookDecisionWindow &w,
+   const BookDecisionRanks &r,const int entry_direction)
+{
+   BookMicroMetrics m;
+   return (entry_direction==1 || entry_direction==-1) &&
+      BookDecisionWindowQuality(c,w,m,-entry_direction) && BookDecisionMaterial(c,m) &&
+      m.pressure_direction==-entry_direction && w.flow.level_available &&
+      r.available && r.count>=c.min_refs && r.conditional_count>=c.min_refs &&
+      r.effort_rank>=c.effort_q && r.resistance>=1.0-c.result_q;
+}
+bool BookDecisionForwardPredicate(const BookDecisionConfig &c,const BookDecisionWindow &w,
+   const BookDecisionRanks &r,const int direction)
+{
+   BookMicroMetrics m;
+   if((direction!=1 && direction!=-1) || !BookDecisionWindowQuality(c,w,m,direction) ||
+      !BookDecisionMaterial(c,m) || !BookDecisionAcceptance(c,m) ||
+      !w.previous_available || !BookMicroFinite(w.previous_vwap) || w.previous_vwap<=0 ||
+      !r.available || r.conditional_count<c.min_refs || r.net_rank<=c.result_q) return false;
+   double current_vwap=w.pv/m.volume;
+   double migration=direction*(current_vwap-w.previous_vwap)/c.tick_size;
+   return BookMicroFinite(current_vwap) && BookMicroFinite(migration) &&
+      m.net_ticks>=c.progress_ticks && m.max_ticks>=c.progress_ticks &&
+      direction*(w.flow.last-w.flow.level)/c.tick_size>=c.progress_ticks &&
+      migration>=c.progress_ticks;
+}
+bool BookDecisionReactionPredicate(const BookDecisionConfig &c,const BookDecisionWindow &test,
+   const BookDecisionWindow &reaction,const int direction)
+{
+   BookMicroMetrics m;
+   return reaction.flow.from_msc>test.flow.to_msc &&
+      reaction.flow.reference_msc==test.flow.to_msc &&
+      reaction.flow.level==test.flow.level &&
+      BookDecisionWindowQuality(c,reaction,m,direction) && BookDecisionAcceptance(c,m) &&
+      m.net_ticks>=c.progress_ticks &&
+      direction*(reaction.flow.last-test.flow.level)/c.tick_size>=c.progress_ticks;
+}
+bool BookDecisionOppositePredicate(const BookDecisionConfig &c,const BookDecisionWindow &w,
+   const int entry_direction,const double frozen_context)
+{
+   BookMicroMetrics opposite;
+   return BookDecisionWindowQuality(c,w,opposite,-entry_direction) &&
+      BookDecisionMaterial(c,opposite) && opposite.pressure_direction==-entry_direction &&
+      BookDecisionAcceptance(c,opposite) && opposite.net_ticks>=c.progress_ticks &&
+      BookMicroFinite(frozen_context) && frozen_context>0 &&
+      entry_direction*(w.flow.last-frozen_context)/c.tick_size<=-c.progress_ticks;
+}
+void BookDecisionVerdictReset(BookDecisionVerdict &v)
+{
+   v.result=DECISION_DADOS_INSUFICIENTES;v.reason="UNAVAILABLE";
+   v.resistance=-1;v.net_progress=0;v.max_progress=0;v.er=0;
+   v.volume_acceptance=0;v.time_acceptance=0;v.pressure_share=0;v.coverage=0;
+   v.conditional_count=0;
+}
+void BookDecisionVerdictMetrics(const BookDecisionConfig &c,const BookDecisionWindow &w,
+   const int d,BookDecisionVerdict &v)
+{
+   BookMicroMetrics m;
+   BookDecisionWindowQuality(c,w,m,d);
+   v.net_progress=m.net_ticks;v.max_progress=m.max_ticks;v.er=m.efficiency;
+   v.volume_acceptance=m.acceptance_volume_ratio;v.time_acceptance=m.acceptance_time_ratio;
+   v.pressure_share=m.small_delta_scale;v.coverage=m.known_coverage;
+}
+bool BookDecisionFresh(const BookDecisionConfig &c,const BookDecisionWindow &w,const long now_msc)
+{
+   return now_msc>=w.flow.to_msc &&
+      now_msc-w.flow.to_msc<=(long)c.window_sec*2000;
+}
+void BookDecisionAssess(const BookDecisionConfig &c,const BookDecisionEvidence &e,
+   const int direction,const bool route_cont,const bool isArmedSignal,BookDecisionVerdict &v)
+{
+   BookDecisionVerdictReset(v);
+   if(!BookDecisionConfigValid(c)) { v.reason="CONFIG_INVALID";return; }
+   if(direction!=1 && direction!=-1) { v.reason="DIRECTION_INVALID";return; }
+   if(!BookDecisionSourceOperational(c.source))
+   { v.reason="AGGRESSOR_SOURCE_UNVERIFIED";return; }
+   if(!e.have_current) { v.reason="COLLECTION_NO_CURRENT_SEGMENT";return; }
+   if(e.current.generation<=0 || e.current.flow.to_msc>e.now_msc ||
+      (e.have_test && (e.test.generation!=e.current.generation || e.test.flow.to_msc>e.now_msc)) ||
+      (e.have_reaction && (e.reaction.generation!=e.current.generation || e.reaction.flow.to_msc>e.now_msc)) ||
+      (e.have_forward && (e.forward.generation!=e.current.generation || e.forward.flow.to_msc>e.now_msc)))
+   { v.reason="EVIDENCE_GENERATION_OR_TIME_MISMATCH";return; }
+   BookDecisionVerdictMetrics(c,e.current,direction,v);
+   BookMicroMetrics current;
+   if(!BookDecisionWindowQuality(c,e.current,current,direction))
+   {
+      if(e.current.invalid>0 || !e.current.ordered || !e.current.source_ok)
+         v.reason="COLLECTION_INTEGRITY";
+      else if(e.current.ambiguous>0) v.reason="AGGRESSOR_FLAGS_AMBIGUOUS";
+      else if(current.volume<=0) v.reason="NO_TRADED_ACTIVITY";
+      else v.reason="COVERAGE_OR_KNOWN_SEGMENT_INSUFFICIENT";
+      // Inactivity may refute an original strict stall, but absent/invalid data
+      // never masquerades as measured inactivity and never cancels an ARMED.
+      if(!route_cont && e.original_subtype==DECISION_ABS_STALL_STRICT &&
+         e.current.complete && e.current.source_ok && e.current.ordered &&
+         e.current.invalid==0 && e.current.ambiguous==0 && e.current.flow.count==0)
+      { v.result=DECISION_VETAR_CANDIDATO;v.reason="ABS_STALL_NO_TRADED_ACTIVITY"; }
+      return;
+   }
+   if(!BookDecisionFresh(c,e.current,e.now_msc))
+   { v.reason="CURRENT_SEGMENT_STALE";return; }
+   double context=e.current.flow.level;
+   if(route_cont && e.have_forward) context=e.forward.flow.level;
+   if(BookDecisionOppositePredicate(c,e.current,direction,context))
+   {
+      v.result=isArmedSignal?DECISION_INVALIDAR_ARMED:DECISION_VETAR_CANDIDATO;
+      v.reason=route_cont?"CONT_ACCEPTED_OPPOSITE_REJECTION":"ABS_ACCEPTED_OPPOSITE_CONTINUATION";
+      return;
+   }
+   if(route_cont)
+   {
+      if(BookDecisionForwardPredicate(c,e.current,e.current_ranks,direction))
+      {
+         v.result=DECISION_VALIDAR;v.reason="CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION";
+         v.conditional_count=e.current_ranks.conditional_count;return;
+      }
+      // Retained causal continuation evidence survives a small traded pause.
+      // It expires by evidence age, never extends original ARMED's timeout.
+      if(e.have_forward && BookDecisionFresh(c,e.forward,e.now_msc) &&
+         BookDecisionForwardPredicate(c,e.forward,e.forward_ranks,direction) &&
+         direction*(e.current.flow.last-e.forward.flow.level)>=-e.forward.flow.tolerance)
+      {
+         // A normal pause preserves the thesis, but equilibrium is not a new
+         // entry authorization. No fixed delay and no trend-end inference.
+         if(current.net_ticks<c.progress_ticks)
+         { v.result=DECISION_AGUARDAR;v.reason="CONT_NORMAL_PAUSE_WITHOUT_CURRENT_PROGRESS"; }
+         else
+         { v.result=DECISION_VALIDAR;v.reason="CONT_RETAINED_CONTEXT_CURRENT_PROGRESS"; }
+         v.conditional_count=e.forward_ranks.conditional_count;return;
+      }
+      if(!BookDecisionMaterial(c,current))
+      { v.result=DECISION_AGUARDAR;v.reason="CONT_BALANCED_OR_IMMATERIAL_PRESSURE";return; }
+      if(!e.current_ranks.available)
+      { v.result=DECISION_DADOS_INSUFICIENTES;v.reason="CONT_COMPARABLE_REFERENCES_INSUFFICIENT";return; }
+      v.result=DECISION_AGUARDAR;v.reason="CONT_PROGRESS_OR_ACCEPTANCE_UNDEFINED";return;
+   }
+   if(!e.have_test || !BookDecisionTestPredicate(c,e.test,e.test_ranks,direction) ||
+      !BookDecisionFresh(c,e.test,e.now_msc))
+   {
+      if(e.original_subtype==DECISION_ABS_STALL_STRICT && !BookDecisionMaterial(c,current))
+      { v.result=DECISION_VETAR_CANDIDATO;v.reason="ABS_STALL_NO_MATERIAL_DIRECTIONAL_PRESSURE";return; }
+      if(e.have_test && !e.test_ranks.available)
+      { v.reason="ABS_COMPARABLE_REFERENCES_INSUFFICIENT";return; }
+      v.result=DECISION_AGUARDAR;v.reason="ABS_CAUSAL_RESISTANCE_TEST_NOT_PROVEN";return;
+   }
+   v.resistance=e.test_ranks.resistance;v.conditional_count=e.test_ranks.conditional_count;
+   if(!e.have_reaction || !BookDecisionReactionPredicate(c,e.test,e.reaction,direction))
+   { v.result=DECISION_AGUARDAR;v.reason="ABS_RESISTANCE_AWAITING_REACTION";return; }
+   BookDecisionVerdictMetrics(c,e.reaction,direction,v);
+   v.result=DECISION_VALIDAR;
+   if(e.original_subtype==DECISION_ABS_DIVERGENCE) v.reason="ABS_DIVERGENCE_TEST_AND_REACTION";
+   else if(e.original_subtype==DECISION_ABS_FOLLOWING_REACTION) v.reason="ABS_FOLLOWING_REACTION_PROVEN_TEST";
+   else v.reason="ABS_STALL_STRICT_TEST_AND_REACTION";
+}
+#endif
+// END_INCORPORATED Include/BookDecisionCore.mqh
+// Research owns every mutable object below. The bridge supplies value snapshots;
+// no result is returned to an execution/financial predicate. Research failure
+// suspends only research. Disk I/O and quote acquisition occur ONLY on Timer.
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE | #include <fstream>
+// HOST_CPP_INACTIVE | #include <sstream>
+// HOST_CPP_INACTIVE | #include <iomanip>
+// HOST_CPP_INACTIVE | #include <cstdio>
+// HOST_CPP_INACTIVE | #include <vector>
+// HOST_CPP_INACTIVE | #endif
+#define BOOK_RESEARCH_TRACK_CAP 32
+#define BOOK_RESEARCH_QUEUE_CAP 128
+#define BOOK_RESEARCH_SAMPLE_CAP 256
+#define BOOK_RESEARCH_ROW_BYTES 65536
+#define BOOK_RESEARCH_TIMER_US 3000
+#define BOOK_RESEARCH_ROWS_PER_TIMER 16
+#define BOOK_RESEARCH_QUOTE_CAP 2048
+#define BOOK_RESEARCH_TRADE_CAP 8192
+#define BOOK_RESEARCH_MAX_FILE_BYTES 67108864
+#define BOOK_RESEARCH_SCHEMA "REMORA_RESEARCH_V1"
+struct BookResearchEnvelope { int file;string line; };
+struct BookResearchOpportunity
+{
+   bool used;BookResearchCandidate candidate;BookResearchTrack track;
+   string subtype,eligibility,last_result,last_reason,last_track_key;
+   bool operational_possible,collision,have_frozen_test,have_proven_reaction,actual_dispatch,dispatch_assessed;long pricing_quote_msc;
+   BookDecisionWindow frozen_test,proven_reaction;BookDecisionRanks frozen_test_ranks;long frozen_epoch;
+};
+BookResearchEnvelope gBookResearchQueue[BOOK_RESEARCH_QUEUE_CAP];
+BookResearchOpportunity gBookResearchOpportunities[BOOK_RESEARCH_TRACK_CAP];
+struct BookResearchPendingDispatch {string id;long pricing_quote_msc,server_msc;bool used;};
+BookResearchPendingDispatch gBookResearchPendingDispatches[BOOK_RESEARCH_TRACK_CAP];
+BookResearchMarketSample gBookResearchSamples[BOOK_RESEARCH_SAMPLE_CAP];
+MqlTick gBookResearchTrades[BOOK_RESEARCH_TRADE_CAP];
+MqlTick gBookResearchTradeTail[BOOK_RESEARCH_QUOTE_CAP];
+int gBookResearchQueueHead=0,gBookResearchQueueCount=0,gBookResearchSampleHead=0,gBookResearchSampleCount=0;
+int gBookResearchTradeHead=0,gBookResearchTradeCount=0,gBookResearchTailCount=0;
+long gBookResearchTradeFrom=0,gBookResearchCovered=0,gBookResearchCursor=0;
+long gBookResearchCollectionStart=0;
+struct BookResearchVwapMinute {long from_msc;double pv,volume;};
+BookResearchVwapMinute gBookResearchVwapMinutes[32];
+long gBookResearchReplayMSC=0,gBookResearchReplayOrdinal=0,gBookResearchTradeEpoch=0;
+int gBookResearchReplayAtMSC=0;
+bool gBookResearchReady=false,gBookResearchSuspended=false,gBookResearchTradeFault=false;
+string gBookResearchRun="",gBookResearchPreset="",gBookResearchCode="",gBookResearchAccount="",gBookResearchMagic="",gBookResearchServer="",gBookResearchTradingPreset="";
+string gBookResearchPrefix="",gBookResearchSuspendReason="",gBookResearchStateFile="";
+bool gBookResearchSuspensionReported=false,gBookResearchTradeFaultReported=false;
+int gBookResearchActualMode=0;
+BookDecisionConfig gBookResearchConfig;
+BookDecisionHistory gBookResearchHistory,gBookResearchReferenceContext;
+bool gBookResearchReferenceContextAvailable=false;
+long gBookResearchContextSignalGeneration=0,gBookResearchContextEpoch=0,gBookResearchContextVersion=0,gBookResearchContextCovered=0;
+long gBookResearchDataVersion=0;
+bool gBookResearchReferenceActual=true;
+struct BookResearchReferenceArchive {BookDecisionHistory history;long from,to,epoch;bool actual,used;};
+BookResearchReferenceArchive gBookResearchReferenceArchives[32];int gBookResearchArchiveNext=0;
+void BookResearchArchiveWindow(const BookDecisionWindow &window,const BookDecisionHistory &history,const bool actual)
+{
+   if(!Inp_ResearchEnable || !gBookResearchReady || gBookResearchSuspended)return;
+   int slot=gBookResearchArchiveNext;gBookResearchArchiveNext=(slot+1)%32;
+   gBookResearchReferenceArchives[slot].history=history;gBookResearchReferenceArchives[slot].from=window.flow.from_msc;
+   gBookResearchReferenceArchives[slot].to=window.flow.to_msc;gBookResearchReferenceArchives[slot].epoch=window.generation;
+   gBookResearchReferenceArchives[slot].actual=actual;gBookResearchReferenceArchives[slot].used=true;
+}
+void BookResearchArchiveOperationalWindow(const BookDecisionWindow &window,const BookDecisionHistory &history)
+{BookResearchArchiveWindow(window,history,true);}
+
+BookDecisionWindow gBookResearchWindow;
+struct BookResearchClosedWindow {BookDecisionWindow window;BookDecisionRanks buy_ranks,sell_ranks;};
+BookResearchClosedWindow gBookResearchClosed[16];
+int gBookResearchClosedHead=0,gBookResearchClosedCount=0;
+bool gBookResearchWindowOpen=false;
+ulong gBookResearchSequence=0,gBookResearchDropped=0,gBookResearchWritten=0,gBookResearchIOErrors=0;
+ulong gBookResearchTimerUS=0,gBookResearchTimerMaxUS=0,gBookResearchAcquisitionCalls=0,gBookResearchAcquisitionRows=0;
+long gBookResearchCandidateCount=0,gBookResearchRejectedCount=0,gBookResearchEligibleCount=0,gBookResearchOutcomeCount=0;
+long gBookResearchDay=-1,gBookResearchLastNow=0;
+
+string BookResearchNumber(const long value)
+{
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |    return std::to_string(value);
+// HOST_CPP_INACTIVE | #else
+   return (string)value;
+// HOST_CPP_INACTIVE | #endif
+}
+string BookResearchDecimal(const double value)
+{
+   if(!BookResearchFinite(value)) return "";
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |    std::ostringstream out;out<<std::setprecision(17)<<value;return out.str();
+// HOST_CPP_INACTIVE | #else
+   return StringFormat("%.17g",value);
+// HOST_CPP_INACTIVE | #endif
+}
+string BookResearchCell(string value)
+{
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |    size_t at=0;while((at=value.find('"',at))!=string::npos){value.insert(at,1,'"');at+=2;}
+// HOST_CPP_INACTIVE | #else
+   StringReplace(value,"\"","\"\"");
+// HOST_CPP_INACTIVE | #endif
+   return "\""+value+"\"";
+}
+string BookResearchBool(const bool value) { return value?"1":"0"; }
+void BookResearchAdd(string &row,const string value) { row+=","+BookResearchCell(value); }
+string BookResearchNames(const int file)
+{
+   if(file==0) return "Candidates";
+   if(file==1) return "Decisions";
+   if(file==2) return "Outcomes";
+   if(file==3) return "Health";
+   return "DailySummary";
+}
+string BookResearchHeader(const int file)
+{
+   string head="schema,event_id,run_id,candidate_id,observed_msc,symbol,account,server,magic,preset_hash,trading_preset_hash,code_hash";
+   if(file==0) return head+",eligibility,reason,route,subtype,direction,mode,signal_bar,armed_at,trigger,region_high,region_low,sl_distance,tp_distance,operational_possible,collision,context_json";
+   if(file==1) return head+",assessment_id,actual_mode,result,reason,evaluation_scope,phase,from_msc,to_msc,vbuy,vsell,vunknown,delta,directional_share,known_coverage,temporal_coverage,effort,effort_rank,net_rank,max_rank,resistance,eligible_refs,comparable_refs,bucket,net_ticks,max_ticks,acceptance_volume,acceptance_time,vwap_migration,evidence_age,window_epoch,signal_generation,integrity,source,batch_complete,ordered,invalid_count,ambiguous_count,known_imbalance,delta_low,delta_high,er,reference_msc,level,tolerance,first_price,last_price,total_path,observed_dwell_msc,reference_shortage,collector_epoch,data_version,acquired_through_msc,prior_history_count,same_bucket_count,matching_pressure_count,effort_comparable_count,prior_ref_min_msc,prior_ref_max_msc,prior_reference_members,reference_membership_status,operation_direction,measurement_direction,tick_size,total_path_ticks,pressure_direction";
+   if(file==2) return head+",status,reason,entry_msc,entry_price,sl,tp,sl_distance,tp_distance,mae,mfe,first_touch,touch_msc,horizon_sec,market_eligible,operational_possible,collision,position_id,order_id,deal_id,request_price,actual_price,gross,commission,fee,swap,net,mae_mfe_partial,exit_reason,accounting_resolved,pnl_confirmed,details,origin_mae,origin_mfe,h60_mae,h60_mfe,h60_complete,h300_mae,h300_mfe,h300_complete,h900_mae,h900_mfe,h900_complete,sl_touch_msc,tp_touch_msc,duration_seconds,dispatch_eligible_observed,reference_kind";
+   if(file==3) return head+",status,reason,queued,dropped,written,io_errors,timer_us,timer_max_us,acquisition_calls,acquisition_rows,memory_bound_bytes,details";
+   return head+",day,candidates,original_eligible,matrix_rejected,outcome_events,dropped,coverage,warning";
+}
+bool BookResearchEnabled() { return Inp_ResearchEnable && gBookResearchReady && !gBookResearchSuspended; }
+void BookResearchSuspend(const string reason)
+{
+   gBookResearchSuspended=true;gBookResearchSuspendReason=reason;
+   // No financial error code, execution retentative, Print spam or journal call.
+}
+string BookResearchBase(const string candidate_id,const string symbol,const long observed_msc)
+{
+   string row=BOOK_RESEARCH_SCHEMA;
+   BookResearchAdd(row,gBookResearchRun+"_"+BookResearchNumber((long)++gBookResearchSequence));
+   BookResearchAdd(row,gBookResearchRun);BookResearchAdd(row,candidate_id);
+   BookResearchAdd(row,BookResearchNumber(observed_msc));BookResearchAdd(row,symbol);
+   BookResearchAdd(row,gBookResearchAccount);BookResearchAdd(row,gBookResearchServer);BookResearchAdd(row,gBookResearchMagic);
+   BookResearchAdd(row,gBookResearchPreset);BookResearchAdd(row,gBookResearchTradingPreset);BookResearchAdd(row,gBookResearchCode);return row;
+}
+void BookResearchEnqueue(const int file,const string row)
+{
+   if(!BookResearchEnabled()) return;
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |    long size=(long)row.size();
+// HOST_CPP_INACTIVE | #else
+   long size=StringLen(row)*3;
+// HOST_CPP_INACTIVE | #endif
+   if(size>BOOK_RESEARCH_ROW_BYTES || gBookResearchQueueCount>=BOOK_RESEARCH_QUEUE_CAP)
+   { gBookResearchDropped++;BookResearchSuspend(size>BOOK_RESEARCH_ROW_BYTES?"ROW_CAPACITY":"QUEUE_CAPACITY");return; }
+   int slot=(gBookResearchQueueHead+gBookResearchQueueCount)%BOOK_RESEARCH_QUEUE_CAP;
+   gBookResearchQueue[slot].file=file;gBookResearchQueue[slot].line=row+"\r\n";gBookResearchQueueCount++;
+}
+bool BookResearchWrite(const string path,const string row,const string header)
+{
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |    std::ifstream check(path,std::ios::binary|std::ios::ate);
+// HOST_CPP_INACTIVE |    long bytes=check.good()?(long)check.tellg():0;check.close();
+// HOST_CPP_INACTIVE |    if(bytes>BOOK_RESEARCH_MAX_FILE_BYTES) return false;
+// HOST_CPP_INACTIVE |    std::ofstream out(path,std::ios::binary|std::ios::app);if(!out) return false;
+// HOST_CPP_INACTIVE |    if(bytes==0 && !header.empty())out<<header<<"\r\n";
+// HOST_CPP_INACTIVE |    out<<row;out.flush();bool good=out.good();out.close();return good;
+// HOST_CPP_INACTIVE | #else
+   ResetLastError();int handle=FileOpen(path,FILE_READ|FILE_WRITE|FILE_BIN|FILE_SHARE_READ);
+   if(handle==INVALID_HANDLE) return false;
+   ulong size=FileSize(handle);bool ok=GetLastError()==0 && size<=BOOK_RESEARCH_MAX_FILE_BYTES;
+   string payload=(size==0 && header!=""?header+"\r\n":"")+row;
+   uchar encoded[];int count=StringToCharArray(payload,encoded,0,WHOLE_ARRAY,CP_UTF8)-1;
+   if(count<=0 || !FileSeek(handle,0,SEEK_END)) ok=false;
+   if(ok){ResetLastError();uint written=FileWriteArray(handle,encoded,0,count);ok=written==(uint)count && GetLastError()==0;}
+   ResetLastError();FileFlush(handle);if(GetLastError()!=0)ok=false;
+   ResetLastError();FileClose(handle);if(GetLastError()!=0)ok=false;return ok;
+// HOST_CPP_INACTIVE | #endif
+}
+void BookResearchHealth(const string status,const string reason,const string details)
+{
+   string row=BookResearchBase("","",gBookResearchLastNow);
+   BookResearchAdd(row,status);BookResearchAdd(row,reason);
+   BookResearchAdd(row,BookResearchNumber(gBookResearchQueueCount));BookResearchAdd(row,BookResearchNumber((long)gBookResearchDropped));
+   BookResearchAdd(row,BookResearchNumber((long)gBookResearchWritten));BookResearchAdd(row,BookResearchNumber((long)gBookResearchIOErrors));
+   BookResearchAdd(row,BookResearchNumber((long)gBookResearchTimerUS));BookResearchAdd(row,BookResearchNumber((long)gBookResearchTimerMaxUS));
+   BookResearchAdd(row,BookResearchNumber((long)gBookResearchAcquisitionCalls));BookResearchAdd(row,BookResearchNumber((long)gBookResearchAcquisitionRows));
+   BookResearchAdd(row,"16777216");BookResearchAdd(row,details);BookResearchEnqueue(3,row);
+}
+void BookResearchDaily(const long day)
+{
+   string row=BookResearchBase("","",gBookResearchLastNow);BookResearchAdd(row,BookResearchNumber(day));
+   BookResearchAdd(row,BookResearchNumber(gBookResearchCandidateCount));BookResearchAdd(row,BookResearchNumber(gBookResearchEligibleCount));
+   BookResearchAdd(row,BookResearchNumber(gBookResearchRejectedCount));BookResearchAdd(row,BookResearchNumber(gBookResearchOutcomeCount));
+   BookResearchAdd(row,BookResearchNumber((long)gBookResearchDropped));
+   BookResearchAdd(row,gBookResearchDropped>0?"INCOMPLETE":"OBSERVED_CALLBACKS_AND_VERIFIED_QUOTE_SEGMENTS");
+   BookResearchAdd(row,"Descriptive only; quote barriers are not fills or portfolio returns; use offline denominators and explicit costs");
+   BookResearchEnqueue(4,row);
+}
+
+// Prefix verification uses ordinal positions, never equality as identity. Two
+// identical rows at one millisecond remain two trades. Bounds cannot certify a
+// full timestamp group when the query has hit its capacity.
+bool BookResearchSameTick(const MqlTick &a,const MqlTick &b)
+{
+   return a.time==b.time && a.time_msc==b.time_msc && a.bid==b.bid && a.ask==b.ask &&
+      a.last==b.last && a.volume==b.volume && a.volume_real==b.volume_real && a.flags==b.flags;
+}
+void BookResearchOpenWindow(const long from,const double level,const long reference,
+   const double previous,const bool previous_available)
+{
+   long width=(long)gBookResearchConfig.window_sec*1000;
+   BookDecisionWindowReset(gBookResearchWindow,from,from+width-1,level,gBookResearchConfig.tick_size,
+      reference,previous,previous_available,gBookResearchConfig.source,(int)((from/1800000)%48),gBookResearchTradeEpoch);
+   gBookResearchWindowOpen=true;
+}
+void BookResearchCloseWindow()
+{
+   BookResearchClosedWindow item;item.window=gBookResearchWindow;item.window.complete=true;
+   BookDecisionCompare(gBookResearchConfig,gBookResearchHistory,item.window,1,item.buy_ranks);
+   BookDecisionCompare(gBookResearchConfig,gBookResearchHistory,item.window,-1,item.sell_ranks);
+   int slot=(gBookResearchClosedHead+gBookResearchClosedCount)%16;
+   if(gBookResearchClosedCount==16){slot=gBookResearchClosedHead;gBookResearchClosedHead=(slot+1)%16;}
+   else gBookResearchClosedCount++;
+   gBookResearchClosed[slot]=item;
+   // CURRENT sample is compared before entering the historical reference set.
+   BookResearchArchiveWindow(item.window,gBookResearchHistory,false);
+   BookDecisionHistoryInsert(gBookResearchConfig,gBookResearchHistory,item.window);
+   double volume=item.window.vb+item.window.vs+item.window.vu;
+   BookResearchOpenWindow(item.window.flow.to_msc+1,item.window.flow.last,item.window.flow.last_msc,
+      volume>0?item.window.pv/volume:0,volume>0);
+}
+bool BookResearchAdvance(const long through)
+{
+   int count=0;
+   while(gBookResearchWindowOpen && through>gBookResearchWindow.flow.to_msc)
+   {
+      if(++count>64){gBookResearchTradeFault=true;BookResearchHealth("DATA_GAP","REGULAR_WINDOW_GAP","");return false;}
+      BookResearchCloseWindow();
+   }
+   return true;
+}
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE | void BookResearchRuntimeIngest(ulong from,ulong to,const MqlTick ticks[],int copied)
+// HOST_CPP_INACTIVE | #else
+void BookResearchRuntimeIngest(ulong from,ulong to,const MqlTick &ticks[],int copied)
+// HOST_CPP_INACTIVE | #endif
+{
+   if(!BookResearchEnabled() || gBookResearchTradeFault || (long)to<gBookResearchCovered) return;
+   if(copied<0 || copied>BOOK_RESEARCH_TRADE_CAP || to<from ||
+      (long)from>gBookResearchCovered+1){gBookResearchTradeFault=true;return;}
+   int seen=0;long previous=-1;
+   for(int i=0;i<copied;i++)
+   {
+      const MqlTick q=ticks[i];
+      if(q.time_msc<(long)from || q.time_msc>(long)to || q.time_msc<previous ||
+         q.time!=q.time_msc/1000 || !BookResearchFinite(q.last) || q.last<=0 || q.volume==0 ||
+         q.volume>9007199254740992 || !BookResearchFinite(q.volume_real) || q.volume_real<0 ||
+         (q.flags&(TICK_FLAG_LAST|TICK_FLAG_VOLUME|TICK_FLAG_BUY|TICK_FLAG_SELL))==0)
+      {gBookResearchTradeFault=true;return;}
+      previous=q.time_msc;
+      if(q.time_msc==gBookResearchCursor)
+      {
+         if(seen<gBookResearchTailCount && !BookResearchSameTick(q,gBookResearchTradeTail[seen]))
+         {gBookResearchTradeFault=true;return;}
+         seen++;
+      }
+   }
+   if(gBookResearchTailCount>0 && (long)from<=gBookResearchCursor && (long)to>=gBookResearchCursor && seen<gBookResearchTailCount)
+   {gBookResearchTradeFault=true;return;}
+   int ordinal=0;long group=-1;
+   for(int i=0;i<copied;i++)
+   {
+      const MqlTick q=ticks[i];
+      if(q.time_msc<gBookResearchCursor || q.time_msc<gBookResearchTradeFrom) continue;
+      if(q.time_msc!=group){group=q.time_msc;ordinal=0;}ordinal++;
+      if(q.time_msc==gBookResearchCursor && ordinal<=gBookResearchTailCount)continue;
+      if(q.time_msc<gBookResearchCovered || !BookResearchAdvance(q.time_msc))
+      {gBookResearchTradeFault=true;return;}
+      if(q.time_msc!=gBookResearchCursor){gBookResearchCursor=q.time_msc;gBookResearchTailCount=0;}
+      if(gBookResearchTailCount>=BOOK_RESEARCH_QUOTE_CAP){gBookResearchTradeFault=true;return;}
+      gBookResearchTradeTail[gBookResearchTailCount++]=q;
+      int slot=(gBookResearchTradeHead+gBookResearchTradeCount)%BOOK_RESEARCH_TRADE_CAP;
+      if(gBookResearchTradeCount==BOOK_RESEARCH_TRADE_CAP)
+      {slot=gBookResearchTradeHead;gBookResearchTradeFrom=gBookResearchTrades[slot].time_msc+1;gBookResearchTradeHead=(slot+1)%BOOK_RESEARCH_TRADE_CAP;}
+      else gBookResearchTradeCount++;
+      gBookResearchTrades[slot]=q;gBookResearchDataVersion++;
+      long minute=(q.time_msc/60000)*60000;int minute_slot=(int)((minute/60000)%32);
+      if(gBookResearchVwapMinutes[minute_slot].from_msc!=minute)
+      {gBookResearchVwapMinutes[minute_slot].from_msc=minute;gBookResearchVwapMinutes[minute_slot].pv=0;gBookResearchVwapMinutes[minute_slot].volume=0;}
+      gBookResearchVwapMinutes[minute_slot].pv+=q.last*(double)q.volume;
+      gBookResearchVwapMinutes[minute_slot].volume+=(double)q.volume;
+      bool buy=(q.flags&TICK_FLAG_BUY)!=0,sell=(q.flags&TICK_FLAG_SELL)!=0;
+      BookDecisionWindowTick(gBookResearchWindow,q.last,(double)q.volume,q.time_msc,buy?(sell?2:1):(sell?-1:0));
+   }
+   if((long)to>gBookResearchCovered)gBookResearchDataVersion++;
+   gBookResearchCovered=(long)to;BookResearchAdvance(gBookResearchCovered);
+}
+// Borrowed batches are copied, then processed by the timer. Oversized borrowed
+// windows are skipped explicitly; the bounded incremental cursor fills suffixes.
+MqlTick gBookResearchBorrowed[BOOK_RESEARCH_QUOTE_CAP];
+int gBookResearchBorrowedCount=0;ulong gBookResearchBorrowedFrom=0,gBookResearchBorrowedTo=0;
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE | void BookResearchRuntimeBorrow(ulong from,ulong to,const MqlTick ticks[],int copied)
+// HOST_CPP_INACTIVE | #else
+void BookResearchRuntimeBorrow(ulong from,ulong to,const MqlTick &ticks[],int copied)
+// HOST_CPP_INACTIVE | #endif
+{
+   if(!BookResearchEnabled())return;
+   if(copied<0 || copied>BOOK_RESEARCH_QUOTE_CAP || gBookResearchBorrowedCount>0)return;
+   for(int i=0;i<copied;i++)gBookResearchBorrowed[i]=ticks[i];
+   gBookResearchBorrowedCount=copied;gBookResearchBorrowedFrom=from;gBookResearchBorrowedTo=to;
+}
+bool BookResearchRuntimeLiveVwap(const double base_pv,const double base_volume,
+   const long from,const long through,double &value)
+{
+   value=0;
+   if(!BookResearchEnabled() || gBookResearchTradeFault || from<gBookResearchCollectionStart ||
+      through>gBookResearchCovered || from<=0 || base_volume<=0 || through<gBookResearchTradeFrom)return false;
+   double pv=base_pv,volume=base_volume;
+   // Closed-cache VWAP bases are M1 boundaries. Minute aggregates retain the
+   // exact ordinal-ingested suffix even after old raw trades leave the tape.
+   if(from%60000==0)
+   {
+      long last_minute=(through/60000)*60000;
+      if(last_minute-from>=32*60000)return false;
+      for(int k=0;k<32;k++)
+      {BookResearchVwapMinute bucket=gBookResearchVwapMinutes[k];
+       if(bucket.from_msc>=from && bucket.from_msc<=last_minute){pv+=bucket.pv;volume+=bucket.volume;}}
+      // Data acquired later is subtracted using retained raw rows; never use
+      // its price/volume to reconstruct an earlier callback's live VWAP.
+      for(int i=0;i<gBookResearchTradeCount;i++)
+      {MqlTick q=gBookResearchTrades[(gBookResearchTradeHead+i)%BOOK_RESEARCH_TRADE_CAP];
+       if(q.time_msc>through && q.time_msc<last_minute+60000){pv-=q.last*(double)q.volume;volume-=(double)q.volume;}}
+   }
+   else
+   {
+      if(from<gBookResearchTradeFrom)return false;
+      for(int i=0;i<gBookResearchTradeCount;i++)
+      {MqlTick q=gBookResearchTrades[(gBookResearchTradeHead+i)%BOOK_RESEARCH_TRADE_CAP];
+       if(q.time_msc<from || q.time_msc>through)continue;pv+=q.last*(double)q.volume;volume+=(double)q.volume;}
+   }
+   if(volume<=0 || !BookResearchFinite(pv) || !BookResearchFinite(volume))return false;
+   value=pv/volume;return value>0;
+}
+int BookResearchFind(const string id)
+{
+   for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++)if(gBookResearchOpportunities[i].used &&
+      gBookResearchOpportunities[i].candidate.id==id)return i;
+   return -1;
+}
+// Immediate memory-only witness prevents a delayed disk queue from treating
+// the candidate's own just-dispatched position as a competing hypothetical.
+void BookResearchMarkActualDispatch(const string id,const long pricing_quote_msc,const long server_msc)
+{
+   if(!BookResearchEnabled())return;
+   int index=BookResearchFind(id);
+   if(index>=0)
+   {
+      gBookResearchOpportunities[index].actual_dispatch=true;
+      gBookResearchOpportunities[index].pricing_quote_msc=pricing_quote_msc;
+      gBookResearchOpportunities[index].track.stage2_demonstrated=true;
+      gBookResearchOpportunities[index].track.original_ended=true;
+      gBookResearchOpportunities[index].track.original_reason="ACTUAL_DISPATCH_ALREADY_OBSERVED";
+      gBookResearchOpportunities[index].track.reason="ACTUAL_DISPATCH_ALREADY_OBSERVED";return;
+   }
+   for(int k=0;k<BOOK_RESEARCH_TRACK_CAP;k++)
+      if(!gBookResearchPendingDispatches[k].used || gBookResearchPendingDispatches[k].id==id)
+      {gBookResearchPendingDispatches[k].used=true;gBookResearchPendingDispatches[k].id=id;
+       gBookResearchPendingDispatches[k].pricing_quote_msc=pricing_quote_msc;gBookResearchPendingDispatches[k].server_msc=server_msc;return;}
+   gBookResearchDropped++;BookResearchSuspend("PENDING_DISPATCH_ID_CAPACITY");
+}
+void BookResearchRuntimeCandidate(const BookResearchCandidate &candidate,const string subtype,
+   const string eligibility,const string reason,const string frozen_context,const bool operational_possible)
+{
+   if(!BookResearchEnabled() || BookResearchFind(candidate.id)>=0)return;
+   int slot=-1;bool collision=false;
+   for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++)
+   {
+      if(!gBookResearchOpportunities[i].used || gBookResearchOpportunities[i].track.stage==RESEARCH_FINISHED)
+      {if(slot<0)slot=i;}
+      else if(gBookResearchOpportunities[i].track.entry_reference_available)collision=true;
+   }
+   if(slot<0){gBookResearchDropped++;BookResearchSuspend("TRACK_CAPACITY");return;}
+   BookResearchOpportunity o;ZeroMemory(o);o.used=true;o.candidate=candidate;o.subtype=subtype;o.eligibility=eligibility;
+   o.operational_possible=operational_possible;o.collision=collision;o.last_result="";o.last_reason="";o.last_track_key="";
+   BookResearchTrackReset(o.track);o.have_frozen_test=false;o.have_proven_reaction=false;o.frozen_epoch=0;gBookResearchOpportunities[slot]=o;
+   for(int k=0;k<BOOK_RESEARCH_TRACK_CAP;k++)if(gBookResearchPendingDispatches[k].used && gBookResearchPendingDispatches[k].id==candidate.id)
+   {BookResearchMarkActualDispatch(candidate.id,gBookResearchPendingDispatches[k].pricing_quote_msc,gBookResearchPendingDispatches[k].server_msc);gBookResearchPendingDispatches[k].used=false;break;}
+
+   gBookResearchCandidateCount++;
+   if(candidate.original_eligible)gBookResearchEligibleCount++;else gBookResearchRejectedCount++;
+   string row=BookResearchBase(candidate.id,candidate.symbol,candidate.created_msc);
+   BookResearchAdd(row,eligibility);BookResearchAdd(row,reason);BookResearchAdd(row,candidate.route);
+   BookResearchAdd(row,subtype);BookResearchAdd(row,BookResearchNumber(candidate.direction));BookResearchAdd(row,candidate.mode);
+   BookResearchAdd(row,BookResearchNumber(candidate.signal_bar));BookResearchAdd(row,BookResearchNumber(candidate.armed_at_sec));
+   BookResearchAdd(row,candidate.original_eligible?BookResearchDecimal(candidate.trigger):"");BookResearchAdd(row,candidate.original_eligible?BookResearchDecimal(candidate.region_high):"");BookResearchAdd(row,candidate.original_eligible?BookResearchDecimal(candidate.region_low):"");
+   BookResearchAdd(row,BookResearchDecimal(candidate.sl_distance));BookResearchAdd(row,BookResearchDecimal(candidate.tp_distance));
+   BookResearchAdd(row,BookResearchBool(operational_possible));BookResearchAdd(row,BookResearchBool(collision));
+   BookResearchAdd(row,frozen_context);BookResearchEnqueue(0,row);
+   if(!candidate.original_eligible)
+   {gBookResearchOpportunities[slot].track.original_ended=true;gBookResearchOpportunities[slot].track.original_reason=reason;}
+}
+string BookResearchResult(const ENUM_BOOK_DECISION_RESULT result)
+{
+   if((int)result<0)return "NOT_EVALUATED";
+   if(result==DECISION_VALIDAR)return "VALIDAR";if(result==DECISION_AGUARDAR)return "AGUARDAR";
+   if(result==DECISION_VETAR_CANDIDATO)return "VETAR_CANDIDATO";if(result==DECISION_INVALIDAR_ARMED)return "INVALIDAR_ARMED";
+   return "DADOS_INSUFICIENTES";
+}
+// Read-only copied reference membership is attached on Timer, never by the
+// operational predicate or dispatch. An unavailable membership stays unknown.
+void BookResearchRuntimeReferenceContext(const BookDecisionHistory &history,const bool available,
+   const long signal_generation,const long epoch,const long data_version,const long covered,const bool actual=true)
+{
+   if(!BookResearchEnabled())return;
+   gBookResearchReferenceContextAvailable=available;gBookResearchReferenceActual=actual;
+   if(available)gBookResearchReferenceContext=history;
+   gBookResearchContextSignalGeneration=signal_generation;gBookResearchContextEpoch=epoch;
+   gBookResearchContextVersion=data_version;gBookResearchContextCovered=covered;
+}
+void BookResearchReferenceCells(const BookDecisionWindow &w,const BookDecisionRanks &r,const int direction,
+   const bool have,const string phase,string &shortage,string &cells)
+{
+   shortage="REFERENCE_MEMBERSHIP_UNAVAILABLE";cells="";
+   int prior=0,bucket=0,pressure=0,comparable=0;long oldest=0,newest=0;string members="";
+   BookDecisionHistory membership;bool have_membership=gBookResearchReferenceContextAvailable;string membership_status="ASSESSMENT_SNAPSHOT";
+   if(have_membership)membership=gBookResearchReferenceContext;
+   for(int k=0;k<32;k++)if(gBookResearchReferenceArchives[k].used && gBookResearchReferenceArchives[k].actual==gBookResearchReferenceActual &&
+      gBookResearchReferenceArchives[k].from==w.flow.from_msc && gBookResearchReferenceArchives[k].to==w.flow.to_msc &&
+      gBookResearchReferenceArchives[k].epoch==w.generation)
+   {membership=gBookResearchReferenceArchives[k].history;have_membership=true;membership_status="EXACT_WINDOW_CLOSE_SNAPSHOT";break;}
+
+   BookMicroMetrics m;ZeroMemory(m);int geometry=phase=="T"?-direction:direction;
+   bool quality=have && BookDecisionWindowQuality(gBookResearchConfig,w,m,geometry);
+   if(have && have_membership && phase!="R")
+   {
+      double effort=BookResearchAbs(w.vb-w.vs),low=effort/gBookResearchConfig.effort_factor,high=effort*gBookResearchConfig.effort_factor;
+      for(int k=0;k<membership.count;k++)
+      {
+         BookDecisionReference item=membership.samples[k];
+         if(item.to_msc>=w.flow.from_msc || item.generation!=w.generation || item.source!=w.source ||
+            item.tick_size!=gBookResearchConfig.tick_size || item.duration!=(long)gBookResearchConfig.window_sec*1000 || item.direction!=geometry)continue;
+         prior++;if(item.bucket!=w.bucket)continue;bucket++;
+         if(item.pressure_direction!=m.pressure_direction)continue;pressure++;
+         if(item.effort<low || item.effort>high)continue;comparable++;
+         if(oldest==0 || item.from_msc<oldest)oldest=item.from_msc;if(item.to_msc>newest)newest=item.to_msc;
+         if(members!="")members+=";";
+         members+=BookResearchNumber(item.from_msc)+":"+BookResearchNumber(item.to_msc)+":"+BookResearchNumber(item.source)+":"+
+            BookResearchNumber(item.bucket)+":"+BookResearchNumber(item.direction)+":"+BookResearchNumber(item.pressure_direction)+":"+
+            BookResearchDecimal(item.tick_size)+":"+BookResearchDecimal(item.effort)+":"+BookResearchDecimal(item.net_progress)+":"+
+            BookResearchDecimal(item.max_progress)+":"+BookResearchNumber(item.generation);
+      }
+      if(!quality)shortage=w.ambiguous>0?"AGGRESSOR_FLAGS_AMBIGUOUS":(w.invalid>0 || !w.ordered || !w.source_ok?"INVALID_DATA":"COVERAGE_INSUFFICIENT");
+      else if(!BookDecisionMaterial(gBookResearchConfig,m))shortage="IMMATERIAL_DIRECTIONAL_PRESSURE";
+      else if(prior==0)shortage="NO_PRIOR_HISTORY";
+      else if(bucket==0)shortage="NEW_BUCKET_NO_PRIOR_REFERENCES";
+      else if(pressure<gBookResearchConfig.min_refs && bucket>=gBookResearchConfig.min_refs)shortage="MINORITY_PRESSURE_REFERENCE_SHORTAGE";
+      else if(pressure<gBookResearchConfig.min_refs)shortage="PRIOR_HISTORY_REFERENCE_SHORTAGE";
+      else if(comparable<gBookResearchConfig.min_refs)shortage="EFFORT_NOT_COMPARABLE";
+      else shortage="SUFFICIENT";
+   }
+   if(!have)shortage="NO_WINDOW";else if(phase=="R")shortage="NOT_APPLICABLE_REACTION";
+   BookResearchAdd(cells,gBookResearchContextEpoch>0?BookResearchNumber(gBookResearchContextEpoch):"");
+   BookResearchAdd(cells,gBookResearchContextVersion>0?BookResearchNumber(gBookResearchContextVersion):"");
+   BookResearchAdd(cells,gBookResearchContextCovered>0?BookResearchNumber(gBookResearchContextCovered):"");
+   BookResearchAdd(cells,have && have_membership && phase!="R"?BookResearchNumber(prior):"");
+   BookResearchAdd(cells,have && have_membership && phase!="R"?BookResearchNumber(bucket):"");
+   BookResearchAdd(cells,have && have_membership && phase!="R"?BookResearchNumber(pressure):"");
+   BookResearchAdd(cells,have && have_membership && phase!="R"?BookResearchNumber(comparable):"");
+   BookResearchAdd(cells,oldest>0?BookResearchNumber(oldest):"");BookResearchAdd(cells,newest>0?BookResearchNumber(newest):"");BookResearchAdd(cells,members);
+   BookResearchAdd(cells,!have || phase=="R"?"NOT_APPLICABLE":(!have_membership?"MEMBERSHIP_UNAVAILABLE":
+      (r.available && (r.count!=pressure || r.conditional_count!=comparable)?"MEMBERSHIP_DOES_NOT_RECONSTRUCT_STORED_RANKS":membership_status)));
+   BookResearchAdd(cells,BookResearchNumber(direction));BookResearchAdd(cells,BookResearchNumber(geometry));
+   BookResearchAdd(cells,BookResearchDecimal(gBookResearchConfig.tick_size));
+   BookResearchAdd(cells,have && gBookResearchConfig.tick_size>0?BookResearchDecimal(w.flow.path/gBookResearchConfig.tick_size):"");
+   BookResearchAdd(cells,have && m.available?BookResearchNumber(m.pressure_direction):"");
+}
+void BookResearchDecisionRow(const string id,const string symbol,const BookDecisionEvidence &e,
+   const BookDecisionVerdict &v,const int direction,const string scope,const string phase,
+   const bool have,const BookDecisionWindow &w,const BookDecisionRanks &r,const string assessment)
+{
+   string row=BookResearchBase(id,symbol,e.now_msc);BookResearchAdd(row,assessment);
+   BookResearchAdd(row,gBookResearchActualMode==DECISION_ORIGINAL?"ORIGINAL":"APLICAR");
+   BookResearchAdd(row,BookResearchResult(v.result));BookResearchAdd(row,v.reason);BookResearchAdd(row,scope);BookResearchAdd(row,phase);
+   BookMicroMetrics m;ZeroMemory(m);bool quality=false;
+   int geometry=phase=="T"?-direction:direction;
+   if(have)quality=BookDecisionWindowQuality(gBookResearchConfig,w,m,geometry);
+   BookResearchAdd(row,have?BookResearchNumber(w.flow.from_msc):"");BookResearchAdd(row,have?BookResearchNumber(w.flow.to_msc):"");
+   BookResearchAdd(row,have?BookResearchDecimal(w.vb):"");BookResearchAdd(row,have?BookResearchDecimal(w.vs):"");
+   BookResearchAdd(row,have?BookResearchDecimal(w.vu):"");BookResearchAdd(row,have?BookResearchDecimal(w.vb-w.vs):"");
+   BookResearchAdd(row,have && m.available?BookResearchDecimal(m.small_delta_scale):"");
+   BookResearchAdd(row,have && m.ratio_available?BookResearchDecimal(m.known_coverage):"");
+   BookResearchAdd(row,have && m.available?BookResearchDecimal(m.temporal_coverage):"");
+   BookResearchAdd(row,have?BookResearchDecimal(BookResearchAbs(w.vb-w.vs)):"");
+   BookResearchAdd(row,r.available?BookResearchDecimal(r.effort_rank):"");BookResearchAdd(row,r.available?BookResearchDecimal(r.net_rank):"");
+   BookResearchAdd(row,r.available?BookResearchDecimal(r.max_rank):"");BookResearchAdd(row,r.available?BookResearchDecimal(r.resistance):"");
+   BookResearchAdd(row,have && phase!="R"?BookResearchNumber(r.count):"");BookResearchAdd(row,have && phase!="R"?BookResearchNumber(r.conditional_count):"");
+   BookResearchAdd(row,have?BookResearchNumber(w.bucket):"");BookResearchAdd(row,quality?BookResearchDecimal(m.net_ticks):"");
+   BookResearchAdd(row,quality?BookResearchDecimal(m.max_ticks):"");BookResearchAdd(row,quality && m.level_available?BookResearchDecimal(m.acceptance_volume_ratio):"");
+   BookResearchAdd(row,quality && m.time_available?BookResearchDecimal(m.acceptance_time_ratio):"");
+   double total=w.vb+w.vs+w.vu;
+   BookResearchAdd(row,quality && w.previous_available && total>0?BookResearchDecimal(geometry*(w.pv/total-w.previous_vwap)/gBookResearchConfig.tick_size):"");
+   BookResearchAdd(row,have?BookResearchNumber(e.now_msc-w.flow.to_msc):"");BookResearchAdd(row,have?BookResearchNumber(w.generation):"");
+   BookResearchAdd(row,gBookResearchContextSignalGeneration>0?BookResearchNumber(gBookResearchContextSignalGeneration):"");
+   BookResearchAdd(row,!have?"UNAVAILABLE":(quality?"QUALIFIED_RUNTIME_HYPOTHESIS":"INVALID_OR_INSUFFICIENT"));
+   BookResearchAdd(row,have?BookResearchNumber(w.source):"");
+   BookResearchAdd(row,have?BookResearchBool(w.complete):"");BookResearchAdd(row,have?BookResearchBool(w.ordered):"");
+   BookResearchAdd(row,have?BookResearchNumber(w.invalid):"");BookResearchAdd(row,have?BookResearchNumber(w.ambiguous):"");
+   double known=w.vb+w.vs;BookResearchAdd(row,have && known>0?BookResearchDecimal((w.vb-w.vs)/known):"");
+   BookResearchAdd(row,have?BookResearchDecimal(w.vb-w.vs-w.vu):"");BookResearchAdd(row,have?BookResearchDecimal(w.vb-w.vs+w.vu):"");
+   BookResearchAdd(row,have && m.er_available?BookResearchDecimal(m.efficiency):"");
+   BookResearchAdd(row,have?BookResearchNumber(w.flow.reference_msc):"");BookResearchAdd(row,have && w.flow.level_available?BookResearchDecimal(w.flow.level):"");
+   BookResearchAdd(row,have?BookResearchDecimal(w.flow.tolerance):"");
+   BookResearchAdd(row,have && w.flow.count>0?BookResearchDecimal(w.flow.first):"");BookResearchAdd(row,have && w.flow.count>0?BookResearchDecimal(w.flow.last):"");
+   BookResearchAdd(row,have?BookResearchDecimal(w.flow.path):"");BookResearchAdd(row,have?BookResearchNumber(w.flow.observed_msc):"");
+   string shortage,cells;BookResearchReferenceCells(w,r,direction,have,phase,shortage,cells);
+   BookResearchAdd(row,shortage);row+=cells;
+   BookResearchEnqueue(1,row);
+}
+void BookResearchRuntimeEvidence(const string id,const BookDecisionEvidence &e,const BookDecisionVerdict &v,
+   const int direction,const bool cont,const bool bound,const bool available,const string scope)
+{
+   if(!BookResearchEnabled())return;
+   int index=BookResearchFind(id);if(index<0)return;
+   // State changes or causal evidence identity changes only; repeated financial
+   // revalidation does not produce an unbounded duplicate diagnostic stream.
+   string stamp=BookResearchResult(v.result)+"|"+v.reason+"|"+
+      BookResearchNumber(available && e.have_current?e.current.flow.from_msc:0)+"|"+scope;
+   if(gBookResearchOpportunities[index].last_result==stamp)return;
+   gBookResearchOpportunities[index].last_result=stamp;gBookResearchOpportunities[index].last_reason=v.reason;
+   string assessment=gBookResearchRun+"_assessment_"+BookResearchNumber((long)gBookResearchSequence+1);
+   string staged_scope=scope+(bound?":ARMED":":CANDIDATE");
+   BookDecisionWindow empty;ZeroMemory(empty);BookDecisionRanks ranks;BookDecisionRanksReset(ranks);
+   if(!available)
+   {BookResearchDecisionRow(id,gBookResearchOpportunities[index].candidate.symbol,e,v,direction,staged_scope,"UNAVAILABLE",false,empty,ranks,assessment);return;}
+   BookResearchDecisionRow(id,gBookResearchOpportunities[index].candidate.symbol,e,v,direction,staged_scope,"CURRENT",e.have_current,e.current,e.current_ranks,assessment);
+   if(cont)BookResearchDecisionRow(id,gBookResearchOpportunities[index].candidate.symbol,e,v,direction,staged_scope,"FORWARD",e.have_forward,e.forward,e.forward_ranks,assessment);
+   else
+   {
+      BookResearchDecisionRow(id,gBookResearchOpportunities[index].candidate.symbol,e,v,direction,staged_scope,"T",e.have_test,e.test,e.test_ranks,assessment);
+      BookResearchDecisionRow(id,gBookResearchOpportunities[index].candidate.symbol,e,v,direction,staged_scope,"R",e.have_reaction,e.reaction,ranks,assessment);
+   }
+}
+// Independent, conservative APPLY evaluation. It shares pure arithmetic, not the
+// operational collector or its frozen T/cache/proofs. Missing causal reaction
+// context is reported, never filled from the operational mutable ARMED.
+void BookResearchShadowEvidence(const int index,const long now,const bool at_pricing_quote=false)
+{
+   BookResearchOpportunity o=gBookResearchOpportunities[index];
+   if(!o.candidate.original_eligible || o.track.stage==RESEARCH_FINISHED ||
+      (!at_pricing_quote && (o.track.original_ended || now/1000-o.candidate.armed_at_sec>=o.candidate.timeout_sec)))return;
+   BookDecisionEvidence e;ZeroMemory(e);e.now_msc=now;
+   e.original_subtype=o.subtype=="DIVERGENCE"?1:(o.subtype=="FOLLOWING_REACTION"?2:0);
+   long width=(long)gBookResearchConfig.window_sec*1000;
+   for(int k=gBookResearchClosedCount-1;k>=0;k--)
+   {
+      BookResearchClosedWindow item=gBookResearchClosed[(gBookResearchClosedHead+k)%16];
+      if(item.window.flow.to_msc>now || now-item.window.flow.to_msc>2*width)continue;
+      BookDecisionRanks ranks=o.candidate.direction==1?item.buy_ranks:item.sell_ranks;
+      if(!e.have_current){e.current=item.window;e.current_ranks=ranks;e.have_current=true;}
+      if(o.candidate.route=="CONT" && !e.have_forward && BookDecisionForwardPredicate(gBookResearchConfig,item.window,ranks,o.candidate.direction))
+      {e.forward=item.window;e.forward_ranks=ranks;e.have_forward=true;}
+      if(o.candidate.route=="ABS" && !e.have_test)
+      {
+         BookDecisionRanks opposite=o.candidate.direction==-1?item.buy_ranks:item.sell_ranks;
+         if(BookDecisionTestPredicate(gBookResearchConfig,item.window,opposite,o.candidate.direction))
+         {e.test=item.window;e.test_ranks=opposite;e.have_test=true;}
+      }
+   }
+   if(o.have_frozen_test && o.frozen_epoch==gBookResearchTradeEpoch && BookDecisionFresh(gBookResearchConfig,o.frozen_test,now))
+   {e.test=o.frozen_test;e.test_ranks=o.frozen_test_ranks;e.have_test=true;}
+   else
+   {
+      o.have_frozen_test=false;o.have_proven_reaction=false;
+      if(e.have_test){o.have_frozen_test=true;o.frozen_test=e.test;o.frozen_test_ranks=e.test_ranks;o.frozen_epoch=gBookResearchTradeEpoch;}
+   }
+   // Reconstruct R solely from rows after causal T, bounded by the known clock.
+   if(e.have_test && e.test.flow.to_msc+1>=gBookResearchTradeFrom)
+   {
+      long end=0;
+      for(int k=0;k<gBookResearchTradeCount;k++)
+      {MqlTick q=gBookResearchTrades[(gBookResearchTradeHead+k)%BOOK_RESEARCH_TRADE_CAP];if(q.time_msc>e.test.flow.to_msc && q.time_msc<=now)end=q.time_msc;}
+      if(end>e.test.flow.to_msc)
+      {
+         BookDecisionWindowReset(e.reaction,e.test.flow.to_msc+1,end,e.test.flow.level,gBookResearchConfig.tick_size,
+            e.test.flow.to_msc,e.test.previous_vwap,e.test.previous_available,gBookResearchConfig.source,e.test.bucket,e.test.generation);
+         for(int k=0;k<gBookResearchTradeCount;k++)
+         {MqlTick q=gBookResearchTrades[(gBookResearchTradeHead+k)%BOOK_RESEARCH_TRADE_CAP];
+          if(q.time_msc>e.test.flow.to_msc && q.time_msc<=end){bool b=(q.flags&TICK_FLAG_BUY)!=0,s=(q.flags&TICK_FLAG_SELL)!=0;
+          BookDecisionWindowTick(e.reaction,q.last,(double)q.volume,q.time_msc,b?(s?2:1):(s?-1:0));}}
+         e.reaction.complete=!gBookResearchTradeFault && end<=gBookResearchCovered;e.have_reaction=true;
+      }
+   }
+   if(e.have_reaction)
+   {
+      if(BookDecisionReactionPredicate(gBookResearchConfig,e.test,e.reaction,o.candidate.direction))
+      {o.have_proven_reaction=true;o.proven_reaction=e.reaction;}
+      else if(o.have_proven_reaction && BookDecisionFresh(gBookResearchConfig,o.proven_reaction,now) &&
+         e.reaction.invalid==0 && e.reaction.ambiguous==0 && e.reaction.ordered && e.reaction.source_ok &&
+         (e.reaction.vb+e.reaction.vs+e.reaction.vu==0 ||
+          (e.reaction.vb+e.reaction.vs)/(e.reaction.vb+e.reaction.vs+e.reaction.vu)>=gBookResearchConfig.coverage) &&
+         o.candidate.direction*(e.reaction.flow.last-e.test.flow.level)/gBookResearchConfig.tick_size>=gBookResearchConfig.progress_ticks)
+         e.reaction=o.proven_reaction;
+   }
+   // Current known prefix is reconstructed AS OF this callback. A later
+   // acquired row cannot enter its window. Deficient flags cannot be hidden
+   // behind a retained closed-window approval.
+   long live_from=(now/width)*width;BookDecisionWindow live;
+   double level=0,previous=0;long reference=0;bool previous_available=false;
+   for(int k=gBookResearchClosedCount-1;k>=0;k--)
+   {BookResearchClosedWindow item=gBookResearchClosed[(gBookResearchClosedHead+k)%16];
+    if(item.window.flow.to_msc<live_from){double volume=item.window.vb+item.window.vs+item.window.vu;
+     level=item.window.flow.last;reference=item.window.flow.last_msc;previous=volume>0?item.window.pv/volume:0;previous_available=volume>0;break;}}
+   BookDecisionWindowReset(live,live_from,now,level,gBookResearchConfig.tick_size,reference,previous,previous_available,
+      gBookResearchConfig.source,(int)((live_from/1800000)%48),gBookResearchTradeEpoch);
+   long last_trade=0;
+   for(int k=0;k<gBookResearchTradeCount;k++)
+   {MqlTick q=gBookResearchTrades[(gBookResearchTradeHead+k)%BOOK_RESEARCH_TRADE_CAP];if(q.time_msc>now)continue;last_trade=q.time_msc;
+    if(q.time_msc<live_from)continue;bool b=(q.flags&TICK_FLAG_BUY)!=0,sell=(q.flags&TICK_FLAG_SELL)!=0;
+    BookDecisionWindowTick(live,q.last,(double)q.volume,q.time_msc,b?(sell?2:1):(sell?-1:0));}
+   live.complete=!gBookResearchTradeFault && live_from>=gBookResearchTradeFrom && now<=gBookResearchCovered;
+   if(live.flow.count>0)
+   {
+      BookMicroMetrics metrics;bool quality=BookDecisionWindowQuality(gBookResearchConfig,live,metrics,o.candidate.direction);
+      double total=live.vb+live.vs+live.vu;
+      bool prefix=live.complete && live.ordered && live.source_ok && live.invalid==0 && live.ambiguous==0 &&
+         (total==0 || (live.vb+live.vs)/total>=gBookResearchConfig.coverage);
+      if(quality || !prefix || !e.have_current)
+      {e.current=live;e.have_current=true;BookDecisionCompare(gBookResearchConfig,gBookResearchHistory,live,o.candidate.direction,e.current_ranks);}
+   }
+   if(o.candidate.route=="ABS" && e.have_reaction && e.have_current)
+   {
+      BookMicroMetrics metrics;double total=e.current.vb+e.current.vs+e.current.vu;
+      bool prefix=e.current.complete && e.current.ordered && e.current.source_ok && e.current.invalid==0 && e.current.ambiguous==0 &&
+         (total==0 || (e.current.vb+e.current.vs)/total>=gBookResearchConfig.coverage);
+      if(!BookDecisionWindowQuality(gBookResearchConfig,e.current,metrics,o.candidate.direction) && prefix &&
+         BookDecisionReactionPredicate(gBookResearchConfig,e.test,e.reaction,o.candidate.direction) &&
+         o.candidate.direction*(e.current.flow.last-e.test.flow.level)/gBookResearchConfig.tick_size>=gBookResearchConfig.progress_ticks)
+      {e.current=e.reaction;BookDecisionRanksReset(e.current_ranks);}
+   }
+   gBookResearchOpportunities[index].have_frozen_test=o.have_frozen_test;
+   gBookResearchOpportunities[index].have_proven_reaction=o.have_proven_reaction;
+   gBookResearchOpportunities[index].frozen_test=o.frozen_test;gBookResearchOpportunities[index].frozen_test_ranks=o.frozen_test_ranks;
+   gBookResearchOpportunities[index].proven_reaction=o.proven_reaction;gBookResearchOpportunities[index].frozen_epoch=o.frozen_epoch;
+   BookDecisionVerdict v;BookDecisionAssess(gBookResearchConfig,e,o.candidate.direction,o.candidate.route=="CONT",true,v);
+   if(gBookResearchTradeFault || now>gBookResearchCovered || last_trade<=0 || now-last_trade>2000)
+   {v.result=DECISION_DADOS_INSUFICIENTES;v.reason=gBookResearchTradeFault?"RESEARCH_TRADE_INTEGRITY_FAULT":"RESEARCH_COLLECTION_BACKLOG";}
+   BookResearchRuntimeReferenceContext(gBookResearchHistory,true,index+1,gBookResearchTradeEpoch,gBookResearchDataVersion,gBookResearchCovered,false);
+   BookResearchRuntimeEvidence(o.candidate.id,e,v,o.candidate.direction,o.candidate.route=="CONT",true,true,at_pricing_quote?"INDEPENDENT_RESEARCH_APPLY_AT_PRICING_QUOTE_NOT_DISPATCH":"INDEPENDENT_RESEARCH_APPLY");
+}
+void BookResearchOutcome(const int index,const string status,const string detail)
+{
+   BookResearchOpportunity o=gBookResearchOpportunities[index];BookResearchTrack t=o.track;
+   string row=BookResearchBase(o.candidate.id,o.candidate.symbol,t.finished_msc>0?t.finished_msc:(t.last_msc>0?t.last_msc:gBookResearchLastNow));
+   BookResearchAdd(row,status);BookResearchAdd(row,t.reason);
+   BookResearchAdd(row,t.entry_reference_available?BookResearchNumber(t.entry_msc):"");
+   BookResearchAdd(row,t.entry_reference_available?BookResearchDecimal(t.entry):"");
+   BookResearchAdd(row,t.entry_reference_available?BookResearchDecimal(t.sl):"");BookResearchAdd(row,t.entry_reference_available?BookResearchDecimal(t.tp):"");
+   BookResearchAdd(row,BookResearchDecimal(t.entry_reference_available?BookResearchAbs(t.entry-t.sl):o.candidate.sl_distance));BookResearchAdd(row,BookResearchDecimal(t.entry_reference_available?BookResearchAbs(t.tp-t.entry):o.candidate.tp_distance));
+   BookResearchAdd(row,t.samples>0?BookResearchDecimal(t.entry_reference_available?t.mae:t.origin_mae):"");
+   BookResearchAdd(row,t.samples>0?BookResearchDecimal(t.entry_reference_available?t.mfe:t.origin_mfe):"");
+   string first=t.barrier=="TP_QUOTE_TOUCH_FIRST"?"TP":(t.barrier=="SL_QUOTE_TOUCH_FIRST"?"SL":"");
+   BookResearchAdd(row,first);BookResearchAdd(row,first=="TP"?BookResearchNumber(t.tp_touch_msc):(first=="SL"?BookResearchNumber(t.sl_touch_msc):""));
+   BookResearchAdd(row,"900");BookResearchAdd(row,BookResearchBool(t.stage2_demonstrated));
+   BookResearchAdd(row,BookResearchBool(t.dispatch_eligible_observed));BookResearchAdd(row,BookResearchBool(o.collision));
+   // Real-account identifiers/economic fields remain unavailable for hypotheses.
+   for(int f=0;f<12;f++)BookResearchAdd(row,"");
+   BookResearchAdd(row,"0");BookResearchAdd(row,"0");
+   BookResearchAdd(row,detail+";possibility="+t.possibility+";original_reason="+t.original_reason+
+      ";dispatch_eligible_observed="+BookResearchBool(t.dispatch_eligible_observed)+
+      ";samples="+BookResearchNumber(t.samples)+";first_sl_msc="+BookResearchNumber(t.sl_touch_msc)+
+      ";first_tp_msc="+BookResearchNumber(t.tp_touch_msc));
+   BookResearchAdd(row,t.samples>0?BookResearchDecimal(t.origin_mae):"");BookResearchAdd(row,t.samples>0?BookResearchDecimal(t.origin_mfe):"");
+   for(int h=0;h<3;h++){BookResearchAdd(row,t.samples>0?BookResearchDecimal(t.horizon_mae[h]):"");
+      BookResearchAdd(row,t.samples>0?BookResearchDecimal(t.horizon_mfe[h]):"");BookResearchAdd(row,BookResearchBool(t.horizon_done[h]));}
+   BookResearchAdd(row,t.sl_touch_msc>0?BookResearchNumber(t.sl_touch_msc):"");BookResearchAdd(row,t.tp_touch_msc>0?BookResearchNumber(t.tp_touch_msc):"");
+   BookResearchAdd(row,t.entry_reference_available?BookResearchDecimal((double)((t.finished_msc>0?t.finished_msc:gBookResearchLastNow)-t.entry_msc)/1000.0):"");
+   BookResearchAdd(row,BookResearchBool(t.dispatch_eligible_observed));
+   BookResearchAdd(row,t.entry_reference_available?(t.dispatch_eligible_observed?"HYPOTHETICAL_EXECUTABLE_QUOTE_NOT_A_FILL":"CONDITIONAL_MARKET_REFERENCE"):"NO_ENTRY_REFERENCE");
+   BookResearchEnqueue(2,row);gBookResearchOutcomeCount++;
+}
+void BookResearchTrackChanged(const int index)
+{
+   BookResearchTrack t=gBookResearchOpportunities[index].track;
+   string key=BookResearchNumber((long)t.stage)+"|"+t.reason+"|"+t.barrier;
+   if(key==gBookResearchOpportunities[index].last_track_key)return;
+   gBookResearchOpportunities[index].last_track_key=key;
+   if(t.entry_reference_available)for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++)
+      if(i!=index && gBookResearchOpportunities[i].used && gBookResearchOpportunities[i].track.entry_reference_available &&
+         gBookResearchOpportunities[i].track.stage!=RESEARCH_FINISHED)
+      {gBookResearchOpportunities[index].collision=true;gBookResearchOpportunities[i].collision=true;}
+   string status=t.original_ended?t.original_reason:t.reason;
+   if(t.barrier=="TP_QUOTE_TOUCH_FIRST")status="TP_FIRST";
+   else if(t.barrier=="SL_QUOTE_TOUCH_FIRST")status="SL_FIRST";
+   else if(t.barrier=="AMBIGUOUS_PATH")status="AMBIGUOUS_PATH";
+   else if(t.stage==RESEARCH_FINISHED && t.barrier=="NO_BARRIER_OBSERVED")status="HORIZON_NO_BARRIER";
+   else if(t.stage==RESEARCH_FINISHED)status=t.reason;
+   BookResearchOutcome(index,status,"Quote touch only; latency/slippage/fill unproven; no financial PnL; conditional references excluded from executable ORIGINAL count");
+}
+void BookResearchRuntimeReal(const string candidate_id,const string status,const long now,
+   const string symbol,const string position_id,const string order_id,const string deal_id,
+   const double request_price,const double actual_price,const double sl,const double tp,
+   const double mae,const double mfe,const double gross,const double commission,const double fee,
+   const double swap,const double net,const bool partial,const string exit_reason,
+   const bool accounting_resolved,const bool confirmed,const string details,const long duration_sec=-1,const long pricing_quote_msc=0)
+{
+   if(!BookResearchEnabled())return;
+   if(status=="REAL_ENTRY_API_RESULT")BookResearchMarkActualDispatch(candidate_id,pricing_quote_msc,now);
+   string row=BookResearchBase(candidate_id,symbol,now);BookResearchAdd(row,status);BookResearchAdd(row,exit_reason);
+   BookResearchAdd(row,"");BookResearchAdd(row,"");BookResearchAdd(row,sl>0?BookResearchDecimal(sl):"");BookResearchAdd(row,tp>0?BookResearchDecimal(tp):"");
+   BookResearchAdd(row,"");BookResearchAdd(row,"");BookResearchAdd(row,status=="REAL_RECONCILED"?BookResearchDecimal(mae):"");BookResearchAdd(row,status=="REAL_RECONCILED"?BookResearchDecimal(mfe):"");
+   BookResearchAdd(row,"");BookResearchAdd(row,"");BookResearchAdd(row,"");
+   BookResearchAdd(row,status=="REAL_ENTRY_API_RESULT"?"1":"");BookResearchAdd(row,status=="REAL_ENTRY_API_RESULT"?"1":"");BookResearchAdd(row,"");
+   BookResearchAdd(row,position_id);BookResearchAdd(row,order_id);BookResearchAdd(row,deal_id);
+   BookResearchAdd(row,request_price>0?BookResearchDecimal(request_price):"");BookResearchAdd(row,actual_price>0?BookResearchDecimal(actual_price):"");
+   BookResearchAdd(row,confirmed?BookResearchDecimal(gross):"");BookResearchAdd(row,confirmed?BookResearchDecimal(commission):"");
+   BookResearchAdd(row,confirmed?BookResearchDecimal(fee):"");BookResearchAdd(row,confirmed?BookResearchDecimal(swap):"");BookResearchAdd(row,confirmed?BookResearchDecimal(net):"");
+   BookResearchAdd(row,BookResearchBool(partial));BookResearchAdd(row,exit_reason);
+   BookResearchAdd(row,BookResearchBool(accounting_resolved));BookResearchAdd(row,BookResearchBool(confirmed));BookResearchAdd(row,details);
+   for(int h=0;h<13;h++)BookResearchAdd(row,"");
+   BookResearchAdd(row,duration_sec>=0?BookResearchNumber(duration_sec):"");BookResearchAdd(row,"");BookResearchAdd(row,"ACTUAL_OBSERVATION");
+   BookResearchEnqueue(2,row);
+}
+void BookResearchRuntimeSample(const BookResearchMarketSample &sample)
+{
+   if(!BookResearchEnabled())return;
+   if(gBookResearchSampleCount>=BOOK_RESEARCH_SAMPLE_CAP){gBookResearchDropped++;BookResearchSuspend("CONTEXT_QUEUE_CAPACITY");return;}
+   int slot=(gBookResearchSampleHead+gBookResearchSampleCount)%BOOK_RESEARCH_SAMPLE_CAP;
+   gBookResearchSamples[slot]=sample;gBookResearchSampleCount++;
+}
+struct BookResearchQuoteRecord {MqlTick tick;long ordinal;int ordinal_at_msc;};
+BookResearchQuoteRecord gBookResearchQuotes[BOOK_RESEARCH_TRADE_CAP];
+MqlTick gBookResearchQuoteTail[BOOK_RESEARCH_QUOTE_CAP];
+int gBookResearchQuoteHead=0,gBookResearchQuoteCount=0,gBookResearchQuoteTailCount=0;
+long gBookResearchQuoteCursor=0,gBookResearchQuoteCovered=0,gBookResearchQuoteOrdinal=0;
+bool gBookResearchQuoteFault=false;
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE | void BookResearchQuoteBatch(const long from,const long through,const MqlTick quotes[],const int count,const bool complete)
+// HOST_CPP_INACTIVE | #else
+void BookResearchQuoteBatch(const long from,const long through,const MqlTick &quotes[],const int count,const bool complete)
+// HOST_CPP_INACTIVE | #endif
+{
+   if(!BookResearchEnabled() || gBookResearchQuoteFault)return;
+   if(from>gBookResearchQuoteCovered+1 || count<0 || count>BOOK_RESEARCH_QUOTE_CAP || through<from)
+   {gBookResearchQuoteFault=true;return;}
+   int seen=0;long previous=-1;
+   for(int k=0;k<count;k++)
+   {
+      MqlTick q=quotes[k];
+      if(q.time_msc<from || q.time_msc>through || q.time_msc<previous || q.time!=q.time_msc/1000)
+      {gBookResearchQuoteFault=true;return;}previous=q.time_msc;
+      if(q.time_msc==gBookResearchQuoteCursor)
+      {
+         if(seen<gBookResearchQuoteTailCount && !BookResearchSameTick(q,gBookResearchQuoteTail[seen]))
+         {gBookResearchQuoteFault=true;return;}seen++;
+      }
+   }
+   if(gBookResearchQuoteTailCount>0 && from<=gBookResearchQuoteCursor && seen<gBookResearchQuoteTailCount)
+   {gBookResearchQuoteFault=true;return;}
+   long group=-1;int ordinal=0;
+   for(int k=0;k<count;k++)
+   {
+      MqlTick q=quotes[k];if(q.time_msc<gBookResearchQuoteCursor)continue;
+      if(q.time_msc!=group){group=q.time_msc;ordinal=0;}ordinal++;
+      if(q.time_msc==gBookResearchQuoteCursor && ordinal<=gBookResearchQuoteTailCount)continue;
+      if(q.time_msc<gBookResearchQuoteCovered){gBookResearchQuoteFault=true;return;}
+      if(q.time_msc!=gBookResearchQuoteCursor){gBookResearchQuoteCursor=q.time_msc;gBookResearchQuoteTailCount=0;}
+      if(gBookResearchQuoteTailCount>=BOOK_RESEARCH_QUOTE_CAP || gBookResearchQuoteCount>=BOOK_RESEARCH_TRADE_CAP)
+      {gBookResearchQuoteFault=true;return;}
+      gBookResearchQuoteTail[gBookResearchQuoteTailCount++]=q;
+      int slot=(gBookResearchQuoteHead+gBookResearchQuoteCount)%BOOK_RESEARCH_TRADE_CAP;
+      gBookResearchQuotes[slot].tick=q;gBookResearchQuotes[slot].ordinal=++gBookResearchQuoteOrdinal;gBookResearchQuotes[slot].ordinal_at_msc=gBookResearchQuoteTailCount;gBookResearchQuoteCount++;
+   }
+   gBookResearchQuoteCovered=complete?through:(count>0?quotes[count-1].time_msc-1:gBookResearchQuoteCovered);
+}
+void BookResearchQuoteOnly(const BookResearchQuoteRecord &record)
+{
+   BookResearchMarketSample x;ZeroMemory(x);x.now_msc=record.tick.time_msc;x.ordinal=record.ordinal;
+   x.bid=record.tick.bid;x.ask=record.tick.ask;x.last=record.tick.last;
+   x.quote_available=x.bid>0 && x.ask>=x.bid;x.path_complete=!gBookResearchQuoteFault;
+   for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++)
+   {
+      if(!gBookResearchOpportunities[i].used)continue;
+      BookResearchCandidate c=gBookResearchOpportunities[i].candidate;
+      BookResearchTrack t=gBookResearchOpportunities[i].track;
+      if(x.now_msc>=c.created_msc && t.stage==RESEARCH_WAIT_STAGE2 && c.original_eligible &&
+         ((record.tick.flags&(TICK_FLAG_LAST|TICK_FLAG_VOLUME|TICK_FLAG_BUY|TICK_FLAG_SELL))!=0) &&
+         record.tick.last>0 && c.direction*(record.tick.last-c.trigger)>=0)t.context_incomplete=true;
+      // First later raw quote has no archived live-Weis/VWAP/financial context.
+      // Preserve that FIRST price as a conditional path reference, never wait
+      // for a later better price and pretend ORIGINAL dispatch was proved.
+      // A cancellation is terminal for the hypothetical thesis. Quotes still
+      // update candidate excursions, never resurrect a timed-out/cancelled ARMED.
+      if(!t.original_ended && (t.stage==RESEARCH_WAIT_STAGE2 || t.stage==RESEARCH_STAGE2_READY) && x.now_msc>=c.created_msc)
+      {
+         long seconds=x.now_msc/1000;int hhmm=(int)((seconds/3600)%24)*100+(int)((seconds/60)%60);
+         if(c.armed_at_sec>0 && seconds-c.armed_at_sec>=c.timeout_sec)
+         {t.original_ended=true;t.original_reason="TIMEOUT_ARMED";t.reason=t.original_reason;}
+         else if(hhmm>=c.stop_entry_hhmm)
+         {t.original_ended=true;t.original_reason="ABORT_SESSION_END";t.reason=t.original_reason;}
+      }
+      if(!t.original_ended && t.stage==RESEARCH_STAGE2_READY && x.ordinal>t.stage2_ordinal && x.now_msc>=t.stage2_msc &&
+         x.quote_available && x.ask-x.bid<=c.max_spread && c.sl_distance>0 && c.tp_distance>0)
+      {
+         double executable=c.direction==1?x.ask:x.bid;
+         if(c.direction*(executable-c.trigger)>=0 && c.direction*(executable-c.trigger)<=c.max_overshoot)
+         {
+            t.entry=executable;t.entry_msc=x.now_msc;t.entry_ordinal=x.ordinal;
+            double sl,tp;if(!BookResearchStops(c,executable,sl,tp))continue;
+            t.sl=sl;t.tp=tp;
+            t.entry_reference_available=true;t.dispatch_eligible_observed=false;t.eligibility_reconstructable=false;
+            t.possibility="ORIGINAL_ENTRY_NOT_RECONSTRUCTABLE";
+            t.reason="CONDITIONAL_FIRST_QUOTE_MISSING_ARCHIVED_STAGE2_CONTEXT";t.stage=RESEARCH_TRACKING;t.barrier="PENDING";
+         }
+         else {t.original_ended=true;t.original_reason="FIRST_QUOTE_BREAKOUT_OR_OVERSHOOT_UNRESOLVED";t.reason=t.original_reason;}
+      }
+      BookResearchObserveQuote(c,x,t);gBookResearchOpportunities[i].track=t;BookResearchTrackChanged(i);
+   }
+}
+void BookResearchProcessSamples()
+{
+   int budget=0;ulong began=GetMicrosecondCount();
+   while(gBookResearchSampleCount>0 && budget++<16 && GetMicrosecondCount()-began<BOOK_RESEARCH_TIMER_US)
+   {
+      BookResearchMarketSample x=gBookResearchSamples[gBookResearchSampleHead];
+      if(x.now_msc>=gBookResearchQuoteCovered && !gBookResearchQuoteFault)break;
+      gBookResearchSampleHead=(gBookResearchSampleHead+1)%BOOK_RESEARCH_SAMPLE_CAP;gBookResearchSampleCount--;
+      while(gBookResearchQuoteCount>0 && gBookResearchQuotes[gBookResearchQuoteHead].tick.time_msc<x.now_msc)
+      {
+         BookResearchQuoteOnly(gBookResearchQuotes[gBookResearchQuoteHead]);
+         gBookResearchQuoteHead=(gBookResearchQuoteHead+1)%BOOK_RESEARCH_TRADE_CAP;gBookResearchQuoteCount--;
+      }
+      int at_stamp=0;BookResearchQuoteRecord match;ZeroMemory(match);
+      for(int k=0;k<gBookResearchQuoteCount;k++)
+      {BookResearchQuoteRecord r=gBookResearchQuotes[(gBookResearchQuoteHead+k)%BOOK_RESEARCH_TRADE_CAP];
+       if(r.tick.time_msc!=x.now_msc)break;at_stamp++;match=r;}
+      // A coalesced callback cannot identify its ordinal amongst several rows
+      // at one ms, even if price/size are equal. Do not invent that identity.
+      bool exact=at_stamp==1 && match.ordinal_at_msc==1 && match.tick.bid==x.bid && match.tick.ask==x.ask && match.tick.last==x.last &&
+         x.raw_identity_available && match.tick.time==x.raw_time_sec && match.tick.volume==x.raw_volume &&
+         match.tick.volume_real==x.raw_volume_real && match.tick.flags==x.raw_flags;
+      x.context_causal=x.context_causal && exact;
+      x.path_complete=exact && !gBookResearchQuoteFault;
+      x.ordinal=exact?match.ordinal:0;
+      if(x.vwap_base_valid)
+         x.vwap_valid=BookResearchRuntimeLiveVwap(x.vwap_base_pv,x.vwap_base_volume,x.vwap_from,x.now_msc,x.live_vwap);
+      if(!x.vwap_valid)x.context_causal=false;
+      for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++)
+      {
+         if(!gBookResearchOpportunities[i].used)continue;
+         if(exact)BookResearchStep(gBookResearchOpportunities[i].candidate,x,gBookResearchOpportunities[i].track);
+         else if(x.now_msc>=gBookResearchOpportunities[i].candidate.created_msc &&
+            (gBookResearchOpportunities[i].track.stage==RESEARCH_WAIT_STAGE2 || gBookResearchOpportunities[i].track.stage==RESEARCH_STAGE2_READY))
+         {
+            // Raw quote ordinals remain verified. Only the callback's Stage2
+            // context identity is unknown; do not erase an ordered barrier path.
+            gBookResearchOpportunities[i].track.context_incomplete=true;
+            gBookResearchOpportunities[i].track.eligibility_reconstructable=false;
+            gBookResearchOpportunities[i].track.reason="ORIGINAL_ENTRY_NOT_RECONSTRUCTABLE";
+         }
+         BookResearchTrackChanged(i);
+         if(gBookResearchActualMode==DECISION_ORIGINAL)BookResearchShadowEvidence(i,x.now_msc);
+      }
+      if(exact){gBookResearchQuoteHead=(gBookResearchQuoteHead+1)%BOOK_RESEARCH_TRADE_CAP;gBookResearchQuoteCount--;}
+   }
+   while(gBookResearchSampleCount==0 && gBookResearchQuoteCount>0 && gBookResearchQuotes[gBookResearchQuoteHead].tick.time_msc<gBookResearchQuoteCovered && GetMicrosecondCount()-began<BOOK_RESEARCH_TIMER_US)
+   {
+      BookResearchQuoteOnly(gBookResearchQuotes[gBookResearchQuoteHead]);
+      gBookResearchQuoteHead=(gBookResearchQuoteHead+1)%BOOK_RESEARCH_TRADE_CAP;gBookResearchQuoteCount--;
+   }
+}
+void BookResearchAcquire()
+{
+   MqlTick latest;if(!SymbolInfoTick(Symbol(),latest) || latest.time_msc<=0)return;
+   long goal=latest.time_msc;
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |    std::vector<MqlTick> batch;
+// HOST_CPP_INACTIVE | #else
+   MqlTick batch[];
+// HOST_CPP_INACTIVE | #endif
+   if(gBookResearchBorrowedCount>0)
+   {
+      if((long)gBookResearchBorrowedFrom<=gBookResearchCovered+1 && (long)gBookResearchBorrowedTo>=gBookResearchCovered)
+         BookResearchRuntimeIngest(gBookResearchBorrowedFrom,gBookResearchBorrowedTo,gBookResearchBorrowed,gBookResearchBorrowedCount);
+      gBookResearchBorrowedCount=0;
+   }
+   if(!gBookResearchTradeFault && goal>=gBookResearchCovered)
+   {
+      long from=gBookResearchCursor>0?gBookResearchCursor:gBookResearchTradeFrom;
+      ResetLastError();int n=CopyTicks(Symbol(),batch,COPY_TICKS_TRADE,(ulong)from,BOOK_RESEARCH_QUOTE_CAP);gBookResearchAcquisitionCalls++;
+      if(n<0 || GetLastError()!=0)gBookResearchTradeFault=true;
+      else
+      {
+         gBookResearchAcquisitionRows+=(ulong)n;long through=n==BOOK_RESEARCH_QUOTE_CAP?batch[n-1].time_msc:goal;
+         if(n>0 && batch[n-1].time_msc>through)through=batch[n-1].time_msc;
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |          BookResearchRuntimeIngest((ulong)from,(ulong)through,batch.data(),n);
+// HOST_CPP_INACTIVE | #else
+         BookResearchRuntimeIngest((ulong)from,(ulong)through,batch,n);
+// HOST_CPP_INACTIVE | #endif
+         if(n==BOOK_RESEARCH_QUOTE_CAP){gBookResearchCovered=through-1;if(batch[n-1].time_msc==from)gBookResearchTradeFault=true;}
+      }
+   }
+   if(!gBookResearchQuoteFault && goal>=gBookResearchQuoteCovered)
+   {
+      long from=gBookResearchQuoteCursor>0?gBookResearchQuoteCursor:gBookResearchReplayMSC;
+      ResetLastError();int n=CopyTicks(Symbol(),batch,COPY_TICKS_ALL,(ulong)from,BOOK_RESEARCH_QUOTE_CAP);gBookResearchAcquisitionCalls++;
+      if(n<0 || GetLastError()!=0)gBookResearchQuoteFault=true;
+      else
+      {
+         gBookResearchAcquisitionRows+=(ulong)n;long through=n==BOOK_RESEARCH_QUOTE_CAP?batch[n-1].time_msc:goal;
+         if(n==BOOK_RESEARCH_QUOTE_CAP && batch[n-1].time_msc==from){gBookResearchQuoteFault=true;return;}
+         if(n<BOOK_RESEARCH_QUOTE_CAP && (n<=0 || batch[n-1].time_msc<goal))
+         {gBookResearchQuoteFault=true;return;} // latest observed quote absent from supposedly complete ALL history
+
+         if(n>0 && batch[n-1].time_msc>through)through=batch[n-1].time_msc;
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |          BookResearchQuoteBatch(from,through,batch.data(),n,n<BOOK_RESEARCH_QUOTE_CAP);
+// HOST_CPP_INACTIVE | #else
+         BookResearchQuoteBatch(from,through,batch,n,n<BOOK_RESEARCH_QUOTE_CAP);
+// HOST_CPP_INACTIVE | #endif
+      }
+   }
+   ArrayFree(batch);
+}
+string BookResearchMarkerPayload(const string status)
+{
+   string payload=BOOK_RESEARCH_SCHEMA;payload+="\n"+gBookResearchRun+"\n"+status+"\n";
+   if(status=="OPEN")for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++)
+      if(gBookResearchOpportunities[i].used && gBookResearchOpportunities[i].track.stage!=RESEARCH_FINISHED)
+         payload+=gBookResearchOpportunities[i].candidate.id+"\n";
+   return payload;
+}
+bool BookResearchWriteMarker(const string status)
+{
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |    std::ofstream out(gBookResearchStateFile,std::ios::binary|std::ios::trunc);if(!out)return false;
+// HOST_CPP_INACTIVE |    out<<BookResearchMarkerPayload(status);out.flush();return out.good();
+// HOST_CPP_INACTIVE | #else
+   ResetLastError();int h=FileOpen(gBookResearchStateFile,FILE_WRITE|FILE_BIN|FILE_SHARE_READ);if(h==INVALID_HANDLE)return false;
+   string text=BookResearchMarkerPayload(status);uchar bytes[];int n=StringToCharArray(text,bytes,0,WHOLE_ARRAY,CP_UTF8)-1;
+   bool ok=n>0 && FileWriteArray(h,bytes,0,n)==(uint)n && GetLastError()==0;
+   ResetLastError();FileFlush(h);if(GetLastError()!=0)ok=false;FileClose(h);return ok;
+// HOST_CPP_INACTIVE | #endif
+}
+void BookResearchReadInterruption()
+{
+   string previous="",status="",schema="";
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |    std::ifstream in(gBookResearchStateFile);if(!in)return;
+// HOST_CPP_INACTIVE |    std::getline(in,schema);std::getline(in,previous);std::getline(in,status);
+// HOST_CPP_INACTIVE | #else
+   if(!FileIsExist(gBookResearchStateFile))return;
+   int h=FileOpen(gBookResearchStateFile,FILE_READ|FILE_TXT|FILE_ANSI|FILE_SHARE_READ,0,CP_UTF8);
+   if(h==INVALID_HANDLE){BookResearchHealth("RESTART_INTERRUPTED","PRIOR_MARKER_UNREADABLE","");return;}
+   schema=FileReadString(h);previous=FileReadString(h);status=FileReadString(h);
+// HOST_CPP_INACTIVE | #endif
+   if(schema!=BOOK_RESEARCH_SCHEMA || status!="CLOSED")
+      BookResearchHealth("RESTART_INTERRUPTED","PRIOR_TRACKS_NOT_RESUMED",previous+"; prior run interrupted or marker incomplete; no continuous MAE/MFE or barrier-order claim");
+   if(schema==BOOK_RESEARCH_SCHEMA && status=="OPEN" && previous!="")
+   {
+      for(int n=0;n<BOOK_RESEARCH_TRACK_CAP;n++)
+      {
+         string id="";
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE |          if(!std::getline(in,id))break;
+// HOST_CPP_INACTIVE | #else
+         if(FileIsEnding(h))break;id=FileReadString(h);
+// HOST_CPP_INACTIVE | #endif
+         if(id=="")continue;
+         string row=BOOK_RESEARCH_SCHEMA;
+         BookResearchAdd(row,gBookResearchRun+"_interrupted_"+BookResearchNumber(++gBookResearchSequence));
+         BookResearchAdd(row,previous);BookResearchAdd(row,id);BookResearchAdd(row,BookResearchNumber(gBookResearchLastNow));
+         BookResearchAdd(row,Symbol());BookResearchAdd(row,gBookResearchAccount);BookResearchAdd(row,gBookResearchServer);BookResearchAdd(row,gBookResearchMagic);
+         BookResearchAdd(row,"");BookResearchAdd(row,"");BookResearchAdd(row,"");
+         BookResearchAdd(row,"RESTART_INTERRUPTED");BookResearchAdd(row,"CONTINUITY_NOT_RECOVERED");
+         for(int f=0;f<28;f++)BookResearchAdd(row,"");
+         BookResearchAdd(row,"Closed by next instance; no future price, invented fill, continuous MAE/MFE or PnL");
+         for(int f=0;f<16;f++)BookResearchAdd(row,"");
+         BookResearchEnqueue(2,row);
+      }
+   }
+
+// HOST_CPP_INACTIVE | #ifndef __cplusplus
+   FileClose(h);
+// HOST_CPP_INACTIVE | #endif
+}
+void BookResearchRuntimeInit(const string run_id,const string preset_hash,const string canonical_inputs,
+   const string account,const string magic,const string code_hash,const int actual_mode,const BookDecisionConfig &config,const string server="",const string trading_hash="")
+{
+   if(!Inp_ResearchEnable)return;
+   if(!BookDecisionConfigValid(config)){gBookResearchReady=false;gBookResearchSuspended=true;gBookResearchSuspendReason="RESEARCH_CONFIG_INVALID";return;}
+   gBookResearchRun=run_id;gBookResearchPreset=preset_hash;gBookResearchAccount=account;gBookResearchMagic=magic;gBookResearchServer=server;gBookResearchTradingPreset=trading_hash;
+   gBookResearchCode=code_hash;gBookResearchActualMode=actual_mode;gBookResearchConfig=config;
+   gBookResearchPrefix="Research_"+account+"_"+Symbol()+"_"+magic+"_"+run_id+"_";
+   gBookResearchStateFile="Research_"+account+"_"+Symbol()+"_"+magic+"_State.txt";
+   gBookResearchReady=true;gBookResearchSuspended=false;gBookResearchSuspendReason="";gBookResearchSuspensionReported=false;gBookResearchTradeFaultReported=false;
+   gBookResearchQueueHead=0;gBookResearchQueueCount=0;gBookResearchSampleHead=0;gBookResearchSampleCount=0;
+   gBookResearchBorrowedCount=0;gBookResearchBorrowedFrom=0;gBookResearchBorrowedTo=0;
+   gBookResearchTradeHead=0;gBookResearchTradeCount=0;gBookResearchTailCount=0;gBookResearchTradeFault=false;
+   gBookResearchQuoteHead=0;gBookResearchQuoteCount=0;gBookResearchQuoteTailCount=0;gBookResearchQuoteFault=false;
+   gBookResearchClosedHead=0;gBookResearchClosedCount=0;gBookResearchQuoteOrdinal=0;gBookResearchDataVersion=0;gBookResearchReferenceContextAvailable=false;
+   gBookResearchContextSignalGeneration=0;gBookResearchContextEpoch=0;gBookResearchContextVersion=0;gBookResearchContextCovered=0;
+   gBookResearchSequence=0;gBookResearchDropped=0;gBookResearchWritten=0;gBookResearchIOErrors=0;
+   gBookResearchTimerUS=0;gBookResearchTimerMaxUS=0;gBookResearchAcquisitionCalls=0;gBookResearchAcquisitionRows=0;
+   gBookResearchCandidateCount=0;gBookResearchEligibleCount=0;gBookResearchRejectedCount=0;gBookResearchOutcomeCount=0;
+   for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++){gBookResearchOpportunities[i].used=false;gBookResearchPendingDispatches[i].used=false;}
+   gBookResearchArchiveNext=0;for(int k=0;k<32;k++)gBookResearchReferenceArchives[k].used=false;
+   MqlTick tick;long start=SymbolInfoTick(Symbol(),tick)?tick.time_msc:(long)TimeTradeServer()*1000;
+   long width=(long)config.window_sec*1000;
+   gBookResearchTradeEpoch++;gBookResearchTradeFrom=(start/width)*width;
+   gBookResearchCovered=gBookResearchTradeFrom-1;gBookResearchCursor=0;gBookResearchCollectionStart=gBookResearchTradeFrom;
+   for(int k=0;k<32;k++){gBookResearchVwapMinutes[k].from_msc=0;gBookResearchVwapMinutes[k].pv=0;gBookResearchVwapMinutes[k].volume=0;}
+   gBookResearchReplayMSC=start;gBookResearchQuoteCursor=0;gBookResearchQuoteCovered=start-1;
+   gBookResearchLastNow=start;gBookResearchDay=start/86400000;
+   BookDecisionHistoryReset(gBookResearchHistory);BookResearchOpenWindow(gBookResearchTradeFrom,0,0,0,false);
+   BookResearchReadInterruption();
+   BookResearchHealth("CONFIGURATION","OBSERVATION_ONLY",canonical_inputs);
+   if(!BookResearchWriteMarker("OPEN")){gBookResearchIOErrors++;BookResearchSuspend("STATE_MARKER_WRITE_FAILED");}
+}
+void BookResearchFlush()
+{
+   if(gBookResearchIOErrors>0)return; // uncertain/partial research writes are never retried
+   int written=0;ulong begin=GetMicrosecondCount();
+   while(gBookResearchQueueCount>0 && written<BOOK_RESEARCH_ROWS_PER_TIMER && GetMicrosecondCount()-begin<BOOK_RESEARCH_TIMER_US)
+   {
+      BookResearchEnvelope item=gBookResearchQueue[gBookResearchQueueHead];
+      if(!BookResearchWrite(gBookResearchPrefix+BookResearchNames(item.file)+".csv",item.line,BookResearchHeader(item.file)))
+      {gBookResearchIOErrors++;BookResearchSuspend("RESEARCH_WRITE_FAILED_PARTIAL_ROW_POSSIBLE");return;}
+      gBookResearchQueueHead=(gBookResearchQueueHead+1)%BOOK_RESEARCH_QUEUE_CAP;gBookResearchQueueCount--;gBookResearchWritten++;written++;
+   }
+}
+void BookResearchRuntimeTimer()
+{
+   if(!Inp_ResearchEnable || !gBookResearchReady)return;
+   ulong begin=GetMicrosecondCount();gBookResearchLastNow=(long)TimeTradeServer()*1000;
+   if(!gBookResearchSuspended)
+   {
+      BookResearchAcquire();
+      for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++)if(gBookResearchOpportunities[i].used &&
+         gBookResearchOpportunities[i].actual_dispatch && !gBookResearchOpportunities[i].dispatch_assessed)
+      {
+         if(gBookResearchActualMode==DECISION_ORIGINAL)
+         {
+            BookResearchShadowEvidence(i,gBookResearchOpportunities[i].pricing_quote_msc,true);
+            // Pricing time is not the final market clock at the API. Do not
+            // silently turn that qualified earlier view into dispatch approval.
+            BookDecisionEvidence unavailable;ZeroMemory(unavailable);unavailable.now_msc=gBookResearchLastNow;
+            BookDecisionVerdict verdict;BookDecisionVerdictReset(verdict);verdict.result=(ENUM_BOOK_DECISION_RESULT)-1;
+            verdict.reason="EXACT_DISPATCH_MARKET_CLOCK_NOT_CAPTURED";
+            BookResearchRuntimeEvidence(gBookResearchOpportunities[i].candidate.id,unavailable,verdict,
+               gBookResearchOpportunities[i].candidate.direction,gBookResearchOpportunities[i].candidate.route=="CONT",true,false,"INDEPENDENT_APPLY_AT_ACTUAL_DISPATCH");
+         }
+         gBookResearchOpportunities[i].dispatch_assessed=true;
+      }
+      BookResearchProcessSamples();
+      if(gBookResearchTradeFault && !gBookResearchTradeFaultReported)
+      {gBookResearchTradeFaultReported=true;BookResearchHealth("DATA_UNAVAILABLE","RESEARCH_TRADE_IDENTITY_ORDER_COMPLETENESS_FAULT","Independent APPLY evidence unavailable; existing quote trajectories remain labelled separately");}
+      if(gBookResearchQuoteFault)
+      {
+         for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++)if(gBookResearchOpportunities[i].used && gBookResearchOpportunities[i].track.stage!=RESEARCH_FINISHED)
+         {gBookResearchOpportunities[i].track.path_ambiguous=true;BookResearchFinish(gBookResearchOpportunities[i].track,gBookResearchLastNow,"INSUFFICIENT_MARKET_DATA");BookResearchTrackChanged(i);}
+         BookResearchHealth("DATA_UNAVAILABLE","RESEARCH_QUOTE_IDENTITY_ORDER_COMPLETENESS_FAULT","Barrier order cannot be certified");
+         BookResearchSuspend("QUOTE_HISTORY_INTEGRITY_FAULT");
+      }
+      long day=gBookResearchLastNow/86400000;
+      if(day!=gBookResearchDay)
+      {BookResearchDaily(gBookResearchDay);gBookResearchDay=day;gBookResearchCandidateCount=0;gBookResearchEligibleCount=0;gBookResearchRejectedCount=0;gBookResearchOutcomeCount=0;}
+      for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++)
+      {
+         if(!gBookResearchOpportunities[i].used || gBookResearchOpportunities[i].track.stage==RESEARCH_FINISHED)continue;
+         BookResearchTrack t=gBookResearchOpportunities[i].track;BookResearchCandidate c=gBookResearchOpportunities[i].candidate;
+         long origin=t.entry_reference_available?t.entry_msc:c.created_msc;
+         long boundary=origin+900000;
+         bool drained=(gBookResearchQuoteCount==0 || gBookResearchQuotes[gBookResearchQuoteHead].tick.time_msc>boundary) &&
+            (gBookResearchSampleCount==0 || gBookResearchSamples[gBookResearchSampleHead].now_msc>boundary);
+         if(gBookResearchLastNow>=boundary && gBookResearchQuoteCovered>=boundary && !gBookResearchQuoteFault && drained)
+         {BookResearchFinish(t,boundary,"HORIZON_NO_BARRIER");gBookResearchOpportunities[i].track=t;BookResearchTrackChanged(i);}
+         else if(gBookResearchLastNow-boundary>=30000)
+         {t.path_ambiguous=true;BookResearchFinish(t,boundary,"INSUFFICIENT_MARKET_DATA");gBookResearchOpportunities[i].track=t;BookResearchTrackChanged(i);}
+      }
+   }
+   if(gBookResearchIOErrors==0)BookResearchFlush();
+   if(gBookResearchSuspended && !gBookResearchSuspensionReported)
+   {
+      gBookResearchSuspensionReported=true;
+      string row=BookResearchBase("",Symbol(),gBookResearchLastNow);BookResearchAdd(row,"SUSPENDED");BookResearchAdd(row,gBookResearchSuspendReason);
+      BookResearchAdd(row,BookResearchNumber(gBookResearchQueueCount));BookResearchAdd(row,BookResearchNumber((long)gBookResearchDropped));
+      BookResearchAdd(row,BookResearchNumber((long)gBookResearchWritten));BookResearchAdd(row,BookResearchNumber((long)gBookResearchIOErrors));
+      BookResearchAdd(row,BookResearchNumber((long)gBookResearchTimerUS));BookResearchAdd(row,BookResearchNumber((long)gBookResearchTimerMaxUS));
+      BookResearchAdd(row,BookResearchNumber((long)gBookResearchAcquisitionCalls));BookResearchAdd(row,BookResearchNumber((long)gBookResearchAcquisitionRows));
+      BookResearchAdd(row,"16777216");BookResearchAdd(row,"Research only; financial execution and protection unaffected; failure may prevent this row being persisted");
+      BookResearchWrite(gBookResearchPrefix+"Health.csv",row+"\r\n",BookResearchHeader(3));
+// HOST_CPP_INACTIVE | #ifndef __cplusplus
+      PrintFormat("[RESEARCH][SUSPENDED] reason=%s dropped=%I64u; financial execution/protection unchanged",gBookResearchSuspendReason,gBookResearchDropped);
+// HOST_CPP_INACTIVE | #endif
+   }
+   if(!gBookResearchSuspended && !BookResearchWriteMarker("OPEN"))
+   {gBookResearchIOErrors++;BookResearchSuspend("STATE_MARKER_WRITE_FAILED");}
+   ulong elapsed=GetMicrosecondCount()-begin;gBookResearchTimerUS+=elapsed;if(elapsed>gBookResearchTimerMaxUS)gBookResearchTimerMaxUS=elapsed;
+}
+void BookResearchRuntimeEndSession(const string reason)
+{
+   if(!BookResearchEnabled())return;
+   for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++)if(gBookResearchOpportunities[i].used && gBookResearchOpportunities[i].track.stage!=RESEARCH_FINISHED)
+   {BookResearchFinish(gBookResearchOpportunities[i].track,gBookResearchLastNow,reason);BookResearchTrackChanged(i);}
+}
+void BookResearchRuntimeDeinit(const int reason)
+{
+   if(!Inp_ResearchEnable || !gBookResearchReady)return;
+   gBookResearchLastNow=(long)TimeTradeServer()*1000;
+   BookResearchRuntimeEndSession("DEINIT_INCOMPLETE");BookResearchDaily(gBookResearchDay);
+   BookResearchHealth("SHUTDOWN",gBookResearchSuspended?gBookResearchSuspendReason:"CLEAN_DEINIT",BookResearchNumber(reason));
+   BookResearchFlush();
+   // A nonempty queue is an interrupted research delivery, never a financial
+   // obligation. Keep marker OPEN so the next instance reports the gap.
+   if(!gBookResearchSuspended && gBookResearchQueueCount==0)BookResearchWriteMarker("CLOSED");
+   gBookResearchReady=false;
+}
+#endif
+// END_INCORPORATED Include/BookResearchRuntime.mqh
+// ORIGINAL_INCLUDE | #include "Include/BookResearchBridge.mqh"
+// BEGIN_INCORPORATED Include/BookResearchBridge.mqh
+#ifndef BOOK_RESEARCH_BRIDGE_MQH
+#define BOOK_RESEARCH_BRIDGE_MQH
+// Read-only boundary. Original value snapshots are copied here; every mutable
+// queue, identity, hypothetical ARMED and file belongs solely to research.
+#define BOOK_RESEARCH_CAPTURE_CAP 32
+struct BookResearchCapture
+{
+   BookResearchCandidate candidate;MatrixSnapshot snapshot;MacroContext macro;
+   string eligibility,reason,subtype;double region_high,region_low;
+   bool possible;long context_bar;bool open_position,pending,accounting,daily_block;
+   int quota;double free_margin,equity,sigma,d1,h1,l1;
+};
+struct BookResearchEvidenceCapture
+{
+   string id;BookDecisionEvidence evidence;BookDecisionVerdict verdict;
+   int direction;bool cont,bound,available,dispatch;
+   long signal_generation,collector_epoch,data_version,covered;
+};
+BookResearchCapture gBookResearchCaptures[BOOK_RESEARCH_CAPTURE_CAP];
+BookResearchEvidenceCapture gBookResearchEvidenceCaptures[BOOK_RESEARCH_CAPTURE_CAP];
+BookDecisionHistory gBookResearchReferenceCaptures[BOOK_RESEARCH_CAPTURE_CAP];bool gBookResearchReferenceAvailable[BOOK_RESEARCH_CAPTURE_CAP];
+int gBookResearchCaptureHead=0,gBookResearchCaptureCount=0,gBookResearchEvidenceHead=0,gBookResearchEvidenceCount=0;
+string gBookResearchCandidateID="",gBookResearchArmedID="";
+long gBookResearchBridgeOrdinal=0,gBookResearchBridgeBar=0;
+ulong gBookResearchCallbackCalls=0,gBookResearchCallbackUS=0,gBookResearchCallbackMaxUS=0;
+ulong gBookResearchBorrowCalls=0,gBookResearchBorrowUS=0,gBookResearchBorrowMaxUS=0;
+ulong gBookResearchLastContextUS=0;string gBookResearchLastContextID="",gBookResearchEvidenceStamp="";
+BookResearchEvidenceCapture gBookResearchLastOperational;
+string gBookResearchAfterSendStamp="",gBookResearchGuardStamp="";ulong gBookResearchDispatchSequence=0,gBookResearchLastAfterDispatchSequence=0;
+struct BookResearchDispatchCapture
+{MqlTradeResult result;ArmedSignal original;string id;double price,lots,sl,tp;bool sent;uint retcode;long now,pricing_quote_msc;};
+BookResearchDispatchCapture gBookResearchDispatches[BOOK_RESEARCH_CAPTURE_CAP];int gBookResearchDispatchHead=0,gBookResearchDispatchCount=0;
+struct BookResearchRealLink {string id;ulong order,deal,position;};
+BookResearchRealLink gBookResearchLinks[BOOK_RESEARCH_TRACK_CAP];int gBookResearchLinkNext=0;
+
+string BookResearchJson(string value)
+{
+   StringReplace(value,"\\","\\\\");StringReplace(value,"\"","\\\"");
+   StringReplace(value,"\r","\\r");StringReplace(value,"\n","\\n");StringReplace(value,"\t","\\t");
+   return "\""+value+"\"";
+}
+// Local position reader avoids changing the strategy's posInfo object/cache.
+bool BookResearchPositionKnown(bool &open)
+{
+   open=false;int n=PositionsTotal();if(n<0 || n>256)return false;
+   CPositionInfo observation;
+   for(int i=0;i<n;i++)
+   {
+      if(!observation.SelectByIndex(i))return false;
+      if(observation.Symbol()==Symbol() && (gNetting || observation.Magic()==(long)gMagicCore))open=true;
+   }
+   return true;
+}
+bool BookResearchPendingKnown(bool &pending)
+{
+   pending=gPendingExec.active || gPendingExit.active || gOrderObligationScanUnresolved ||
+      gRequestJournalUnresolved || gRequestJournalWritePending || gEntryJournalCleanupPending ||
+      gExitJournalCleanupPending || gEntryJournalInvalid || gExitJournalInvalid ||
+      gPendingOrderClassificationUnresolved;
+   int n=OrdersTotal();if(n<0 || n>256)return false;
+   // OrderSelect state is terminal read selection, not an EA financial variable.
+   for(int i=0;i<n;i++)
+   {
+      ulong ticket=OrderGetTicket(i);if(ticket==0)return false;
+      if(OrderGetString(ORDER_SYMBOL)==Symbol() && OrderGetInteger(ORDER_MAGIC)==(long)gMagicCore)pending=true;
+   }
+   for(int i=0;i<gTradeRecordCount;i++)
+      if(gTradeRecords[i].positionID>0 && !gTradeRecords[i].closed && gTradeRecords[i].totalVolumeIn>0)pending=true;
+   for(int i=0;i<ArraySize(gUnresolvedOrders);i++)
+      if(gUnresolvedOrders[i].active && (gUnresolvedOrders[i].classificationPending || gUnresolvedOrders[i].persistencePending))pending=true;
+   return true;
+}
+string BookResearchIdentity(const long bar,const int direction,const string route,const string mode,const double trigger)
+{
+   return gBookRunID+"|"+(string)bar+"|"+route+"|"+(string)direction+"|"+mode+"|"+StringFormat("%.17g",trigger);
+}
+void BookResearchQueueCandidate(const MatrixSnapshot &snapshot,const int direction,const bool cont,
+   const string mode,const double high,const double low,const bool eligible,const string eligibility,const string reason,const long captured_signal_bar=0)
+{
+   if(!BookResearchEnabled())return;
+   if(gBookResearchCaptureCount>=BOOK_RESEARCH_CAPTURE_CAP){gBookResearchDropped++;BookResearchSuspend("CANDIDATE_CAPTURE_CAPACITY");return;}
+   BookResearchCapture capture;ZeroMemory(capture);
+   BookResearchCandidate c;ZeroMemory(c);
+   MqlTick tick;bool have=SymbolInfoTick(Symbol(),tick);
+   c.created_msc=have?tick.time_msc:(long)TimeTradeServer()*1000;c.armed_at_sec=(long)TimeTradeServer();
+   c.signal_bar=captured_signal_bar>0?captured_signal_bar:(long)gCachedMicroBar;c.symbol=Symbol();c.direction=direction;
+   c.route=eligible?(cont?"CONT":"ABS"):(snapshot.absValid&&snapshot.contValid?"CONFLICT":(snapshot.absValid?"ABS":(snapshot.contValid?"CONT":"NONE")));c.mode=mode;
+   c.trigger=eligible?ComputeTrigger(direction,high,low):0;c.region_high=high;c.region_low=low;
+   c.id=BookResearchIdentity(c.signal_bar,direction,eligible?c.route:eligibility,mode,c.trigger);
+   if(eligible)gBookResearchCandidateID=c.id;
+   c.timeout_sec=Inp_ArmedTimeoutSec;c.stop_entry_hhmm=Inp_StopEntryHHMM;
+   c.max_spread=gSpreadMaxPts;c.max_overshoot=gMaxOvershoot;c.tick_size=gTickSize;
+   c.effort_min=cont?Inp_CONT_BreakoutEffort:Inp_ABS_BreakoutEffort;
+   c.sl_distance=gSL_Pts;c.tp_distance=gTP_Pts;c.inner_pct=Inp_VWAP_Inner_Pct;c.outer_pct=Inp_VWAP_Outer_Pct;
+   c.late_direction_block=Inp_EnableLateDirectionBlock;c.original_eligible=eligible;
+   c.risk_parameters_frozen=true;c.sigma_stop=Inp_SL_Mode==SL_SIGMA_COM_TETO;c.frozen_sigma=SigmaD1;
+   c.sl_multiplier=Inp_Mult_SL;c.sl_cap=gIsDollarFamily?Inp_Max_SL_Pts_WDO:Inp_Max_SL_Pts_WIN;
+   c.tp_by_r=Inp_TP_Mode==TP_MODE_BY_ROUTE_R;c.tp_multiplier=(mode=="TURBO" || mode=="TURBO_CONT")?TP_TURBO_R:TP_BASE_R;
+   c.price_digits=(int)SymbolInfoInteger(Symbol(),SYMBOL_DIGITS);
+   capture.candidate=c;capture.snapshot=snapshot;capture.macro=gMacro;capture.context_bar=(long)gMacro.barTime;
+   capture.eligibility=eligibility;capture.reason=reason;
+   capture.subtype=cont?"CONT":(snapshot.absDivergence?"DIVERGENCE":(snapshot.absFollowingReaction?"FOLLOWING_REACTION":"STALL_STRICT"));
+   capture.region_high=high;capture.region_low=low;
+   // Selection hook copies existing guards only; no position/order scan or
+   // history query is inserted before the original candidate veto/arming.
+   bool open=gOpenPos.active,pending=gPendingExec.active || gPendingExit.active || gRequestJournalUnresolved ||
+      gOrderObligationScanUnresolved || gPendingOrderClassificationUnresolved;
+   capture.open_position=open;capture.pending=pending;capture.accounting=gAccountingUnresolved;
+   capture.daily_block=dailyRiskBlocked;capture.quota=ordersEnteredToday;
+   capture.sigma=SigmaD1;capture.d1=VWAP_D1;capture.h1=H1;capture.l1=L1;
+   capture.free_margin=AccountInfoDouble(ACCOUNT_MARGIN_FREE);capture.equity=AccountInfoDouble(ACCOUNT_EQUITY);
+   capture.possible=!open && !pending && !gAccountingUnresolved &&
+      !dailyRiskBlocked && ordersEnteredToday<Inp_MaxTradesDay;
+   int slot=(gBookResearchCaptureHead+gBookResearchCaptureCount)%BOOK_RESEARCH_CAPTURE_CAP;
+   gBookResearchCaptures[slot]=capture;gBookResearchCaptureCount++;
+}
+void BookResearchCaptureCandidate(const MatrixSnapshot &snapshot,const int direction,const bool cont,
+   const string mode,const double high,const double low)
+{BookResearchQueueCandidate(snapshot,direction,cont,mode,high,low,true,"ORIGINAL_ELIGIBLE","SELECTED_BEFORE_APPLY");}
+void BookResearchObserveMatrix(const MatrixSnapshot &snapshot,const ENUM_MSS status)
+{
+   if(!BookResearchEnabled())return;
+   string reason="";
+   if(status!=MSS_OK)reason="MATRIX_"+MssStr(status);
+   else if(snapshot.absValid && snapshot.contValid)reason="ROUTE_CONFLICT_BLOCK";
+   else if(!snapshot.absValid && !snapshot.contValid)reason="NO_CONFLUENCE";
+   if(reason!="")BookResearchQueueCandidate(snapshot,0,false,"NONE",0,0,false,reason,reason);
+}
+void BookResearchRegionInvalid(const MatrixSnapshot &snapshot,const int direction,const bool cont,const string mode)
+{BookResearchQueueCandidate(snapshot,direction,cont,mode,0,0,false,"REGION_INVALID","REGION_INVALID");}
+void BookResearchObserveBlockedMatrix(const MatrixSnapshot &snapshot,const datetime signal_bar)
+{BookResearchQueueCandidate(snapshot,0,false,"NONE",0,0,false,"FINANCIAL_BLOCKED_SNAPSHOT","ACCOUNTING_UNRESOLVED_READ_ONLY_SNAPSHOT",(long)signal_bar);}
+void BookResearchCaptureArmed()
+{if(BookResearchEnabled())gBookResearchArmedID=gBookResearchCandidateID;}
+void BookResearchQueueEvidence(const BookDecisionEvidence &e,const BookDecisionVerdict &v,const int direction,
+   const bool cont,const bool bound,const bool available)
+{
+   if(!BookResearchEnabled())return;
+   string stamp=(bound?gBookResearchArmedID:gBookResearchCandidateID)+"|"+(string)(int)v.result+"|"+v.reason+"|"+
+      (string)(available && e.have_current?e.current.flow.from_msc:0)+"|"+(bound?"ARMED":"CANDIDATE");
+   BookResearchEvidenceCapture latest;latest.id=bound?gBookResearchArmedID:gBookResearchCandidateID;
+   latest.evidence=e;latest.verdict=v;latest.direction=direction;latest.cont=cont;latest.bound=bound;latest.available=available;latest.dispatch=false;
+   latest.signal_generation=gBookDecisionSignalGeneration;latest.collector_epoch=gBookDecisionEpoch;
+   latest.data_version=gBookDecisionDataVersion;latest.covered=gBookDecisionCoveredMSC;
+   gBookResearchLastOperational=latest;
+   if(stamp==gBookResearchEvidenceStamp)return;gBookResearchEvidenceStamp=stamp;
+   if(gBookResearchEvidenceCount>=BOOK_RESEARCH_CAPTURE_CAP){gBookResearchDropped++;BookResearchSuspend("EVIDENCE_CAPTURE_CAPACITY");return;}
+   BookResearchEvidenceCapture capture;capture.id=bound?gBookResearchArmedID:gBookResearchCandidateID;
+   capture=latest;
+   int slot=(gBookResearchEvidenceHead+gBookResearchEvidenceCount)%BOOK_RESEARCH_CAPTURE_CAP;
+   gBookResearchEvidenceCaptures[slot]=capture;gBookResearchReferenceAvailable[slot]=available;
+   if(available)gBookResearchReferenceCaptures[slot]=gBookDecisionHistory;
+   gBookResearchEvidenceCount++;
+}
+void BookResearchOperationalEvidence(const BookDecisionEvidence &e,const BookDecisionVerdict &v,
+   const int direction,const bool cont,const bool bound)
+{BookResearchQueueEvidence(e,v,direction,cont,bound,true);}
+void BookResearchOperationalUnavailable(const BookDecisionVerdict &v,const int direction,const bool cont,const bool bound)
+{
+   if(!BookResearchEnabled())return;
+   BookDecisionEvidence e;ZeroMemory(e);e.now_msc=(long)TimeTradeServer()*1000;
+   BookResearchQueueEvidence(e,v,direction,cont,bound,false);
+}
+// Called only AFTER the sole entry API and CompletePendingExec have run.
+// Copy exact native result/terms once, without I/O, computation or order calls.
+void BookResearchRecordDispatch(const MqlTradeResult &result,const ArmedSignal &original,const double price,
+   const double lots,const double sl,const double tp,const bool sent,const uint retcode,const long pricing_quote_msc)
+{
+   if(!BookResearchEnabled())return;
+   gBookResearchDispatchSequence++;
+   BookResearchMarkActualDispatch(gBookResearchArmedID,pricing_quote_msc,(long)TimeTradeServer()*1000);
+   if(gBookResearchDispatchCount>=BOOK_RESEARCH_CAPTURE_CAP){gBookResearchDropped++;BookResearchSuspend("DISPATCH_CAPTURE_CAPACITY");return;}
+   BookResearchDispatchCapture c;c.result=result;c.original=original;c.id=gBookResearchArmedID;
+   c.price=price;c.lots=lots;c.sl=sl;c.tp=tp;c.sent=sent;c.retcode=retcode;c.now=(long)TimeTradeServer()*1000;c.pricing_quote_msc=pricing_quote_msc;
+   int slot=(gBookResearchDispatchHead+gBookResearchDispatchCount)%BOOK_RESEARCH_CAPTURE_CAP;
+   gBookResearchDispatches[slot]=c;gBookResearchDispatchCount++;
+   int link=gBookResearchLinkNext;gBookResearchLinkNext=(link+1)%BOOK_RESEARCH_TRACK_CAP;
+   gBookResearchLinks[link].id=c.id;gBookResearchLinks[link].order=result.order;gBookResearchLinks[link].deal=result.deal;gBookResearchLinks[link].position=0;
+}
+void BookResearchAfterSend(const ENUM_SEND_OUTCOME outcome)
+{
+   if(!BookResearchEnabled())return;
+   // Repeated WAIT is a state, not one research record per incoming tick.
+   string stamp=gBookResearchArmedID+"|"+(string)(int)outcome+"|"+gBookDecisionReason+"|"+
+      BookResearchBool(gPendingExec.active)+"|"+(string)(int)gPendingExec.dispatchPhase+"|"+
+      (string)gPendingExec.orderTicket+"|"+(string)gPendingExec.resultDeal+"|"+(string)gBookResearchDispatchSequence;
+   if(stamp==gBookResearchAfterSendStamp)return;gBookResearchAfterSendStamp=stamp;
+   bool dispatched=gBookResearchDispatchSequence!=gBookResearchLastAfterDispatchSequence;
+   gBookResearchLastAfterDispatchSequence=gBookResearchDispatchSequence;
+   // This hook is AFTER SendOrder returns, outside every financial critical path.
+   if(dispatched && gBookResearchEvidenceCount<BOOK_RESEARCH_CAPTURE_CAP && gBookResearchLastOperational.id==gBookResearchArmedID)
+   {int item=(gBookResearchEvidenceHead+gBookResearchEvidenceCount)%BOOK_RESEARCH_CAPTURE_CAP;
+    gBookResearchEvidenceCaptures[item]=gBookResearchLastOperational;gBookResearchEvidenceCaptures[item].dispatch=true;
+    gBookResearchReferenceAvailable[item]=gBookResearchLastOperational.available && gBookResearchLastOperational.collector_epoch==gBookDecisionEpoch &&
+       gBookResearchLastOperational.data_version==gBookDecisionDataVersion;
+    if(gBookResearchReferenceAvailable[item])gBookResearchReferenceCaptures[item]=gBookDecisionHistory;
+    gBookResearchEvidenceCount++;}
+   BookResearchRuntimeReal(gBookResearchArmedID,"REAL_SEND_RETURN",(long)TimeTradeServer()*1000,Symbol(),"",
+      (string)gPendingExec.orderTicket,(string)gPendingExec.resultDeal,gPendingExec.requestPrice,0,gPendingExec.slPrice,gPendingExec.tpPrice,
+      0,0,0,0,0,0,0,false,"",false,false,"send_outcome="+(string)(int)outcome+"; request_id="+(string)gPendingExec.requestID+
+      "; pending_active="+BookResearchBool(gPendingExec.active)+"; result is not a fill or reconciled PnL");
+}
+string BookResearchLinkFor(const ulong position,const ulong order,const ulong deal)
+{
+   for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++)
+      if((position>0 && gBookResearchLinks[i].position==position) || (order>0 && gBookResearchLinks[i].order==order) ||
+         (deal>0 && gBookResearchLinks[i].deal==deal))return gBookResearchLinks[i].id;
+   return ""; // never guess a recovered trade's original candidate or preset
+}
+void BookResearchCaptureTransaction(const MqlTradeTransaction &trans,const MqlTradeRequest &request,const MqlTradeResult &result)
+{
+   if(!BookResearchEnabled() || trans.symbol!=Symbol())return;
+
+   // A transaction's position field is a POSITION TICKET, not necessarily its
+   // stable POSITION_IDENTIFIER. Link stable IDs only from confirmed deal data.
+   ulong pid=0;
+   if(trans.deal>0)pid=(ulong)HistoryDealGetInteger(trans.deal,DEAL_POSITION_ID);
+   if(pid==0 && trans.position>0)
+   {CPositionInfo observation;if(observation.SelectByTicket(trans.position))pid=(ulong)PositionGetInteger(POSITION_IDENTIFIER);}
+   string id=BookResearchLinkFor(pid,trans.order,trans.deal);if(id=="")return;
+   for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++)if(gBookResearchLinks[i].id==id && pid>0)gBookResearchLinks[i].position=pid;
+   BookResearchRuntimeReal(id,trans.type==TRADE_TRANSACTION_POSITION?"REAL_STOP_CHANGE_OBSERVED":"REAL_TRANSACTION_OBSERVED",(long)TimeTradeServer()*1000,Symbol(),pid>0?(string)pid:"",
+      (string)trans.order,(string)trans.deal,request.price,trans.price,trans.price_sl,trans.price_tp,0,0,0,0,0,0,0,false,"",false,false,
+      "transaction_type="+(string)(int)trans.type+";request_id="+(string)result.request_id+";retcode="+(string)result.retcode);
+}
+void BookResearchCaptureTrade(const TradeRecord &record)
+{
+   if(!BookResearchEnabled())return;
+   string id=BookResearchLinkFor(record.positionID,record.entryOrderTicket,0);
+   BookResearchRuntimeReal(id,"REAL_RECONCILED",record.exitTimeMSC,Symbol(),(string)record.positionID,
+      (string)record.entryOrderTicket,(string)record.lastExitDealTicket,record.requestPriceAvailable?record.requestPrice:0,
+      record.weightedEntryPrice,record.slPrice,record.tpPrice,record.MAE,record.MFE,record.grossProfit,record.commission,
+      record.fee,record.swap,record.netProfit,record.maeMfePartialAfterRestart,record.exitReason,record.accountingResolved,
+      record.accountingResolved && record.volumeClosedComplete && !record.inoutCostsUnresolved,
+      "duration_seconds="+(string)record.holdSeconds+";entry_time="+(string)(long)record.entryTime+";exit_time="+(string)(long)record.exitTime+
+      ";link_scope="+(id==""?"HISTORICAL_ORIGIN_NOT_PROVEN":"EXACT_ORDER_OR_POSITION_ID"),record.holdSeconds);
+}
+// Local terminal calculations are read-only. This mirror never calls the
+// original sizing helper (which writes audits) or freezes the real risk state.
+// Failed APIs mean UNKNOWN; a measured stop/margin rejection means INVALID.
+void BookResearchReadTerms(const int direction,const string mode,const MqlTick &tick,bool &known,bool &valid)
+{
+   known=false;valid=false;
+   double entry=direction==1?tick.ask:tick.bid;if(entry<=0)return;
+   BookResearchCandidate c;ZeroMemory(c);c.direction=direction;c.mode=mode;c.sl_distance=gSL_Pts;c.tp_distance=gTP_Pts;
+   c.tick_size=gTickSize;c.price_digits=(int)SymbolInfoInteger(Symbol(),SYMBOL_DIGITS);c.risk_parameters_frozen=true;
+   c.sigma_stop=Inp_SL_Mode==SL_SIGMA_COM_TETO;c.frozen_sigma=SigmaD1;c.sl_multiplier=Inp_Mult_SL;
+   c.sl_cap=gIsDollarFamily?Inp_Max_SL_Pts_WDO:Inp_Max_SL_Pts_WIN;
+   c.tp_by_r=Inp_TP_Mode==TP_MODE_BY_ROUTE_R;c.tp_multiplier=mode=="TURBO"?TP_TURBO_R:TP_BASE_R;
+   double sl,tp;if(!BookResearchStops(c,entry,sl,tp)){known=true;return;}
+   double lots=Inp_FixedLots;ENUM_ORDER_TYPE type=direction==1?ORDER_TYPE_BUY:ORDER_TYPE_SELL;
+   if(Inp_SizingMode!=SIZING_FIXED)
+   {
+      double profit=0;if(!OrderCalcProfit(type,Symbol(),1.0,entry,sl,profit) || !MathIsValidNumber(profit) || profit>=0)return;
+      double cash=AccountInfoDouble(ACCOUNT_EQUITY)*Inp_RiskPerTradePct/100.0;
+      double step=SymbolInfoDouble(Symbol(),SYMBOL_VOLUME_STEP);
+      if(!MathIsValidNumber(cash) || cash<=0 || step<=0)return;
+      double cap=MathMin(Inp_MaxLots,SymbolInfoDouble(Symbol(),SYMBOL_VOLUME_MAX));
+      double raw=MathMin(cash/MathAbs(profit),cap);lots=NormalizeDouble(MathFloor(raw/step)*step,8);
+      if(lots>raw+1e-10)lots=NormalizeDouble(lots-step,8);
+      if(lots<SymbolInfoDouble(Symbol(),SYMBOL_VOLUME_MIN)-1e-10){known=true;return;}
+   }
+   double minimum=(double)SymbolInfoInteger(Symbol(),SYMBOL_TRADE_STOPS_LEVEL)*SymbolInfoDouble(Symbol(),SYMBOL_POINT);
+   double closing=direction==1?tick.bid:tick.ask;
+   if(lots<=0 || direction*(entry-sl)<minimum || direction*(tp-entry)<minimum ||
+      direction*(closing-sl)<minimum || direction*(tp-closing)<minimum){known=true;return;}
+   double margin=0;if(!OrderCalcMargin(type,Symbol(),lots,entry,margin) || !MathIsValidNumber(margin) || margin<0)return;
+   known=true;valid=AccountInfoDouble(ACCOUNT_MARGIN_FREE)>=margin;
+}
+void BookResearchAfterTick()
+{
+   if(!BookResearchEnabled())return;
+   // Context snapshots <=10Hz plus every new candidate. Raw quote history is
+   // acquired separately on the timer. Missing intermediate Stage2 context is
+   // explicitly not reconstructable, never filled with a later bar's values.
+   ulong local=GetMicrosecondCount();
+   if(gBookResearchLastContextID==gBookResearchCandidateID && gBookResearchLastContextUS>0 &&
+      local>=gBookResearchLastContextUS && local-gBookResearchLastContextUS<100000)return;
+   gBookResearchLastContextUS=local;gBookResearchLastContextID=gBookResearchCandidateID;
+   BookResearchMarketSample x;ZeroMemory(x);MqlTick tick;
+   if(!SymbolInfoTick(Symbol(),tick))return;
+   x.now_msc=tick.time_msc;x.server_sec=(long)TimeTradeServer();x.ordinal=++gBookResearchBridgeOrdinal;
+   MqlDateTime dt;TimeToStruct((datetime)x.server_sec,dt);x.hhmm=dt.hour*100+dt.min;
+   x.signal_bar=(long)iTime(Symbol(),Inp_SignalTF,0);x.new_signal_bar=x.signal_bar!=gBookResearchBridgeBar;gBookResearchBridgeBar=x.signal_bar;
+   x.raw_identity_available=true;x.raw_volume=tick.volume;x.raw_volume_real=tick.volume_real;x.raw_flags=tick.flags;x.raw_time_sec=(long)tick.time;
+   x.bid=tick.bid;x.ask=tick.ask;x.last=tick.last;x.quote_available=tick.bid>0 && tick.ask>=tick.bid;
+   x.real_trade=(tick.flags&(TICK_FLAG_LAST|TICK_FLAG_VOLUME|TICK_FLAG_BUY|TICK_FLAG_SELL))!=0;
+   x.weis_valid=wwValid;
+   double current_volume=wwUseReal?(double)iRealVolume(Symbol(),Inp_SignalTF,0):(double)iVolume(Symbol(),Inp_SignalTF,0);
+   double close=iClose(Symbol(),Inp_SignalTF,0),volume,average;
+   BookResearchLiveWave(current_volume,close,wwCloseRef,wwDirClosed,wwAccumClosed,wwAvgClosed,wwAvgIfFlip,
+      x.live_effort,volume,average,x.live_wave_direction);
+   x.context_causal=x.signal_bar>0 && x.server_sec>=x.signal_bar && iTime(Symbol(),Inp_SignalTF,0)==(datetime)x.signal_bar && close>0;
+   x.sigma=SigmaD1;x.band_multiplier=BandMultiplier;
+   x.vwap_base_pv=vwapSumPV;x.vwap_base_volume=vwapSumVol;x.vwap_from=(long)vwapNextFromMsc;
+   x.vwap_base_valid=vwapReady && vwapSumVol>0 && vwapNextFromMsc>0;
+   // No hidden history read: the research timer qualifies the local trade suffix.
+   x.vwap_valid=false;x.path_complete=false;
+   x.hard_snapshot_valid=gLastTelemetryMatrixValid && (long)gLastTelemetrySignalBar==x.signal_bar;
+   if(x.hard_snapshot_valid)
+   {x.hard_abs_valid=gLastTelemetryMatrix.absValid;x.hard_cont_valid=gLastTelemetryMatrix.contValid;
+    x.hard_abs_direction=gLastTelemetryMatrix.dir;x.hard_cont_direction=gLastTelemetryMatrix.dirCont;}
+   bool open=false,pending=false;bool position_known=BookResearchPositionKnown(open),pending_known=BookResearchPendingKnown(pending);
+   x.financial_known=position_known && pending_known;
+   x.financial_possible=!open && !pending && !dailyRiskBlocked && !gAccountingUnresolved && ordersEnteredToday<Inp_MaxTradesDay;
+   string guard=(string)x.signal_bar+"|"+BookResearchBool(open)+BookResearchBool(pending)+BookResearchBool(gAccountingUnresolved)+
+      BookResearchBool(dailyRiskBlocked)+BookResearchBool(d1Ready)+BookResearchBool(wwValid);
+   if(guard!=gBookResearchGuardStamp)
+   {
+      gBookResearchGuardStamp=guard;
+      if(!x.financial_possible || !d1Ready || !wwValid)
+         BookResearchHealth("ORIGINAL_NOT_EVALUATED",!d1Ready || !wwValid?"ORIGINAL_DATA_GUARD":"ORIGINAL_FINANCIAL_OR_POSITION_GUARD",
+            "No valid current matrix opportunity is invented; open="+BookResearchBool(open)+";pending="+BookResearchBool(pending)+
+            ";accounting="+BookResearchBool(gAccountingUnresolved)+";quota="+(string)ordersEnteredToday);
+   }
+
+   // Replay cannot reconstruct historical broker margin/sizing solely from a
+   // quote. Stage2 market eligibility and conditional barriers remain separate.
+   x.execution_terms_known=false;x.execution_terms_valid=false;x.route_terms=true;
+   for(int k=0;k<4;k++)BookResearchReadTerms(k<2?1:-1,k%2==0?"BASE":"TURBO",tick,x.terms_known[k],x.terms_valid[k]);
+   x.book_required=Inp_DOM_TradeGateEnable;x.book_known=false;x.book_confirmed=false;
+   MqlTick after_context;
+   if(!SymbolInfoTick(Symbol(),after_context) || after_context.time_msc!=tick.time_msc ||
+      after_context.bid!=tick.bid || after_context.ask!=tick.ask || after_context.last!=tick.last ||
+      after_context.volume!=tick.volume || after_context.volume_real!=tick.volume_real || after_context.flags!=tick.flags)x.context_causal=false;
+   BookResearchRuntimeSample(x);
+   ulong elapsed=GetMicrosecondCount()-local;gBookResearchCallbackCalls++;gBookResearchCallbackUS+=elapsed;
+   if(elapsed>gBookResearchCallbackMaxUS)gBookResearchCallbackMaxUS=elapsed;
+}
+void BookResearchInit()
+{
+   if(!Inp_ResearchEnable)return;
+   gBookResearchCaptureHead=0;gBookResearchEvidenceHead=0;gBookResearchCaptureCount=0;gBookResearchEvidenceCount=0;gBookResearchCandidateID="";gBookResearchArmedID="";
+   gBookResearchLinkNext=0;for(int i=0;i<BOOK_RESEARCH_TRACK_CAP;i++)ZeroMemory(gBookResearchLinks[i]);
+   ZeroMemory(gBookResearchLastOperational);gBookResearchAfterSendStamp="";gBookResearchGuardStamp="";gBookResearchDispatchSequence=0;gBookResearchLastAfterDispatchSequence=0;gBookResearchDispatchHead=0;gBookResearchDispatchCount=0;
+   gBookResearchCallbackCalls=0;gBookResearchCallbackUS=0;gBookResearchCallbackMaxUS=0;gBookResearchBorrowCalls=0;gBookResearchBorrowUS=0;gBookResearchBorrowMaxUS=0;
+   gBookResearchBridgeOrdinal=0;gBookResearchBridgeBar=0;gBookResearchLastContextUS=0;gBookResearchLastContextID="";gBookResearchEvidenceStamp="";
+   string trading_hash="UNAVAILABLE";
+   string name="Inp_ResearchEnable",value=Inp_ResearchEnable?"1":"0";
+   string suffix="4:bool"+(string)StringLen(name)+":"+name+"1:"+value+"\n";
+   int length=StringLen(gBookCanonicalInputs)-StringLen(suffix);
+   if(length>=0 && StringSubstr(gBookCanonicalInputs,length)==suffix)
+      BookIdentityHash("BOOK_INPUT_CANONICAL_V1\n"+StringSubstr(gBookCanonicalInputs,0,length),trading_hash);
+   BookResearchRuntimeInit(gBookRunID,gBookConfigHash,gBookCanonicalInputs,(string)AccountInfoInteger(ACCOUNT_LOGIN),
+      (string)gMagicCore,BOOK_SOURCE_BUNDLE_SHA256,(int)Inp_DecisionMode,gBookDecisionConfig,AccountInfoString(ACCOUNT_SERVER),trading_hash);
+}
+// Exact legacy diagnostic serialization with all four external geometry values frozen.
+void BookResearchMatrixRow(string &line,const MatrixSnapshot &s,bool available,datetime signalBar,
+   const double captured_sigma,const double captured_d1,const double captured_h1,const double captured_l1)
+{
+  string route = s.absValid && s.contValid ? "CONFLICT" :
+      (s.absValid ? "ABS" : (s.contValid ? "CONT" : "NONE"));
+  string mode = s.absValid && s.contValid ? "CONFLICT" :
+     (s.absValid ? (s.turboAbs ? "TURBO" : "BASE") :
+      (s.contValid ? (s.turboCont ? "TURBO" : "BASE") : "NONE"));
+  int direction = s.absValid && !s.contValid ? s.dir :
+       (s.contValid && !s.absValid ? s.dirCont : 0);
+// These four formulas are executable diagnostics in canonical v2.44.
+// They remain telemetry and cannot change ABS/CONT or execution.
+string flowRegime = !s.c1_effort_ok ? "FLOW_WEAK" :
+     (!s.displacementOk ? "FLOW_STALL" :
+      (s.moveDir == s.dir ? "FLOW_REACTION" :
+       (s.moveDir == -s.dir ? "FLOW_EXTENSION" : "FLOW_NA")));
+CsvAdd(line,BStr(available)); // MATRIX_SNAPSHOT_AVAILABLE
+CsvAdd(line,CsvTime(signalBar)); // SIGNAL_BAR
+CsvAdd(line,available ? (EnumToString(s.status)) : ""); // MATRIX_STATUS
+CsvAdd(line,available ? (route) : ""); // ROUTE
+CsvAdd(line,available ? (mode) : ""); // MODE
+CsvAdd(line,available ? (DirStr(direction)) : ""); // DIR
+CsvAdd(line,available ? (CsvD(s.price)) : ""); // PRICE
+CsvAdd(line,available ? (CsvD(s.open1)) : ""); // OPEN
+CsvAdd(line,available ? (CsvD(s.candleBody)) : ""); // CANDLE_BODY
+CsvAdd(line,available ? (IntegerToString(s.candleDir)) : ""); // CANDLE_DIR
+CsvAdd(line,available ? (CsvD(s.posRel)) : ""); // POSREL
+CsvAdd(line,available ? (CsvD(s.posRange)) : ""); // POS_RANGE
+CsvAdd(line,available ? (BStr(s.glass)) : ""); // GLASS
+CsvAdd(line,available ? (CsvD(s.distAbs)) : ""); // DIST_VWAP_D1
+CsvAdd(line,available ? (CsvD(s.vwapVig)) : ""); // VWAP_VIG
+CsvAdd(line,available ? (CsvD(s.upper)) : ""); // UPPER_BAND
+CsvAdd(line,available ? (CsvD(s.lower)) : ""); // LOWER_BAND
+CsvAdd(line,available ? (CsvD(s.bandRange)) : ""); // BAND_RANGE
+CsvAdd(line,available ? (CsvD(captured_sigma)) : ""); // SIGMA_D1
+CsvAdd(line,available ? (CsvD(captured_d1)) : ""); // captured_d1
+CsvAdd(line,available ? (CsvD(captured_h1)) : ""); // captured_h1
+CsvAdd(line,available ? (CsvD(captured_l1)) : ""); // captured_l1
+CsvAdd(line,available ? (DirStr(s.dir)) : ""); // ABS_DIR
+CsvAdd(line,available ? (DirStr(s.dirCont)) : ""); // CONT_DIR
+CsvAdd(line,available ? (BStr(s.c1)) : ""); // C1
+CsvAdd(line,available ? (BStr(s.c2)) : ""); // C2
+CsvAdd(line,available ? (BStr(s.c3)) : ""); // C3
+CsvAdd(line,available ? (BStr(s.c4)) : ""); // C4
+CsvAdd(line,available ? (BStr(s.c5AbsOk)) : ""); // C5
+CsvAdd(line,available ? (BStr(s.c23)) : ""); // C23
+CsvAdd(line,available ? (BStr(s.baseAbs)) : ""); // BASE
+CsvAdd(line,available ? (BStr(s.turboAbs)) : ""); // TURBO
+CsvAdd(line,available ? (BStr(s.c1Cont)) : ""); // CONT_C1
+CsvAdd(line,available ? (BStr(s.c2Cont)) : ""); // CONT_C2
+CsvAdd(line,available ? (BStr(s.c3Cont)) : ""); // CONT_C3
+CsvAdd(line,available ? (BStr(s.c4Cont)) : ""); // CONT_C4
+CsvAdd(line,available ? (BStr(s.c5ContOk)) : ""); // CONT_C5
+CsvAdd(line,available ? (BStr(s.c23Cont)) : ""); // CONT_C23
+CsvAdd(line,available ? (BStr(s.baseCont)) : ""); // CONT_BASE
+CsvAdd(line,available ? (BStr(s.turboCont)) : ""); // CONT_TURBO
+CsvAdd(line,available ? (IntegerToString(s.scoreEff)) : ""); // ABS_SCORE
+CsvAdd(line,available ? (IntegerToString(s.scoreContEff)) : ""); // CONT_SCORE
+  CsvAdd(line,available ? (BStr(s.absValid)) : ""); // ABS_VALID
+  CsvAdd(line,available ? (BStr(s.contValid)) : ""); // CONT_VALID
+  CsvAdd(line,available ? (BStr(s.macroAbsCompatible)) : ""); //
+// MACRO_ABS_COMPATIBLE
+  CsvAdd(line,available ? (BStr(s.macroContCompatible)) : ""); //
+// MACRO_CONT_COMPATIBLE
+  CsvAdd(line,available ? (BStr(s.wwok)) : ""); // WW_VALID
+  CsvAdd(line,available ? (CsvD(s.effort)) : ""); // WW_EFFORT
+  CsvAdd(line,available ? (IntegerToString(s.waveDir)) : ""); // WW_DIR
+  CsvAdd(line,available ? (s.wwok ? IntegerToString(s.wwWaveBars) : "") : ""); //
+// WW_WAVE_BARS
+  CsvAdd(line,available ? (s.wwok && s.wwWaveAgeAvailable ?
+IntegerToString(s.wwWaveAgeSec) : "") : ""); // WW_WAVE_AGE_SEC
+  CsvAdd(line,available ? (s.wwok ? CsvD(s.wwAccumVolume) : "") : ""); //
+// WW_ACCUM_VOLUME
+ CsvAdd(line,available ? (s.wwok ? CsvD(s.wwDistancePts) : "") : ""); //
+// WW_DISTANCE_PTS
+ CsvAdd(line,available ? (BStr(s.windowsValid)) : ""); // WINDOWS_VALID
+ CsvAdd(line,available ? (PocStateStr(s.pocState)) : ""); // ABS_POC_STATE
+ CsvAdd(line,available ? (PocStateStr(s.contPocState)) : ""); // CONT_POC_STATE
+ CsvAdd(line,available ? (CsvD(s.minDispl)) : ""); // ABS_MIN_MOVE
+ CsvAdd(line,available ? (CsvD(s.maxBody)) : ""); // ABS_MAX_BODY
+ CsvAdd(line,available ? (CsvD(s.contMinDispl)) : ""); // CONT_MIN_MOVE
+ CsvAdd(line,available ? (BStr(s.displacementOk)) : ""); // ABS_DISPLACEMENT_OK
+ CsvAdd(line,available ? (BStr(s.contDisplacementOk)) : ""); //
+// CONT_DISPLACEMENT_OK
+ CsvAdd(line,available ? (BStr(s.absDivergence)) : ""); // ABS_DIVERGENCE
+ CsvAdd(line,available ? (BStr(s.absStallStrict)) : ""); // ABS_STALL_STRICT
+ CsvAdd(line,available ? (BStr(s.c1_body_ok)) : ""); // ABS_BODY_OK
+ CsvAdd(line,available ? (BStr(s.absFollowingReaction)) : ""); //
+// ABS_FOLLOWING_REACTION
+ CsvAdd(line,available ? (BStr(s.absFollowingExtension)) : ""); //
+// ABS_FOLLOWING_EXTENSION
+ CsvAdd(line,available ? (BStr(s.c1_effort_ok)) : ""); // ABS_EFFORT_OK
+ CsvAdd(line,available ? (BStr(s.cont_effort_ok)) : ""); // CONT_EFFORT_OK
+ CsvAdd(line,available ? (BStr(s.cont_poc_ok)) : ""); // CONT_POC_OK
+ CsvAdd(line,available ? (BStr(s.cont_movedir_ok)) : ""); // CONT_MOVE_DIR_OK
+ CsvAdd(line,available ? (BStr(s.cont_wavedir_ok)) : ""); // CONT_WAVE_DIR_OK
+ CsvAdd(line,available ? (BStr(s.cont_candle_dir_ok)) : ""); // CONT_CANDLE_DIR_OK
+ CsvAdd(line,available ? (CsvD(s.priceMove)) : ""); // PRICE_MOVE
+ CsvAdd(line,available ? (CsvD(s.pocMove)) : ""); // POC_MOVE
+ CsvAdd(line,available ? (IntegerToString(s.moveDir)) : ""); // MOVE_DIR
+ CsvAdd(line,available ? (IntegerToString(s.contMoveDir)) : ""); // CONT_MOVE_DIR
+ CsvAdd(line,available ? (CsvD(s.pocNow.poc)) : ""); // POC_NOW
+ CsvAdd(line,available ? (CsvD(s.pocNow.totalVolume)) : ""); // POC_NOW_VOLUME
+ CsvAdd(line,available ? (s.pocNow.ok ? "VALID" : "INVALID") : ""); //
+// POC_NOW_WINDOW_STATE
+ CsvAdd(line,available ? (BStr(s.pocNow.hasTie)) : ""); // POC_NOW_TIE
+ CsvAdd(line,available ? (IntegerToString(s.pocNow.tradeCount)) : ""); //
+// POC_NOW_TRADE_COUNT
+ CsvAdd(line,available ? (IntegerToString(s.pocNow.levels)) : ""); // POC_NOW_LEVELS
+ CsvAdd(line,available ? (CsvD(s.pocNow.lastValidPrice)) : ""); // POC_NOW_LAST_PRICE
+ CsvAdd(line,available ? (CsvD(s.pocNow.top1Price)) : ""); // POC_NOW_TOP1_PRICE
+ CsvAdd(line,available ? (CsvD(s.pocNow.top1Vol)) : ""); // POC_NOW_TOP1_VOL
+ CsvAdd(line,available ? (s.pocNow.levels >= 2 ? CsvD(s.pocNow.top2Price) : "") : ""); //
+// POC_NOW_TOP2_PRICE
+ CsvAdd(line,available ? (s.pocNow.levels >= 2 ? CsvD(s.pocNow.top2Vol) : "") : ""); //
+// POC_NOW_TOP2_VOL
+ CsvAdd(line,available ? (CsvD(s.pocNow.dominance)) : ""); // POC_NOW_DOMINANCE
+ CsvAdd(line,available ? (CsvD(s.pocNow.buyVol)) : ""); // AGG_BUY_NOW
+ CsvAdd(line,available ? (CsvD(s.pocNow.sellVol)) : ""); // AGG_SELL_NOW
+ CsvAdd(line,available ? (CsvD(s.pocNow.unkVol)) : ""); // AGG_UNKNOWN_NOW
+   CsvAdd(line,available ? (CsvD(s.pocNow.buyVol - s.pocNow.sellVol)) : ""); //
+// AGG_DELTA_NOW
+   CsvAdd(line,available ? ((s.pocNow.buyVol + s.pocNow.sellVol > 0.0) ?
+CsvD((s.pocNow.buyVol - s.pocNow.sellVol)/(s.pocNow.buyVol + s.pocNow.sellVol)) : "") : "");
+// AGG_IMBALANCE_NOW
+   CsvAdd(line,available ? ((s.pocNow.buyVol + s.pocNow.sellVol + s.pocNow.unkVol > 0.0) ?
+CsvD((s.pocNow.buyVol + s.pocNow.sellVol)/(s.pocNow.buyVol + s.pocNow.sellVol +
+s.pocNow.unkVol)) : "") : ""); // AGG_KNOWN_PCT_NOW
+   CsvAdd(line,available ? (CsvD(s.pocPrev.poc)) : ""); // POC_PREV
+   CsvAdd(line,available ? (CsvD(s.pocPrev.totalVolume)) : ""); // POC_PREV_VOLUME
+   CsvAdd(line,available ? (s.pocPrev.ok ? "VALID" : "INVALID") : ""); //
+// POC_PREV_WINDOW_STATE
+   CsvAdd(line,available ? (BStr(s.pocPrev.hasTie)) : ""); // POC_PREV_TIE
+   CsvAdd(line,available ? (IntegerToString(s.pocPrev.tradeCount)) : ""); //
+// POC_PREV_TRADE_COUNT
+   CsvAdd(line,available ? (IntegerToString(s.pocPrev.levels)) : ""); // POC_PREV_LEVELS
+   CsvAdd(line,available ? (CsvD(s.pocPrev.lastValidPrice)) : ""); //
+// POC_PREV_LAST_PRICE
+   CsvAdd(line,available ? (CsvD(s.pocPrev.top1Price)) : ""); // POC_PREV_TOP1_PRICE
+   CsvAdd(line,available ? (CsvD(s.pocPrev.top1Vol)) : ""); // POC_PREV_TOP1_VOL
+   CsvAdd(line,available ? (s.pocPrev.levels >= 2 ? CsvD(s.pocPrev.top2Price) : "") : ""); //
+// POC_PREV_TOP2_PRICE
+   CsvAdd(line,available ? (s.pocPrev.levels >= 2 ? CsvD(s.pocPrev.top2Vol) : "") : ""); //
+// POC_PREV_TOP2_VOL
+   CsvAdd(line,available ? (CsvD(s.pocPrev.dominance)) : ""); // POC_PREV_DOMINANCE
+   CsvAdd(line,available ? (CsvD(s.pocPrev.buyVol)) : ""); // AGG_BUY_PREV
+   CsvAdd(line,available ? (CsvD(s.pocPrev.sellVol)) : ""); // AGG_SELL_PREV
+   CsvAdd(line,available ? (CsvD(s.pocPrev.unkVol)) : ""); // AGG_UNKNOWN_PREV
+   CsvAdd(line,available ? (CsvD(s.pocPrev.buyVol - s.pocPrev.sellVol)) : ""); //
+// AGG_DELTA_PREV
+   CsvAdd(line,available ? ((s.pocPrev.buyVol + s.pocPrev.sellVol > 0.0) ?
+CsvD((s.pocPrev.buyVol - s.pocPrev.sellVol)/(s.pocPrev.buyVol + s.pocPrev.sellVol)) : "") :
+""); // AGG_IMBALANCE_PREV
+   CsvAdd(line,available ? ((s.pocPrev.buyVol + s.pocPrev.sellVol + s.pocPrev.unkVol > 0.0) ?
+CsvD((s.pocPrev.buyVol + s.pocPrev.sellVol)/(s.pocPrev.buyVol + s.pocPrev.sellVol +
+s.pocPrev.unkVol)) : "") : ""); // AGG_KNOWN_PCT_PREV
+   CsvAdd(line,available ? (flowRegime) : ""); // FLOW_REGIME
+   CsvAdd(line,available ? (CsvD(s.pocPrev.totalVolume > 0.0 ?
+s.pocNow.totalVolume/s.pocPrev.totalVolume : 0.0)) : ""); // VOL_RATIO
+   CsvAdd(line,available ? (CsvD(s.minDispl > 0.0 ? MathAbs(s.priceMove)/s.minDispl : 0.0))
+: ""); // PRICE_EFFICIENCY
+  CsvAdd(line,available ? (CsvD(MathAbs(s.priceMove) > 0.0 ?
+MathAbs(s.pocMove)/MathAbs(s.priceMove) : 0.0)) : ""); // POC_RESPONSE
+}
+void BookResearchTimer()
+{
+   if(!Inp_ResearchEnable || !gBookResearchReady)return;
+   ulong began=GetMicrosecondCount();
+   int n=0;
+   while(BookResearchEnabled() && gBookResearchCaptureCount>0 && n++<8 && GetMicrosecondCount()-began<BOOK_RESEARCH_TIMER_US)
+   {
+      BookResearchCapture c=gBookResearchCaptures[gBookResearchCaptureHead];
+      gBookResearchCaptureHead=(gBookResearchCaptureHead+1)%BOOK_RESEARCH_CAPTURE_CAP;gBookResearchCaptureCount--;
+      string header="",values="",macro="";
+      CsvMatrixHeader(header);BookResearchMatrixRow(values,c.snapshot,true,(datetime)c.candidate.signal_bar,c.sigma,c.d1,c.h1,c.l1);
+      // Serialize the FROZEN macro object, not current mutable macro globals.
+      macro="{\"status\":"+(string)(int)c.macro.status+",\"bar\":"+(string)(long)c.macro.barTime+
+         ",\"price\":"+BookResearchDecimal(c.macro.closedPrice)+",\"vwap\":"+BookResearchDecimal(c.macro.vwap)+
+         ",\"sigma\":"+BookResearchDecimal(c.macro.SigmaD1)+",\"posrel\":"+BookResearchDecimal(c.macro.posRel)+
+         ",\"abs_dir\":"+(string)c.macro.macroAbsDir+",\"cont_dir\":"+(string)c.macro.macroContDir+"}";
+      string context="{\"declared_version\":\"1.125\",\"build_id\":"+BookResearchJson(BOOK_BUILD_ID)+
+         ",\"revision_at_generation\":"+BookResearchJson(BOOK_REVISION_AT_GENERATION)+",\"matrix_csv_header\":"+BookResearchJson(header)+",\"matrix_csv_row\":"+BookResearchJson(values)+
+         ",\"macro\":"+macro+",\"region_high\":"+BookResearchDecimal(c.region_high)+",\"region_low\":"+BookResearchDecimal(c.region_low)+
+         ",\"preset_hash\":"+BookResearchJson(gBookConfigHash)+",\"accounting_unresolved\":"+BookResearchBool(c.accounting)+
+         ",\"open_position\":"+BookResearchBool(c.open_position)+",\"pending\":"+BookResearchBool(c.pending)+
+         ",\"daily_block\":"+BookResearchBool(c.daily_block)+",\"quota\":"+(string)c.quota+
+         ",\"free_margin\":"+BookResearchDecimal(c.free_margin)+",\"equity\":"+BookResearchDecimal(c.equity)+"}";
+      BookResearchRuntimeCandidate(c.candidate,c.subtype,c.eligibility,c.reason,context,c.possible);
+   }
+   n=0;
+   while(BookResearchEnabled() && gBookResearchCaptureCount==0 && gBookResearchEvidenceCount>0 && n++<8 && GetMicrosecondCount()-began<BOOK_RESEARCH_TIMER_US)
+   {
+      BookResearchEvidenceCapture e=gBookResearchEvidenceCaptures[gBookResearchEvidenceHead];
+      BookResearchRuntimeReferenceContext(gBookResearchReferenceCaptures[gBookResearchEvidenceHead],gBookResearchReferenceAvailable[gBookResearchEvidenceHead],
+         e.signal_generation,e.collector_epoch,e.data_version,e.covered);
+      gBookResearchEvidenceHead=(gBookResearchEvidenceHead+1)%BOOK_RESEARCH_CAPTURE_CAP;gBookResearchEvidenceCount--;
+      BookResearchRuntimeEvidence(e.id,e.evidence,e.verdict,e.direction,e.cont,e.bound,e.available,e.dispatch?"ACTUAL_OPERATIONAL_APPLY_DISPATCH":"ACTUAL_OPERATIONAL_APPLY_STATE");
+   }
+   n=0;
+   while(BookResearchEnabled() && gBookResearchCaptureCount==0 && gBookResearchDispatchCount>0 && n++<8 && GetMicrosecondCount()-began<BOOK_RESEARCH_TIMER_US)
+   {
+      BookResearchDispatchCapture d=gBookResearchDispatches[gBookResearchDispatchHead];
+      gBookResearchDispatchHead=(gBookResearchDispatchHead+1)%BOOK_RESEARCH_CAPTURE_CAP;gBookResearchDispatchCount--;
+      BookResearchRuntimeReal(d.id,"REAL_ENTRY_API_RESULT",d.now,Symbol(),"",(string)d.result.order,(string)d.result.deal,
+         d.price,d.result.price,d.sl,d.tp,0,0,0,0,0,0,0,false,"",false,false,
+         "request_id="+(string)d.result.request_id+";retcode="+(string)d.retcode+";sent="+BookResearchBool(d.sent)+
+         ";requested_lots="+BookResearchDecimal(d.lots)+";pricing_quote_msc="+(string)d.pricing_quote_msc+";API result is not reconciled financial PnL",-1,d.pricing_quote_msc);
+   }
+   BookResearchRuntimeTimer();
+   MqlDateTime dt;TimeToStruct(TimeTradeServer(),dt);
+   if(dt.hour*100+dt.min>=Inp_EOD_CloseHHMM)BookResearchRuntimeEndSession("EOD_INCOMPLETE");
+}
+void BookResearchDeinit(const int reason)
+{
+   if(!Inp_ResearchEnable)return;
+   BookResearchHealth("COST","LOCAL_MEASUREMENTS",
+      "callback_calls="+(string)gBookResearchCallbackCalls+";callback_total_us="+(string)gBookResearchCallbackUS+
+      ";callback_max_us="+(string)gBookResearchCallbackMaxUS+";borrow_calls="+(string)gBookResearchBorrowCalls+
+      ";borrow_total_us="+(string)gBookResearchBorrowUS+";borrow_max_us="+(string)gBookResearchBorrowMaxUS+
+      ";capture_discarded="+(string)gBookResearchDropped+";mql_memory_used_mb="+(string)MQLInfoInteger(MQL_MEMORY_USED)+";not_a_proven_MT5_latency_bound");
+   BookResearchRuntimeDeinit(reason);
+}
+// HOST_CPP_INACTIVE | #ifdef __cplusplus
+// HOST_CPP_INACTIVE | void BookResearchBorrowedTicks(ulong from,ulong to,const MqlTick ticks[],int count)
+// HOST_CPP_INACTIVE | #else
+void BookResearchBorrowedTicks(ulong from,ulong to,const MqlTick &ticks[],int count)
+// HOST_CPP_INACTIVE | #endif
+{
+   if(!BookResearchEnabled())return;
+   ulong began=GetMicrosecondCount();BookResearchRuntimeBorrow(from,to,ticks,count);
+   ulong elapsed=GetMicrosecondCount()-began;gBookResearchBorrowCalls++;gBookResearchBorrowUS+=elapsed;
+   if(elapsed>gBookResearchBorrowMaxUS)gBookResearchBorrowMaxUS=elapsed;
+}
+#endif
+// END_INCORPORATED Include/BookResearchBridge.mqh

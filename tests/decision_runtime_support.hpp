@@ -1,3 +1,4 @@
+#include "research_noop_hooks.hpp"
 // API adapters for ACTUAL BookDecisionRuntime. Not a broker/MetaEditor test.
 #include <algorithm>
 #include <cassert>

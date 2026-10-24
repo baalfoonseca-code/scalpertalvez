@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def fixture():
     source = (ROOT / 'scalpertalvez.mq5').read_text()
     module = (ROOT / 'Include/BookCsvDiagnostics.mqh').read_text()
-    support = (ROOT / 'tests/corrective_csv_support.hpp').read_text()
+    support = (ROOT / 'tests/research_noop_hooks.hpp').read_text() + '\n' + (ROOT / 'tests/corrective_csv_support.hpp').read_text()
     types = '\n'.join(declaration(source, 'struct', name) for name in ['BreakEvenState', 'TradeRecord'])
     support = support.replace('// CSV_PRODUCTION_TYPES', types) + '\n' + function(source, 'DirStr')
     module_functions = ['BookCsvCanCreateMissing', 'BookCsvReject', 'BookCsvParse',

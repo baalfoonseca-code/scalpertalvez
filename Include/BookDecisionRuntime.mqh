@@ -204,6 +204,7 @@ void BookDecisionCloseCurrent()
    { slot=gBookDecisionClosedHead; gBookDecisionClosedHead=(gBookDecisionClosedHead+1)%BOOK_DECISION_WINDOW_CAP; }
    else gBookDecisionClosedCount++;
    gBookDecisionClosed[slot]=closed;
+   BookResearchArchiveOperationalWindow(closed.window,gBookDecisionHistory);
    BookDecisionHistoryInsert(gBookDecisionConfig,gBookDecisionHistory,closed.window);
    double level=closed.window.flow.count>0?closed.window.flow.last:0;
    long reference=closed.window.flow.last_msc;
@@ -545,12 +546,14 @@ void BookDecisionAssessCurrent(const int direction,const bool cont,const bool bo
       else if(gBookDecisionFault) gBookDecisionVerdict.reason=gBookDecisionFaultReason;
       else if(gBookDecisionAcquisitionIncomplete) gBookDecisionVerdict.reason="COLLECTION_BACKLOG_OR_THROTTLED";
       else gBookDecisionVerdict.reason="TRADED_DATA_STALE_OR_UNAVAILABLE";
+      BookResearchOperationalUnavailable(gBookDecisionVerdict,direction,cont,bound);
    }
    else
    {
       BookDecisionEvidence evidence;
       BookDecisionEvidenceFor(direction,cont,bound,evidence);
       BookDecisionAssess(gBookDecisionConfig,evidence,direction,cont,bound,gBookDecisionVerdict);
+      BookResearchOperationalEvidence(evidence,gBookDecisionVerdict,direction,cont,bound);
    }
    gBookDecisionResult=gBookDecisionVerdict.result;
    gBookDecisionReason=gBookDecisionVerdict.reason;

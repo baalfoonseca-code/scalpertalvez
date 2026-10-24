@@ -1,0 +1,2 @@
+schema,event_id,run_id,candidate_id,observed_msc,symbol,account,server,magic,preset_hash,trading_preset_hash,code_hash,status,reason,queued,dropped,written,io_errors,timer_us,timer_max_us,acquisition_calls,acquisition_rows,memory_bound_bytes,details
+REMORA_RESEARCH_V1,"acceptance_1","acceptance","","1000000","","123","","60001","actual-loaded-fixture","","fixture-source","CONFIGURATION","OBSERVATION_ONLY","0","0","0","0","0","0","0","0","16777216","fixture defaults; no market performance"

@@ -1,0 +1,2 @@
+DETERMINISTIC HOST FIXTURE — NOT MARKET DATA, NOT A REAL TRADE
+ACCEPTANCE matrix=1 actual_APPLY_insufficient=1 API=0 original_stage2=1 first_reference_msc=1000001 reference=10002 SL=9992 TP=10022 outcome=TP_QUOTE_TOUCH_FIRST real_PnL=UNAVAILABLE

@@ -1,0 +1,2 @@
+schema,event_id,run_id,candidate_id,observed_msc,symbol,account,server,magic,preset_hash,trading_preset_hash,code_hash,eligibility,reason,route,subtype,direction,mode,signal_bar,armed_at,trigger,region_high,region_low,sl_distance,tp_distance,operational_possible,collision,context_json
+REMORA_RESEARCH_V1,"acceptance_2","acceptance","matrix-selected","1000000","WIN","123","","60001","actual-loaded-fixture","","fixture-source","ORIGINAL_ELIGIBLE","SELECTED_BEFORE_APPLY","ABS","STALL_STRICT","1","TURBO","960","1000","10000","9999","9990","10","20","1","0","{}"
