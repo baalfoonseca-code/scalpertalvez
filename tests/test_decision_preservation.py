@@ -78,11 +78,21 @@ class DecisionPreservationTests(unittest.TestCase):
 
     def test_financial_and_observational_arithmetic_modules_remain_byte_identical(self):
         for name in ['BookRiskInputs', 'BookAdvancedRisk', 'BookRiskCore', 'BookArmedInputs',
-                     'BookArmedMath', 'BookCsvDiagnostics', 'BookIdentity', 'BookMicroMath',
+                     'BookArmedMath', 'BookIdentity', 'BookMicroMath',
                      'BookMicrostructure', 'BookRuntimePerf']:
             path = f'Include/{name}.mqh'
             with self.subTest(module=path):
                 self.assertEqual((ROOT / path).read_bytes(), old(path).encode('utf-8'))
+
+    def test_csv_correction_is_limited_to_transactional_scan_and_writer_lifecycle(self):
+        # Explicitly authorized CSV fix: all unrelated parser/schema logic stays
+        # byte-identical, and actual recovery/append behavior has integration tests.
+        before = old('Include/BookCsvDiagnostics.mqh')
+        after = (ROOT / 'Include/BookCsvDiagnostics.mqh').read_text()
+        for name in ['BookCsvReject', 'InitializeTradeCsvIndex', 'BookCsvOpenInitialFile']:
+            before = before.replace(function(before, name), 'AUTHORIZED_CSV_CORRECTION')
+            after = after.replace(function(after, name), 'AUTHORIZED_CSV_CORRECTION')
+        self.assertEqual(before, after)
 
     def test_diagnostic_change_is_only_demonstrated_late_breakout_mapping(self):
         path = 'Include/BookArmedDiagnostics.mqh'

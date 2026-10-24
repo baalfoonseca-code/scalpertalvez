@@ -85,6 +85,10 @@ bool BookCsvReject(const string fileName,const long logicalRow,const int expecte
    gTradeCsvIndexLoaded=false;
    gTradeCsvAppendSafe=false;
    gTradeCsvInfrastructureUnresolved=true;
+   // Release our exclusive writer after a failed scan/write. This preserves
+   // source bytes and permits a later authoritative external restoration.
+   if(csvTradeHandle!=INVALID_HANDLE)
+   { FileClose(csvTradeHandle); csvTradeHandle=INVALID_HANDLE; }
    string detail=fileName+"|"+(string)logicalRow+"|"+(string)expected+"|"+
       (string)received+"|"+reason+"|"+(string)offset;
    if(detail!=gBookCsvLastDiagnostic)
@@ -139,8 +143,9 @@ bool BookCsvParse(const string record,string &fields[],string &reason,int &offse
 
 bool InitializeTradeCsvIndex(string fileName)
 {
-   // Prefix IDs remain available for diagnosis but are never authoritative until
-   // the ENTIRE file validates. Interrupted recovery cannot bless a partial scan.
+   // Transactional scan: neither the authoritative PID index nor accounting
+   // recovery obligations are published until the ENTIRE ledger validates.
+   // A valid prefix followed by corruption must not create financial side effects.
    ArrayResize(gTradeCsvWrittenPIDs,0);
    gTradeCsvIndexLoaded=false; gTradeCsvAppendSafe=false;
    gTradeCsvInfrastructureUnresolved=true; gBookCsvVerifiedSize=0;
@@ -174,6 +179,7 @@ bool InitializeTradeCsvIndex(string fileName)
    int expectedColumns=ArraySize(expected);
    int schema=-1,symbol=-1,magic=-1,pid=-1,closed=-1,accounting=-1;
    bool haveHeader=false,inQuote=false;
+   ulong candidatePIDs[],unresolvedPIDs[];
    long positionRows[];
    int recordStart=0,len=StringLen(content); long logicalRow=0;
    for(int i=0;i<len;i++)
@@ -220,15 +226,17 @@ bool InitializeTradeCsvIndex(string fileName)
             return BookCsvReject(fileName,logicalRow,expectedColumns,ArraySize(fields),"INVALID_OR_OVERFLOW_POSITION_ID",start);
          // Amortized append; a sorted copy below detects duplicates in O(n log n)
          // instead of repeatedly scanning an entire historical ledger.
-         int count=ArraySize(gTradeCsvWrittenPIDs);
-         if(ArrayResize(gTradeCsvWrittenPIDs,count+1,1024)!=count+1 ||
+         int count=ArraySize(candidatePIDs);
+         if(ArrayResize(candidatePIDs,count+1,1024)!=count+1 ||
             ArrayResize(positionRows,count+1,1024)!=count+1)
             return BookCsvReject(fileName,logicalRow,expectedColumns,ArraySize(fields),"PID_INDEX_ALLOCATION_FAILED",start);
-         gTradeCsvWrittenPIDs[count]=positionID; positionRows[count]=logicalRow;
+         candidatePIDs[count]=positionID; positionRows[count]=logicalRow;
          if(fields[accounting]=="0")
          {
-            if(!PersistEconomicMarker(positionID)) gEconomicMarkerScanUnresolved=true;
-            RememberDeferredAccountingPID(positionID);
+            int pending=ArraySize(unresolvedPIDs);
+            if(ArrayResize(unresolvedPIDs,pending+1,1024)!=pending+1)
+               return BookCsvReject(fileName,logicalRow,expectedColumns,ArraySize(fields),"ACCOUNTING_STAGE_ALLOCATION_FAILED",start);
+            unresolvedPIDs[pending]=positionID;
          }
       }
    }
@@ -240,18 +248,31 @@ bool InitializeTradeCsvIndex(string fileName)
             inQuote?"UNTERMINATED_QUOTED_TAIL":"UNTERMINATED_RECORD",recordStart);
    }
    ulong sorted[];
-   int count=ArraySize(gTradeCsvWrittenPIDs);
-   if(count>0 && (ArrayCopy(sorted,gTradeCsvWrittenPIDs)!=count || !ArraySort(sorted)))
+   int count=ArraySize(candidatePIDs);
+   if(count>0 && (ArrayCopy(sorted,candidatePIDs)!=count || !ArraySort(sorted)))
       return BookCsvReject(fileName,0,expectedColumns,expectedColumns,"DUPLICATE_VALIDATION_ALLOCATION_FAILED");
    for(int i=1;i<count;i++)
       if(sorted[i]==sorted[i-1])
       {
          bool first=false; long duplicateRow=0;
          for(int k=0;k<count;k++)
-            if(gTradeCsvWrittenPIDs[k]==sorted[i])
+            if(candidatePIDs[k]==sorted[i])
             { if(first) { duplicateRow=positionRows[k]; break; } first=true; }
          return BookCsvReject(fileName,duplicateRow,expectedColumns,expectedColumns,"DUPLICATE_POSITION_ID_"+(string)sorted[i]);
       }
+   if(count>0 && ArrayCopy(gTradeCsvWrittenPIDs,candidatePIDs)!=count)
+   {
+      ArrayResize(gTradeCsvWrittenPIDs,0);
+      return BookCsvReject(fileName,0,expectedColumns,expectedColumns,"PID_INDEX_PUBLICATION_FAILED");
+   }
+   // Only fully validated, unique ledger rows may recreate accounting work.
+   // Persist/queue operations remain idempotent; unresolved persistence still
+   // blocks accounting through the existing economic-marker infrastructure.
+   for(int i=0;i<ArraySize(unresolvedPIDs);i++)
+   {
+      if(!PersistEconomicMarker(unresolvedPIDs[i])) gEconomicMarkerScanUnresolved=true;
+      RememberDeferredAccountingPID(unresolvedPIDs[i]);
+   }
    gTradeCsvIndexLoaded=true; gTradeCsvAppendSafe=true;
    gTradeCsvInfrastructureUnresolved=false; gBookCsvVerifiedSize=size;
    BookCsvEnsureSentinel();
@@ -298,7 +319,9 @@ int BookCsvOpenInitialFile()
    if(!exists && !BookCsvCanCreateMissing(gBookCsvObservedEver,BookCsvSentinelStatus()==0,evidence))
    { BookCsvReject(gTradeCsvFileName,0,0,0,"MISSING_FILE_WITH_RECOVERED_FINANCIAL_EVIDENCE"); return INVALID_HANDLE; }
    ResetLastError();
-   int h=FileOpen(gTradeCsvFileName,FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_SHARE_READ|FILE_SHARE_WRITE);
+   // One writer owns this financial ledger for the handle lifetime. Readers
+   // remain allowed; a second EA cannot race a separately validated PID index.
+   int h=FileOpen(gTradeCsvFileName,FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_SHARE_READ);
    if(h==INVALID_HANDLE)
    { BookCsvReject(gTradeCsvFileName,0,0,0,"INITIAL_OPEN_FAILED"); return INVALID_HANDLE; }
    ResetLastError(); ulong size=FileSize(h); int sizeError=GetLastError();

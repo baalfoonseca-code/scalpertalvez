@@ -1,16 +1,16 @@
 # Rêmora BOOK PRO Decisória — candidata experimental
 
 Arquivo único: [REMORA_BOOK_PRO_DECISORIA.mq5](REMORA_BOOK_PRO_DECISORIA.mq5).
-Branch: `dev/book-pro-decisoria-abs-cont`. Controle preservado: `815077efec40adf1897bcf64640756bb46c4c118`, checkpoint `checkpoint/book-1125-matrix-id-fix1-815077e`.
+Branch: `dev/book-pro-decisoria-abs-cont`. Controle preservado: `815077efec40adf1897bcf64640756bb46c4c118`, checkpoint `checkpoint/book-1125-matrix-id-fix1-815077e`. Correção atual preserva também `7a2fcce` em `checkpoint/book-decisoria-pre-corretiva-7a2fcce`.
 São **103 inputs: os 91 anteriores intactos e 12 novos ao final**. Os defaults do fonte não representam o preset do gráfico.
 
 **Modo ativo: DECISION_APLICAR.** `DECISION_ORIGINAL` continua disponível para comparação; `Inp_ResponseMode` mantém sua função histórica.
-A fonte agressora começa em **DECISION_FLAGS_UNVERIFIED**: não autoriza entradas. A seleção independente `DECISION_FLAGS_PROVIDER_ASSERTED` declara o contrato do provedor para BUY/SELL em `COPY_TICKS_TRADE`; não comprova sua acurácia. Nunca é herdada de `Inp_Obs_TrustAggressorFlags`.
+A fonte agressora começa em **DECISION_FLAGS_RUNTIME_QUALIFIED**. A hipótese declarada é que BUY/SELL exclusivos em `COPY_TICKS_TRADE` representam a agressão; cada lote e segmento precisa passar pelas verificações de origem, identidade temporal/ordinal, completude, ordenação, flags, cobertura e atualidade. Isso não comprova a acurácia econômica da classificação da corretora: usar em demonstração exige que o feed forneça essa propriedade. `UNVERIFIED` continua bloqueando entradas quando selecionado explicitamente; presets antigos podem conservar esse valor. Nenhuma confiança é herdada de `Inp_Obs_TrustAggressorFlags`.
 
 | Novo input | Default | Unidade/função |
 |---|---|---|
 | Inp_DecisionMode | DECISION_APLICAR | Camada operacional ativa |
-| Inp_DecisionAggressorSource | DECISION_FLAGS_UNVERIFIED | Pressuposto explícito do feed |
+| Inp_DecisionAggressorSource | DECISION_FLAGS_RUNTIME_QUALIFIED | Hipótese explícita + qualificação estrutural em execução |
 | Inp_DecisionWindowSec | 5 | Segundos de referência regular |
 | Inp_DecisionMinReferences | 16 | Amostras anteriores comparáveis |
 | Inp_DecisionEffortQuantile | 0.80 | Percentil empírico de esforço |
@@ -40,9 +40,13 @@ A camada é consumida após a seleção original, durante ARMED, antes de `Prepa
 
 Coleta e decisão independem de Response/CSV/filas/logs. O núcleo reaproveita os lotes POC/VWAP de `CopyTradeTicksStrict` e completa o cursor com consultas limitadas a 8192 registros, no máximo uma por 10ms. Preserva ordinais distintos no mesmo milissegundo, inclusive negócios idênticos. O contrato é o histórico disponível na API do terminal, não certificação externa da completude do provedor. Backlog/lacunas/capacidade impedem autorização até recuperação comprovada; uma nova época precisa aquecer novamente. A coleta adicional roda depois de BE, locks, contabilidade e EOD. Contadores registram custo, consultas, memória do processo e descartes; não são latência MT5 comprovada por C++.
 
+Configuração estruturalmente inválida agora faz `OnInit()` retornar `INIT_PARAMETERS_INCORRECT`; aquecimento normal inicializa com sucesso e não interrompe a gestão. Prefixo novo apenas esparso não apaga T/R ou CONT já comprovados; flags ruins ou perda do contexto impedem fallback. R termina em negócio efetivamente observado, seu endpoint válido não é diluído por silêncio posterior e T vencido pode ser substituído por outro teste causal sem mudar `armedAt` nem os 90s.
+
+CSV WDO: a varredura só publica PIDs e obrigações de recuperação depois da validação integral/duplicatas; o handle de escrita é exclusivo e liberado em rejeição. Gravação parcial continua preservada e bloqueada; gravação completa com flush incerto é recuperada por releitura, sem repetição. O arquivo real `Scalper01_RC1_WDOX26_60002_Trades.csv` não foi fornecido: nenhuma linha real foi reparada ou apagada. Os testes simulam restauração externa autoritativa, não a inventam no código.
+
 ## Provas executadas
 
-**74/74 testes na candidata e 52/52 no controle congelado: zero falhas, erros ou testes pulados.** Os 36 testes herdados aplicáveis também rodaram na candidata; 16 contratos antigos específicos do empacotamento/renomeação MATRIX_ID_FIX1 foram conferidos no controle. O fixture isolado da matriz recebeu somente um adaptador host para o reset privado; suas assertivas foram mantidas, e o reset real foi executado no pipeline completo.
+**90/90 testes na candidata corrigida e 52/52 no controle congelado: zero falhas, erros ou testes pulados. Incluem seis testes de defaults/fluxos irregulares e nove de CSV integrado.** Os 36 testes herdados aplicáveis também rodaram na candidata; 16 contratos antigos específicos do empacotamento/renomeação MATRIX_ID_FIX1 foram conferidos no controle. O fixture isolado da matriz recebeu somente um adaptador host para o reset privado; suas assertivas foram mantidas, e o reset real foi executado no pipeline completo.
 
 | Caminho completo, com coletor/histórico/predicados/controlador reais | Operandos medidos nos fixtures | Chamadas à API |
 |---|---|---:|
@@ -51,12 +55,12 @@ Coleta e decisão independem de Response/CSV/filas/logs. O núcleo reaproveita o
 | CONT aprovada | 16 referências; avanço=10 ticks; migração VWAP positiva; aceitação=1/1 | 1 |
 | CONT impedida | Rejeição contrária=13,5 ticks; aceitação contrária=1/1 | 0 |
 
-São 16 cenários completos aprovados e 16 impedidos, cruzando rotas, compra/venda, WIN/WDO e book ligado/desligado, com observação e logs desligados. Alterar apenas o veredito muda API 1/0; alterar apenas logs não muda a decisão. ORIGINAL reproduz 192 rastros de envio do controle. Há ainda provas de limpeza PREPARED/MAY, intenção incerta sem reenvio, timeout/sessão/overshoot, glass/conflito/inelegibilidade, aquecimento, flags/delta/cobertura, ordinais sobrepostos, capacidade e sensibilidade dos limiares.
+Além dos 16 cenários anteriores, os defaults corrigidos produzem 16 aprovados e 16 impedidos com tempos/volumes irregulares, até aproximadamente 17% de volume desconhecido e negócios idênticos no mesmo milissegundo. Evidência completa sobrevive à nova janela parcial, ao silêncio curto e à substituição causal de T vencido; dados antigos permanecem bloqueados. São cenários cruzando rotas, compra/venda, WIN/WDO e book ligado/desligado, com observação e logs desligados. Alterar apenas o veredito muda API 1/0; alterar apenas logs não muda a decisão. ORIGINAL reproduz 192 rastros de envio do controle. Há ainda provas de limpeza PREPARED/MAY, intenção incerta sem reenvio, timeout/sessão/overshoot, glass/conflito/inelegibilidade, aquecimento, flags/delta/cobertura, ordinais sobrepostos, capacidade e sensibilidade dos limiares.
 
-Nos fixtures de candidaturas originalmente elegíveis, **por rota**: 20 casos, 4 aprovados, 4 aguardados, 4 vetados, 4 perdidos por timeout e4 por overshoot; 4 entradas válidas preservadas. São contagens de cenários determinísticos, não oportunidades observadas no mercado nem medida de superioridade.
+Nos fixtures de candidaturas originalmente elegíveis, **por rota**: 20 casos, 4 aprovados, 4 aguardados, 4 vetados, 4 perdidos por timeout e 4 por overshoot; 4 entradas válidas preservadas. São contagens de cenários determinísticos, não oportunidades observadas no mercado nem medida de superioridade.
 
 [Resultados e limites](artifacts/decisoria/test-results.json) · [Log dos testes](artifacts/decisoria/tests.log) · [Diff modular exato](artifacts/decisoria/alteracoes-modulares.patch) · [Comparação dos monolíticos](artifacts/decisoria/monolitico.diff).
 
 **MetaEditor não acessível: compilação nativa, avisos/erros nativos, replay MT5, latência real e comparação financeira não executados.** Não há EX5 novo, homologação, preset real inferido ou implantação em produção. Sem dados cronológicos de mercado, não se afirma melhora de acerto/expectativa nem que reduzir ordens seja melhor. Os limiares são experimentais; os testes de sensibilidade não os otimizam.
 
-Reprodução: `python3 tools/generate_identity_inputs.py --check`, `python3 tools/build_decisoria.py --check`, `python3 tools/run_decision_checks.py`. A versão modular e o único arquivo novo foram comparados integralmente, incluindo os 103 inputs e os eventos. A monolítica de controle e todos os documentos/resultados anteriores permanecem intactos.
+Reprodução: `python3 tools/generate_identity_inputs.py --check`, `python3 tools/build_decisoria.py --check`, `python3 tools/run_decision_checks.py`. A versão modular e o único arquivo novo foram comparados integralmente, incluindo os 103 inputs e os eventos. A monolítica de controle 815077e e seus documentos/resultados permanecem intactos; a entrega anterior 7a2fcce está integralmente preservada no checkpoint.

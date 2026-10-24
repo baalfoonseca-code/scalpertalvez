@@ -66,7 +66,9 @@ void bounded(){
  assert(gBookDecisionTapeCount==BOOK_DECISION_TAPE_CAP&&before==BOOK_DECISION_TAPE_CAP);
  assert(gBookDecisionTapeDrops==20);
  auto queries=bd_copy_calls;BookDecisionPump();
- assert(bd_copy_calls==queries&&gBookDecisionAcquisitionIncomplete);
+ assert(bd_copy_calls==queries&&!gBookDecisionAcquisitionIncomplete); // No newly uncovered clock.
+ bd_now(s+BOOK_DECISION_TAPE_CAP+21);BookDecisionPump();
+ assert(bd_copy_calls==queries&&gBookDecisionAcquisitionIncomplete); // New known data must catch up.
  bd_clock_local+=10;BookDecisionPump();assert(!gBookDecisionAcquisitionIncomplete);
  std::cout<<"bounded 8192-row incremental catch-up, ten-ms query throttle and capacity accounting\n";
 }

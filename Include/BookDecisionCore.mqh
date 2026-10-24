@@ -5,7 +5,7 @@
 // Units: price progress/path/reclaim in asset ticks; effort in original integer
 // TRADE-volume units; timestamps/dwell in milliseconds; ranks/fractions unitless.
 // PREDICATES (also exercised in tests/decision_policy_cases.hpp):
-// Q: asserted TRADE flags AND ordered, complete known segment AND no invalid or
+// Q: configured TRADE-flag interpretation AND ordered, complete known segment AND no invalid or
 // ambiguous rows AND KnownCoverage>=coverage AND observed_ms/duration>=observed.
 // Material: Q AND robust DeltaInterval AND abs(Delta)/V>=directional_share.
 // HighT: Material in -entry_direction AND effort_upper_ECDF>=effort_q.
@@ -85,14 +85,18 @@ double BookDecisionMax(const double a,const double b) { return a>b?a:b; }
 double BookDecisionMin(const double a,const double b) { return a<b?a:b; }
 void BookDecisionConfigDefaults(BookDecisionConfig &c)
 {
-   c.source=DECISION_FLAGS_UNVERIFIED;c.window_sec=5;c.min_refs=16;
+   c.source=DECISION_FLAGS_RUNTIME_QUALIFIED;c.window_sec=5;c.min_refs=16;
    c.effort_q=0.80;c.result_q=0.20;c.coverage=0.80;
    c.directional_share=0.20;c.acceptance=0.60;c.observed_coverage=0.50;
    c.progress_ticks=1.0;c.effort_factor=2.0;c.tick_size=1.0;
 }
+// Runtime qualification establishes only structural usability of terminal trade
+// batches under the explicit BUY/SELL interpretation, never provider accuracy.
+bool BookDecisionSourceOperational(const int source)
+{ return source==DECISION_FLAGS_PROVIDER_ASSERTED || source==DECISION_FLAGS_RUNTIME_QUALIFIED; }
 bool BookDecisionConfigValid(const BookDecisionConfig &c)
 {
-   return (c.source==DECISION_FLAGS_UNVERIFIED || c.source==DECISION_FLAGS_PROVIDER_ASSERTED) &&
+   return (c.source==DECISION_FLAGS_UNVERIFIED || BookDecisionSourceOperational(c.source)) &&
       c.window_sec>=1 && c.window_sec<=10 && c.min_refs>=4 && c.min_refs<=64 &&
       BookMicroFinite(c.effort_q) && c.effort_q>0 && c.effort_q<1 &&
       BookMicroFinite(c.result_q) && c.result_q>0 && c.result_q<1 &&
@@ -144,7 +148,7 @@ bool BookDecisionWindowQuality(const BookDecisionConfig &c,const BookDecisionWin
    BookMicroMetrics &m,const int direction)
 {
    BookMicroCompute(w.flow,w.vb,w.vs,w.vu,w.complete,w.invalid,c.tick_size,direction,
-      c.source==DECISION_FLAGS_PROVIDER_ASSERTED,m);
+      BookDecisionSourceOperational(c.source),m);
    // Keep the inherited raw/observational implementation untouched. This
    // operational copy uses the exact path ratio, without its roundoff clamp.
    m.efficiency=0;m.er_available=false;
@@ -158,7 +162,7 @@ bool BookDecisionWindowQuality(const BookDecisionConfig &c,const BookDecisionWin
    // occupied seconds. No trade and silence cannot manufacture dwell.
    if(duration>0)
       m.temporal_coverage=(double)w.flow.observed_msc/(double)duration;
-   return BookDecisionConfigValid(c) && c.source==DECISION_FLAGS_PROVIDER_ASSERTED &&
+   return BookDecisionConfigValid(c) && BookDecisionSourceOperational(c.source) &&
       w.source==c.source && w.source_ok && w.ordered && w.complete &&
       w.invalid==0 && w.ambiguous==0 && w.flow.count>=2 && duration>0 &&
       w.flow.from_msc>0 &&
@@ -306,7 +310,7 @@ void BookDecisionAssess(const BookDecisionConfig &c,const BookDecisionEvidence &
    BookDecisionVerdictReset(v);
    if(!BookDecisionConfigValid(c)) { v.reason="CONFIG_INVALID";return; }
    if(direction!=1 && direction!=-1) { v.reason="DIRECTION_INVALID";return; }
-   if(c.source!=DECISION_FLAGS_PROVIDER_ASSERTED)
+   if(!BookDecisionSourceOperational(c.source))
    { v.reason="AGGRESSOR_SOURCE_UNVERIFIED";return; }
    if(!e.have_current) { v.reason="COLLECTION_NO_CURRENT_SEGMENT";return; }
    if(e.current.generation<=0 || e.current.flow.to_msc>e.now_msc ||

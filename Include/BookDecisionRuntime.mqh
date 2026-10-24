@@ -46,7 +46,9 @@ ulong gBookDecisionProofLocalMS=0;
 datetime gBookDecisionProofSignalBar=0,gBookDecisionProofContextBar=0;
 int gBookDecisionProofSignalSeconds=0,gBookDecisionProofContextSeconds=0;
 ulong gBookDecisionLastPollLocalMS=0;
-BookDecisionWindow gBookDecisionReactionCache;
+BookDecisionWindow gBookDecisionReactionCache,gBookDecisionProvenReaction;
+bool gBookDecisionHaveProvenReaction=false;
+long gBookDecisionProvenReactionTestTo=0,gBookDecisionProvenReactionEpoch=0;
 bool gBookDecisionReactionCached=false,gBookDecisionReactionAvailable=false;
 long gBookDecisionReactionTestTo=0,gBookDecisionReactionEpoch=0,gBookDecisionReactionVersion=0;
 ENUM_BOOK_DECISION_RESULT gBookDecisionLastLogResult=DECISION_DADOS_INSUFICIENTES;
@@ -105,6 +107,7 @@ void BookDecisionResetSignal()
 {
    gBookDecisionSignalGeneration++;
    gBookDecisionBoundActive=false; gBookDecisionHaveFrozenTest=false;
+   gBookDecisionHaveProvenReaction=false;
    gBookDecisionProofGeneration=0; gBookDecisionProofEpoch=0;
    gBookDecisionProofVersion=0; gBookDecisionProofLocalMS=0;
    gBookDecisionProofSignalBar=0; gBookDecisionProofContextBar=0;
@@ -155,7 +158,7 @@ void BookDecisionDataReset(const long now_msc)
    gBookDecisionFault=false; gBookDecisionFaultReason="";
    gBookDecisionAcquisitionIncomplete=false;
    gBookDecisionReactionCached=false; gBookDecisionLastPollLocalMS=0;
-   gBookDecisionHaveFrozenTest=false;
+   gBookDecisionHaveFrozenTest=false; gBookDecisionHaveProvenReaction=false;
    gBookDecisionProofGeneration=0; gBookDecisionProofEpoch=0;
    BookDecisionOpenWindow(gBookDecisionStartMSC,0,0,0,false);
 }
@@ -173,14 +176,14 @@ bool BookDecisionInit()
    BookDecisionResetSignal(); BookDecisionConfigure();
    gBookDecisionSymbol=Symbol();
    gBookDecisionReady=false;
-   if(Inp_DecisionMode==DECISION_ORIGINAL) return true;
-   if(Inp_DecisionMode!=DECISION_APLICAR)
+   if(Inp_DecisionMode!=DECISION_ORIGINAL && Inp_DecisionMode!=DECISION_APLICAR)
    { gBookDecisionReason="INVALID_DECISION_MODE"; BookDecisionReport(); return false; }
    if(!BookDecisionConfigValid(gBookDecisionConfig))
    { gBookDecisionReason="INVALID_DECISION_CONFIGURATION"; BookDecisionReport(); return false; }
+   if(Inp_DecisionMode==DECISION_ORIGINAL) return true;
    BookDecisionDataReset((long)TimeTradeServer()*1000);
    gBookDecisionReady=true;
-   PrintFormat("[BOOK_DECISION][CONFIG] mode=APLICAR source=%d volume=MqlTick.volume window_sec=%d min_refs=%d P_effort=%.3f P_result=%.3f coverage=%.3f directional_share=%.3f acceptance_volume_and_time=%.3f observed_coverage=%.3f progress_ticks=%.3f effort_factor=%.3f; feed setting is an assumption, not provider validation; source 0 blocks entries",
+   PrintFormat("[BOOK_DECISION][CONFIG] mode=APLICAR source=%d volume=MqlTick.volume window_sec=%d min_refs=%d P_effort=%.3f P_result=%.3f coverage=%.3f directional_share=%.3f acceptance_volume_and_time=%.3f observed_coverage=%.3f progress_ticks=%.3f effort_factor=%.3f; feed setting is an assumption, not provider validation; source 0 blocks entries; source 2 runtime qualification is not external provider certification",
       gBookDecisionConfig.source,gBookDecisionConfig.window_sec,gBookDecisionConfig.min_refs,
       gBookDecisionConfig.effort_q,gBookDecisionConfig.result_q,gBookDecisionConfig.coverage,
       gBookDecisionConfig.directional_share,gBookDecisionConfig.acceptance,
@@ -336,9 +339,11 @@ void BookDecisionPump()
    if(gBookDecisionLastPollLocalMS>0 && local_now>=gBookDecisionLastPollLocalMS &&
       local_now-gBookDecisionLastPollLocalMS<BOOK_DECISION_MIN_POLL_MS)
    {
-      // A skipped acquisition is not evidence of one trade per OnTick. Keep the
-      // ARMED clocks but do not authorize an unknown append at the same ms.
-      gBookDecisionAcquisitionIncomplete=true; return;
+      // A skipped query consumes no ordinal. It may retain a previously acquired
+      // complete API snapshot within the fixed freshness bound, not certify any
+      // future append at the same millisecond. A known newer clock must catch up.
+      if(goal>gBookDecisionCoveredMSC) gBookDecisionAcquisitionIncomplete=true;
+      return;
    }
    gBookDecisionLastPollLocalMS=local_now;
    long from=gBookDecisionCursorMSC>0?gBookDecisionCursorMSC:gBookDecisionStartMSC;
@@ -389,6 +394,17 @@ bool BookDecisionSourceFresh()
       gBookDecisionLastTradeMSC-now<=1000 &&
       now-gBookDecisionCoveredMSC<=BOOK_DECISION_SOURCE_AGE_MS;
 }
+// A benign unformed prefix may leave earlier complete evidence usable. It may
+// never hide malformed/ambiguous trades or deficient classified-volume coverage.
+// Temporal coverage remains mandatory for each segment actually authorizing.
+bool BookDecisionPrefixIntegrity(const BookDecisionWindow &w)
+{
+   double known=w.vb+w.vs,total=known+w.vu;
+   return w.source==gBookDecisionConfig.source && w.generation==gBookDecisionEpoch &&
+      w.complete && w.ordered && w.source_ok && w.invalid==0 && w.ambiguous==0 &&
+      BookMicroFinite(known) && BookMicroFinite(total) && known>=0 && total>=0 &&
+      (total==0 || known/total>=gBookDecisionConfig.coverage);
+}
 bool BookDecisionReaction(const BookDecisionWindow &test,BookDecisionWindow &reaction)
 {
    if(gBookDecisionReactionCached && gBookDecisionReactionTestTo==test.flow.to_msc &&
@@ -400,7 +416,9 @@ bool BookDecisionReaction(const BookDecisionWindow &test,BookDecisionWindow &rea
    gBookDecisionReactionEpoch=gBookDecisionEpoch;
    gBookDecisionReactionVersion=gBookDecisionDataVersion;
    gBookDecisionReactionAvailable=false; gBookDecisionReactionRebuilds++;
-   long from=test.flow.to_msc+1,to=gBookDecisionCoveredMSC;
+   // R ends at an actually observed trade, not a later silent wall-clock tail.
+   long from=test.flow.to_msc+1,to=gBookDecisionLastTradeMSC;
+   if(to>gBookDecisionCoveredMSC) to=gBookDecisionCoveredMSC;
    if(from>to || from<gBookDecisionTapeFromMSC ||
       to-test.flow.to_msc>(long)gBookDecisionConfig.window_sec*2000) return false;
    BookDecisionWindowReset(reaction,from,to,test.flow.level,gBookDecisionConfig.tick_size,
@@ -418,6 +436,25 @@ bool BookDecisionReaction(const BookDecisionWindow &test,BookDecisionWindow &rea
       BookDecisionWindowTick(reaction,tick.last,(double)tick.volume,tick.time_msc,direction);
    }
    reaction.complete=true; // complete KNOWN prefix, not a completed future window
+   int entry_direction=test.vb>test.vs?-1:(test.vs>test.vb?1:0);
+   if(entry_direction!=0 && BookDecisionReactionPredicate(gBookDecisionConfig,test,reaction,entry_direction))
+   {
+      gBookDecisionProvenReaction=reaction; gBookDecisionHaveProvenReaction=true;
+      gBookDecisionProvenReactionTestTo=test.flow.to_msc;
+      gBookDecisionProvenReactionEpoch=gBookDecisionEpoch;
+   }
+   else if(gBookDecisionHaveProvenReaction &&
+      gBookDecisionProvenReactionTestTo==test.flow.to_msc &&
+      gBookDecisionProvenReactionEpoch==gBookDecisionEpoch &&
+      BookDecisionPrefixIntegrity(reaction) &&
+      BookDecisionFresh(gBookDecisionConfig,gBookDecisionProvenReaction,gBookDecisionCoveredMSC) &&
+      entry_direction*(reaction.flow.last-test.flow.level)/gBookDecisionConfig.tick_size>=gBookDecisionConfig.progress_ticks)
+   {
+      // The proven causal endpoint remains identifiable. Later silence or an
+      // unformed tail does not retrospectively erase it. Qualified current
+      // rejection is assessed separately before any VALIDAR in the policy.
+      reaction=gBookDecisionProvenReaction;
+   }
    gBookDecisionReactionCache=reaction;
    gBookDecisionReactionAvailable=reaction.flow.count>0;
    return gBookDecisionReactionAvailable;
@@ -444,6 +481,12 @@ void BookDecisionEvidenceFor(const int direction,const bool cont,const bool boun
          BookDecisionTestPredicate(gBookDecisionConfig,closed.window,reverse,direction))
       { evidence.have_test=true; evidence.test=closed.window; evidence.test_ranks=reverse; }
    }
+   if(bound && gBookDecisionHaveFrozenTest &&
+      !BookDecisionFresh(gBookDecisionConfig,gBookDecisionFrozenTest,gBookDecisionCoveredMSC))
+   {
+      // Replace an expired market test, never the signal identity or its clock.
+      gBookDecisionHaveFrozenTest=false; gBookDecisionHaveProvenReaction=false;
+   }
    if(bound && gBookDecisionHaveFrozenTest)
    {
       evidence.have_test=true; evidence.test=gBookDecisionFrozenTest;
@@ -456,17 +499,39 @@ void BookDecisionEvidenceFor(const int direction,const bool cont,const bool boun
    }
    if(evidence.have_test)
       evidence.have_reaction=BookDecisionReaction(evidence.test,evidence.reaction);
-   // A known live prefix can demonstrate rejection immediately; it need not
-   // wait for another regular close. With fewer than two trades retain the
-   // already completed evidence instead of manufacturing an observed interval.
-   if(gBookDecisionWindow.flow.count>=2 &&
+   // New complete/qualified evidence replaces old evidence immediately. An
+   // opening-window temporal shortfall alone is not a reason to erase a proven
+   // causal T/R or continuation. Unknown/ambiguous/corrupt records NEVER fall back.
+   if(gBookDecisionWindow.flow.count>=1 &&
       gBookDecisionCoveredMSC>=gBookDecisionWindow.flow.from_msc)
    {
-      evidence.have_current=true; evidence.current=gBookDecisionWindow;
-      evidence.current.flow.to_msc=gBookDecisionCoveredMSC;
-      evidence.current.complete=true;
-      BookDecisionCompare(gBookDecisionConfig,gBookDecisionHistory,evidence.current,
-         direction,evidence.current_ranks);
+      BookDecisionWindow live=gBookDecisionWindow;
+      live.flow.to_msc=gBookDecisionCoveredMSC; live.complete=true;
+      BookMicroMetrics metrics;
+      bool qualified=BookDecisionWindowQuality(gBookDecisionConfig,live,metrics,direction);
+      bool integrity=BookDecisionPrefixIntegrity(live);
+      double context=0;
+      if(cont && evidence.have_forward) context=evidence.forward.flow.level;
+      else if(!cont && evidence.have_test) context=evidence.test.flow.level;
+      double retained_threshold=cont?-gBookDecisionConfig.tick_size:
+         gBookDecisionConfig.progress_ticks*gBookDecisionConfig.tick_size;
+      bool retained=context<=0 || direction*(live.flow.last-context)>=retained_threshold;
+      if(qualified || !integrity || !retained || !evidence.have_current)
+      {
+         evidence.have_current=true; evidence.current=live;
+         BookDecisionCompare(gBookDecisionConfig,gBookDecisionHistory,live,direction,evidence.current_ranks);
+      }
+   }
+   // A valid R can be shorter than the enclosing regular window. Preserve its
+   // actual endpoint when a merely sparse regular window has insufficient dwell.
+   if(!cont && evidence.have_reaction && evidence.have_current)
+   {
+      BookMicroMetrics metrics;
+      if(!BookDecisionWindowQuality(gBookDecisionConfig,evidence.current,metrics,direction) &&
+         BookDecisionPrefixIntegrity(evidence.current) &&
+         BookDecisionReactionPredicate(gBookDecisionConfig,evidence.test,evidence.reaction,direction) &&
+         direction*(evidence.current.flow.last-evidence.test.flow.level)/gBookDecisionConfig.tick_size>=gBookDecisionConfig.progress_ticks)
+      { evidence.current=evidence.reaction; BookDecisionRanksReset(evidence.current_ranks); }
    }
 }
 void BookDecisionAssessCurrent(const int direction,const bool cont,const bool bound)

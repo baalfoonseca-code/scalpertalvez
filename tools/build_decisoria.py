@@ -27,7 +27,7 @@ PREAMBLE = (
     '// GENERATED: REMORA_BOOK_PRO_DECISORIA.mq5; integral modular expansion.\n'
     '// EXPERIMENTAL: operational ABS/CONT validation; DECISION_APLICAR is the source default.\n'
     '// Audited control: '+BASE+'; its monolithic file remains unchanged.\n'
-    '// Provider aggressor flags require an independent explicit configuration assumption.\n'
+    '// CORRETIVA: runtime-qualified flags are a declared hypothesis, not broker certification.\n'
     '// Only official MQL5 headers remain external; no custom repository include is required.\n'
     '// Native MetaEditor compilation NOT verified; no production deployment or approval.\n\n'
 )
@@ -62,8 +62,14 @@ def preserved_inputs(active: str) -> list[str]:
     current = independent.inventory(active)['inputs']
     if len(baseline) != 91 or current[:91] != baseline:
         raise ValueError('The historical 91 input types/names/order/defaults were changed')
-    if len(current) <= 91:
-        raise ValueError('No independent decision inputs have been appended')
+    previous = subprocess.check_output(['git', 'show',
+        '7a2fcce33d2f6bddbcec6931aa7a4a85c0f185d0:REMORA_BOOK_PRO_DECISORIA.mq5'], cwd=ROOT).decode('utf-8')
+    decision_inputs = independent.inventory(previous)['inputs'][91:]
+    expected = [declaration.replace('Inp_DecisionAggressorSource = DECISION_FLAGS_UNVERIFIED',
+                                   'Inp_DecisionAggressorSource = DECISION_FLAGS_RUNTIME_QUALIFIED')
+                for declaration in decision_inputs]
+    if len(current) != 103 or current[91:] != expected:
+        raise ValueError('The 12 decision controls changed outside the authorized aggressor-source default')
     return current
 
 

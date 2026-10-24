@@ -1,21 +1,21 @@
 COMMAND tools/build_decisoria.py --check
-{"status": "passed", "target": "REMORA_BOOK_PRO_DECISORIA.mq5", "sha256": "047e33f1067f4828f47b3758f7e237c3dc65b3e131de48834e475832cdf860dc", "comparison": {"status": "passed", "active_tokens_equal": true, "inventories_equal": true, "active_token_count": 120664, "active_tokens_sha256": "874d9735a0f0def9fed9aa59a810967198c996c8dc38514198e760b9606095e8", "counts": {"inputs": 103, "functions": 540, "structs": 39, "enums": 22, "globals": 548}, "input_count": 103, "historical_inputs_preserved": 91, "new_inputs": ["input ENUM_BOOK_DECISION_MODE Inp_DecisionMode = DECISION_APLICAR", "input ENUM_BOOK_DECISION_SOURCE Inp_DecisionAggressorSource = DECISION_FLAGS_UNVERIFIED", "input int Inp_DecisionWindowSec = 5", "input int Inp_DecisionMinReferences = 16", "input double Inp_DecisionEffortQuantile = 0.80", "input double Inp_DecisionResultQuantile = 0.20", "input double Inp_DecisionMinCoverage = 0.80", "input double Inp_DecisionMinDirectionalShare = 0.20", "input double Inp_DecisionMinAcceptance = 0.60", "input double Inp_DecisionMinObservedCoverage = 0.50", "input double Inp_DecisionMinProgressTicks = 1.0", "input double Inp_DecisionComparableEffortFactor = 2.0"], "duplicates": {"functions": {}, "structs": {}, "enums": {}, "globals": {}}, "native_compilation_executed": false}, "native_compilation_executed": false}
+{"status": "passed", "target": "REMORA_BOOK_PRO_DECISORIA.mq5", "sha256": "1ab4e35f97f1808a182e3e94630fcc7238130b068f7d7ee939a9e86299f6f521", "comparison": {"status": "passed", "active_tokens_equal": true, "inventories_equal": true, "active_token_count": 121370, "active_tokens_sha256": "a56d06ec2d842965304ef4e23b2df1428256ab6470751706767526acad49e641", "counts": {"inputs": 103, "functions": 542, "structs": 39, "enums": 22, "globals": 552}, "input_count": 103, "historical_inputs_preserved": 91, "new_inputs": ["input ENUM_BOOK_DECISION_MODE Inp_DecisionMode = DECISION_APLICAR", "input ENUM_BOOK_DECISION_SOURCE Inp_DecisionAggressorSource = DECISION_FLAGS_RUNTIME_QUALIFIED", "input int Inp_DecisionWindowSec = 5", "input int Inp_DecisionMinReferences = 16", "input double Inp_DecisionEffortQuantile = 0.80", "input double Inp_DecisionResultQuantile = 0.20", "input double Inp_DecisionMinCoverage = 0.80", "input double Inp_DecisionMinDirectionalShare = 0.20", "input double Inp_DecisionMinAcceptance = 0.60", "input double Inp_DecisionMinObservedCoverage = 0.50", "input double Inp_DecisionMinProgressTicks = 1.0", "input double Inp_DecisionComparableEffortFactor = 2.0"], "duplicates": {"functions": {}, "structs": {}, "enums": {}, "globals": {}}, "native_compilation_executed": false}, "native_compilation_executed": false}
 
 COMMAND tools/generate_identity_inputs.py --check
-identity verified: 103 inputs, historic 71 intact, source_sha256=82f31e5fa90f26602e2a5fa1b41500cf06cf9c02e53518ab766415f5819d7c86
+identity verified: 103 inputs, historic 71 intact, source_sha256=e082a3c51aa474f28f4595e491a0d1be509f4090ee1f4e4a967f5358ad420f76
 
 COMMAND tools/verify_delivery.py
 PASS lexical delimiters/local includes: scalpertalvez (10230 lines)
-PASS lexical delimiters/local includes: scalpertalvez.mq5 (10468 lines)
+PASS lexical delimiters/local includes: scalpertalvez.mq5 (10472 lines)
 PASS lexical delimiters/local includes: Include/BookAdvancedRisk.mqh (513 lines)
 PASS lexical delimiters/local includes: Include/BookArmedDiagnostics.mqh (623 lines)
 PASS lexical delimiters/local includes: Include/BookArmedInputs.mqh (5 lines)
 PASS lexical delimiters/local includes: Include/BookArmedMath.mqh (58 lines)
 PASS lexical delimiters/local includes: Include/BookBuildIdentity.mqh (8 lines)
-PASS lexical delimiters/local includes: Include/BookCsvDiagnostics.mqh (314 lines)
-PASS lexical delimiters/local includes: Include/BookDecisionCore.mqh (389 lines)
-PASS lexical delimiters/local includes: Include/BookDecisionInputs.mqh (33 lines)
-PASS lexical delimiters/local includes: Include/BookDecisionRuntime.mqh (592 lines)
+PASS lexical delimiters/local includes: Include/BookCsvDiagnostics.mqh (337 lines)
+PASS lexical delimiters/local includes: Include/BookDecisionCore.mqh (393 lines)
+PASS lexical delimiters/local includes: Include/BookDecisionInputs.mqh (37 lines)
+PASS lexical delimiters/local includes: Include/BookDecisionRuntime.mqh (657 lines)
 PASS lexical delimiters/local includes: Include/BookIdentity.mqh (151 lines)
 PASS lexical delimiters/local includes: Include/BookInputSnapshot.mqh (110 lines)
 PASS lexical delimiters/local includes: Include/BookMicroMath.mqh (253 lines)
@@ -80,7 +80,7 @@ test_actual_risk_paths_cannot_poison_legacy_emr_namespace (test_risk_integration
 test_actual_journal_parser_and_inputs (test_risk_journal.RiskJournalTests.test_actual_journal_parser_and_inputs) ... ok
 
 ----------------------------------------------------------------------
-Ran 52 tests in 27.443s
+Ran 52 tests in 28.326s
 
 OK
 MATRIX_IDENTIFIER_CSV: 24 actual formatter rows identical across before/after/monolith; bytes=57614; SHA256=f9cabb9029bc0b5f0af74af69a4493c601dc8745351efc7c6a6fa8df702c0118
@@ -94,7 +94,7 @@ PASS causal level, late data and incomplete windows
 PASS exactly eleven closed M1 prices and rank tie semantics
 PASS C1 extension-to-stall is not monotonically restrictive; unconfigured sigma stays NA
 PASS C1 threshold-equivalence lattice (20,664 controlled snapshots)
-PASS 20705 assertions; native arithmetic benchmark ticks=1000000 total_us=8048.77 mean_us_per_tick=0.00804877 sizeof_flow=224 sizeof_snapshot=736 (C++ arithmetic only; not MT5 OnTick latency)
+PASS 20705 assertions; native arithmetic benchmark ticks=1000000 total_us=9037.09 mean_us_per_tick=0.00903709 sizeof_flow=224 sizeof_snapshot=736 (C++ arithmetic only; not MT5 OnTick latency)
 MONOLITH FIXTURE matrix_stage2: matrix=12000 abs=2899 cont=31 conflicts=2 base=1413 turbo=2789 dom=96 stage2=4096 ready=1088 wait=1782 ended=1165 digest=aa16ed3577bb69ca
 MONOLITH FIXTURE poc_weis: poc=514 weis=128 fallback=64 live_flips=71 digest=febf922085385281
 risk core: 2216 assertions passed (host kernel only; no MT5/API execution)
@@ -113,6 +113,21 @@ test_legacy_financial_journal_schemas (test_compatibility.CompatibilityTests.tes
 test_observational_modules_cannot_dispatch_or_write_strategy_state (test_compatibility.CompatibilityTests.test_observational_modules_cannot_dispatch_or_write_strategy_state) ... ok
 test_original_reference_bytes_unchanged (test_compatibility.CompatibilityTests.test_original_reference_bytes_unchanged) ... ok
 test_protected_strategy_function_bodies (test_compatibility.CompatibilityTests.test_protected_strategy_function_bodies) ... ok
+test_corrupt_tail_has_no_prefix_recovery_side_effects (test_corrective_csv.CorrectiveCsvIntegrationTests.test_corrupt_tail_has_no_prefix_recovery_side_effects) ... ok
+test_duplicate_rows_have_no_prefix_recovery_side_effects (test_corrective_csv.CorrectiveCsvIntegrationTests.test_duplicate_rows_have_no_prefix_recovery_side_effects) ... ok
+test_exclusive_writer_and_shared_reader_contract (test_corrective_csv.CorrectiveCsvIntegrationTests.test_exclusive_writer_and_shared_reader_contract) ... ok
+test_full_readonly_recovery_and_accounting_obligation_retained (test_corrective_csv.CorrectiveCsvIntegrationTests.test_full_readonly_recovery_and_accounting_obligation_retained) ... ok
+test_incomplete_rows_identified_without_repair (test_corrective_csv.CorrectiveCsvIntegrationTests.test_incomplete_rows_identified_without_repair) ... ok
+test_interrupted_append_cannot_be_erased_or_duplicated (test_corrective_csv.CorrectiveCsvIntegrationTests.test_interrupted_append_cannot_be_erased_or_duplicated) ... ok
+test_read_allocation_and_marker_failures_preserve_history (test_corrective_csv.CorrectiveCsvIntegrationTests.test_read_allocation_and_marker_failures_preserve_history) ... ok
+test_uncertain_complete_write_recovers_without_duplicate_append (test_corrective_csv.CorrectiveCsvIntegrationTests.test_uncertain_complete_write_recovers_without_duplicate_append) ... ok
+test_valid_actual_wdo_producer_and_idempotent_append (test_corrective_csv.CorrectiveCsvIntegrationTests.test_valid_actual_wdo_producer_and_idempotent_append) ... ok
+test_complete_evidence_survives_new_low_activity_partial_without_fixed_wait (test_corrective_defaults.CorrectiveDefaultTests.test_complete_evidence_survives_new_low_activity_partial_without_fixed_wait) ... ok
+test_exact_defaults_irregular_ticks_can_approve_and_prevent_actual_entries (test_corrective_defaults.CorrectiveDefaultTests.test_exact_defaults_irregular_ticks_can_approve_and_prevent_actual_entries) ... ok
+test_expired_test_can_be_replaced_causally_without_restarting_armed (test_corrective_defaults.CorrectiveDefaultTests.test_expired_test_can_be_replaced_causally_without_restarting_armed) ... ok
+test_proven_reaction_quiet_tail_is_not_an_artificial_wait_or_stale_permission (test_corrective_defaults.CorrectiveDefaultTests.test_proven_reaction_quiet_tail_is_not_an_artificial_wait_or_stale_permission) ... ok
+test_runtime_qualified_contract_does_not_accept_ambiguous_or_unknown_pressure (test_corrective_defaults.CorrectiveDefaultTests.test_runtime_qualified_contract_does_not_accept_ambiguous_or_unknown_pressure) ... ok
+test_structural_setup_errors_fail_but_default_warmup_initializes (test_corrective_defaults.CorrectiveDefaultTests.test_structural_setup_errors_fail_but_default_warmup_initializes) ... ok
 test_absent_file_is_not_empty_success (test_csv_infrastructure.CsvInfrastructureTests.test_absent_file_is_not_empty_success) ... ok
 test_duplicate_position_is_uncertain (test_csv_infrastructure.CsvInfrastructureTests.test_duplicate_position_is_uncertain) ... ok
 test_embedded_nul (test_csv_infrastructure.CsvInfrastructureTests.test_embedded_nul) ... ok
@@ -153,6 +168,7 @@ test_actual_collector_history_evidence_and_sendorder_abs_cont (test_decision_pip
 test_all_existing_structures_and_enums_preserve_their_definitions (test_decision_preservation.DecisionPreservationTests.test_all_existing_structures_and_enums_preserve_their_definitions) ... ok
 test_all_historical_91_input_declarations_and_defaults_preserved_before_new_controls (test_decision_preservation.DecisionPreservationTests.test_all_historical_91_input_declarations_and_defaults_preserved_before_new_controls) ... ok
 test_control_monolith_and_all_prior_reports_remain_byte_identical (test_decision_preservation.DecisionPreservationTests.test_control_monolith_and_all_prior_reports_remain_byte_identical) ... ok
+test_csv_correction_is_limited_to_transactional_scan_and_writer_lifecycle (test_decision_preservation.DecisionPreservationTests.test_csv_correction_is_limited_to_transactional_scan_and_writer_lifecycle) ... ok
 test_diagnostic_change_is_only_demonstrated_late_breakout_mapping (test_decision_preservation.DecisionPreservationTests.test_diagnostic_change_is_only_demonstrated_late_breakout_mapping) ... ok
 test_financial_and_observational_arithmetic_modules_remain_byte_identical (test_decision_preservation.DecisionPreservationTests.test_financial_and_observational_arithmetic_modules_remain_byte_identical) ... ok
 test_matrix_original_readiness_book_financial_and_exit_functions_preserved (test_decision_preservation.DecisionPreservationTests.test_matrix_original_readiness_book_financial_and_exit_functions_preserved) ... ok
@@ -177,9 +193,56 @@ test_actual_risk_paths_cannot_poison_legacy_emr_namespace (test_risk_integration
 test_actual_journal_parser_and_inputs (test_risk_journal.RiskJournalTests.test_actual_journal_parser_and_inputs) ... ok
 
 ----------------------------------------------------------------------
-Ran 74 tests in 41.664s
+Ran 90 tests in 65.005s
 
 OK
+CORRECTIVE_CSV Rejected truncated ledger publishes no partial PID index/accounting work; source byte-identical and execution blocker retained
+CORRECTIVE_CSV Duplicate complete rows rejected before any economic marker or deferred PID mutation
+CORRECTIVE_CSV Exclusive writer contract rejects second writer; read validation remains compatible (host locking adapter)
+CORRECTIVE_CSV Recovery verifies entire externally restored ledger, deduplicates retry, retains unresolved accounting and source bytes
+CORRECTIVE_CSV Missing columns and unterminated quoted tails identified distinctly; no invented repair
+CORRECTIVE_CSV Interrupted append retained unmodified and append-disabled; recovery cannot duplicate or erase partial row
+CORRECTIVE_CSV Read/publication failures cannot commit partial recovery; marker persistence failure retains accounting block
+CORRECTIVE_CSV Uncertain flush with complete row recovered by full readback; no repeated append or financial fabrication
+CORRECTIVE_CSV WDO actual producer/index/append: quoted multiline52columns, exact64bitPID, one append, repeat no duplicate
+COMPLETE_EVIDENCE_NEW_PARTIAL preserved=8 API=1 each no_fixed_wait
+DEFAULT_IRREGULAR route=ABS symbol=WIN_IRREGULAR d=-1 book=0 source=2 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION coverage=0.885057 refs=16 API=1
+DEFAULT_IRREGULAR route=ABS symbol=WIN_IRREGULAR d=-1 book=0 source=2 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=ABS symbol=WIN_IRREGULAR d=-1 book=1 source=2 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION coverage=0.885057 refs=16 API=1
+DEFAULT_IRREGULAR route=ABS symbol=WIN_IRREGULAR d=-1 book=1 source=2 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=CONT symbol=WIN_IRREGULAR d=-1 book=0 source=2 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION coverage=0.826316 refs=16 API=1
+DEFAULT_IRREGULAR route=CONT symbol=WIN_IRREGULAR d=-1 book=0 source=2 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=CONT symbol=WIN_IRREGULAR d=-1 book=1 source=2 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION coverage=0.826316 refs=16 API=1
+DEFAULT_IRREGULAR route=CONT symbol=WIN_IRREGULAR d=-1 book=1 source=2 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=ABS symbol=WIN_IRREGULAR d=1 book=0 source=2 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION coverage=0.885057 refs=16 API=1
+DEFAULT_IRREGULAR route=ABS symbol=WIN_IRREGULAR d=1 book=0 source=2 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=ABS symbol=WIN_IRREGULAR d=1 book=1 source=2 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION coverage=0.885057 refs=16 API=1
+DEFAULT_IRREGULAR route=ABS symbol=WIN_IRREGULAR d=1 book=1 source=2 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=CONT symbol=WIN_IRREGULAR d=1 book=0 source=2 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION coverage=0.826316 refs=16 API=1
+DEFAULT_IRREGULAR route=CONT symbol=WIN_IRREGULAR d=1 book=0 source=2 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=CONT symbol=WIN_IRREGULAR d=1 book=1 source=2 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION coverage=0.826316 refs=16 API=1
+DEFAULT_IRREGULAR route=CONT symbol=WIN_IRREGULAR d=1 book=1 source=2 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=ABS symbol=WDO_IRREGULAR d=-1 book=0 source=2 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION coverage=0.885057 refs=16 API=1
+DEFAULT_IRREGULAR route=ABS symbol=WDO_IRREGULAR d=-1 book=0 source=2 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=ABS symbol=WDO_IRREGULAR d=-1 book=1 source=2 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION coverage=0.885057 refs=16 API=1
+DEFAULT_IRREGULAR route=ABS symbol=WDO_IRREGULAR d=-1 book=1 source=2 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=CONT symbol=WDO_IRREGULAR d=-1 book=0 source=2 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION coverage=0.826316 refs=16 API=1
+DEFAULT_IRREGULAR route=CONT symbol=WDO_IRREGULAR d=-1 book=0 source=2 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=CONT symbol=WDO_IRREGULAR d=-1 book=1 source=2 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION coverage=0.826316 refs=16 API=1
+DEFAULT_IRREGULAR route=CONT symbol=WDO_IRREGULAR d=-1 book=1 source=2 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=ABS symbol=WDO_IRREGULAR d=1 book=0 source=2 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION coverage=0.885057 refs=16 API=1
+DEFAULT_IRREGULAR route=ABS symbol=WDO_IRREGULAR d=1 book=0 source=2 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=ABS symbol=WDO_IRREGULAR d=1 book=1 source=2 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION coverage=0.885057 refs=16 API=1
+DEFAULT_IRREGULAR route=ABS symbol=WDO_IRREGULAR d=1 book=1 source=2 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=CONT symbol=WDO_IRREGULAR d=1 book=0 source=2 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION coverage=0.826316 refs=16 API=1
+DEFAULT_IRREGULAR route=CONT symbol=WDO_IRREGULAR d=1 book=0 source=2 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION coverage=0.885057 refs=0 API=0
+DEFAULT_IRREGULAR route=CONT symbol=WDO_IRREGULAR d=1 book=1 source=2 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION coverage=0.826316 refs=16 API=1
+DEFAULT_IRREGULAR route=CONT symbol=WDO_IRREGULAR d=1 book=1 source=2 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION coverage=0.885057 refs=0 API=0
+EXACT_DEFAULTS_TO_API valid=16 rejected=16 irregular_times unknown_rows identical_ms observer=off logs=off
+EXPIRED_T_CAUSAL_REPLACEMENT preserved=2 same_original_armedAt no_timeout_extension
+PROVEN_REACTION_QUIET_TAIL preserved=2 stale_blocked=2 source_age_enforced
+DEFAULT_SOURCE_CONTRACT ambiguous_or_unknown blocked=4 API=0
+DEFAULT_INITIALIZATION invalid_structure=failed normal_warmup=initialized
 ABS blocked: opposite progress=10ticks, opposite acceptance(volume,time)=1,1 -> candidate veto/armed invalidation
 ABS valid: T resistance=1, R net=6ticks, acceptance(volume,time)=1,1; opposite delta retained
 CONT blocked by produced opposite progress+accepted volume/time beyond frozen context
@@ -301,6 +364,6 @@ PASS causal level, late data and incomplete windows
 PASS exactly eleven closed M1 prices and rank tie semantics
 PASS C1 extension-to-stall is not monotonically restrictive; unconfigured sigma stays NA
 PASS C1 threshold-equivalence lattice (20,664 controlled snapshots)
-PASS 20705 assertions; native arithmetic benchmark ticks=1000000 total_us=7490.55 mean_us_per_tick=0.00749055 sizeof_flow=224 sizeof_snapshot=736 (C++ arithmetic only; not MT5 OnTick latency)
+PASS 20705 assertions; native arithmetic benchmark ticks=1000000 total_us=7276.06 mean_us_per_tick=0.00727606 sizeof_flow=224 sizeof_snapshot=736 (C++ arithmetic only; not MT5 OnTick latency)
 risk core: 2216 assertions passed (host kernel only; no MT5/API execution)
 risk journal/input extraction: 56 assertions passed (ASCII host conversions; no MT5 file/server execution)

@@ -5038,6 +5038,11 @@ gCONT_MinDisplPts=gIsIndexFamily?Inp_CONT_MinPriceMovePts_WIN:Inp_CONT_MinPriceM
   { Print("[SCALPER][FATAL] Invalid RC1 parameters; no silent correction."); return
 INIT_PARAMETERS_INCORRECT; }
   if(!DOMGateValidateInputs() || !BookRiskInputsValid()) return INIT_PARAMETERS_INCORRECT;
+  // Structural configuration fails initialization explicitly. Normal warm-up
+  // initializes successfully and only withholds new entries; management runs.
+  if(!BookDecisionInit())
+  { Print("[BOOK_DECISION][FATAL] Invalid operational configuration; initialization rejected.");
+    return INIT_PARAMETERS_INCORRECT; }
   if(!IsFokSupported())
   { Print("[SCALPER][FATAL] FOK unsupported."); return
 INIT_PARAMETERS_INCORRECT; }
@@ -5070,7 +5075,6 @@ mm=(ENUM_ACCOUNT_MARGIN_MODE)AccountInfoInteger(ACCOUNT_MARGIN_MODE);
  TryCalcD1();
  BootstrapCachesNoTrade();
  BookIdentityInit();
- BookDecisionInit(); // Unavailable decision data blocks entries, never protection.
 // A configurable label cannot remove the explicit schema namespace.
 string prefix="Scalper01_RC1_";
 if(CSVFileName!="Scalper01_RC1" && CSVFileName!="") prefix+=CSVFileName+"_";
@@ -5093,7 +5097,7 @@ csvTradeHandle=BookCsvOpenInitialFile();
      FileFlush(csvTradeHandle);
      if(!InitializeTradeCsvIndex(prefix+suffix+"_Trades.csv"))
         Print("[SCALPER][TRADES_CSV_INDEX_UNAVAILABLE] Finalization records require CSV reconciliation.");
-     FileSeek(csvTradeHandle,0,SEEK_END);
+     if(csvTradeHandle!=INVALID_HANDLE) FileSeek(csvTradeHandle,0,SEEK_END);
   }
   int timerSec=(MQLInfoInteger(MQL_TESTER)!=0)?60:1;
   if(!EventSetTimer(timerSec)) return INIT_FAILED;
