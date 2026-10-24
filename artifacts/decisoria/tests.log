@@ -1,0 +1,306 @@
+COMMAND tools/build_decisoria.py --check
+{"status": "passed", "target": "REMORA_BOOK_PRO_DECISORIA.mq5", "sha256": "047e33f1067f4828f47b3758f7e237c3dc65b3e131de48834e475832cdf860dc", "comparison": {"status": "passed", "active_tokens_equal": true, "inventories_equal": true, "active_token_count": 120664, "active_tokens_sha256": "874d9735a0f0def9fed9aa59a810967198c996c8dc38514198e760b9606095e8", "counts": {"inputs": 103, "functions": 540, "structs": 39, "enums": 22, "globals": 548}, "input_count": 103, "historical_inputs_preserved": 91, "new_inputs": ["input ENUM_BOOK_DECISION_MODE Inp_DecisionMode = DECISION_APLICAR", "input ENUM_BOOK_DECISION_SOURCE Inp_DecisionAggressorSource = DECISION_FLAGS_UNVERIFIED", "input int Inp_DecisionWindowSec = 5", "input int Inp_DecisionMinReferences = 16", "input double Inp_DecisionEffortQuantile = 0.80", "input double Inp_DecisionResultQuantile = 0.20", "input double Inp_DecisionMinCoverage = 0.80", "input double Inp_DecisionMinDirectionalShare = 0.20", "input double Inp_DecisionMinAcceptance = 0.60", "input double Inp_DecisionMinObservedCoverage = 0.50", "input double Inp_DecisionMinProgressTicks = 1.0", "input double Inp_DecisionComparableEffortFactor = 2.0"], "duplicates": {"functions": {}, "structs": {}, "enums": {}, "globals": {}}, "native_compilation_executed": false}, "native_compilation_executed": false}
+
+COMMAND tools/generate_identity_inputs.py --check
+identity verified: 103 inputs, historic 71 intact, source_sha256=82f31e5fa90f26602e2a5fa1b41500cf06cf9c02e53518ab766415f5819d7c86
+
+COMMAND tools/verify_delivery.py
+PASS lexical delimiters/local includes: scalpertalvez (10230 lines)
+PASS lexical delimiters/local includes: scalpertalvez.mq5 (10468 lines)
+PASS lexical delimiters/local includes: Include/BookAdvancedRisk.mqh (513 lines)
+PASS lexical delimiters/local includes: Include/BookArmedDiagnostics.mqh (623 lines)
+PASS lexical delimiters/local includes: Include/BookArmedInputs.mqh (5 lines)
+PASS lexical delimiters/local includes: Include/BookArmedMath.mqh (58 lines)
+PASS lexical delimiters/local includes: Include/BookBuildIdentity.mqh (8 lines)
+PASS lexical delimiters/local includes: Include/BookCsvDiagnostics.mqh (314 lines)
+PASS lexical delimiters/local includes: Include/BookDecisionCore.mqh (389 lines)
+PASS lexical delimiters/local includes: Include/BookDecisionInputs.mqh (33 lines)
+PASS lexical delimiters/local includes: Include/BookDecisionRuntime.mqh (592 lines)
+PASS lexical delimiters/local includes: Include/BookIdentity.mqh (151 lines)
+PASS lexical delimiters/local includes: Include/BookInputSnapshot.mqh (110 lines)
+PASS lexical delimiters/local includes: Include/BookMicroMath.mqh (253 lines)
+PASS lexical delimiters/local includes: Include/BookMicrostructure.mqh (447 lines)
+PASS lexical delimiters/local includes: Include/BookRiskCore.mqh (94 lines)
+PASS lexical delimiters/local includes: Include/BookRiskInputs.mqh (21 lines)
+PASS lexical delimiters/local includes: Include/BookRuntimePerf.mqh (31 lines)
+PASS immutable reference and master PDF; 18 files checked. Native compilation NOT performed.
+
+FROZEN CONTROL 815077efec40adf1897bcf64640756bb46c4c118
+test_actual_observer_collection_state (test_armed_diagnostics.ArmedDiagnostics.test_actual_observer_collection_state) ... ok
+test_actual_shared_trace_math (test_armed_diagnostics.ArmedDiagnostics.test_actual_shared_trace_math) ... ok
+test_csv_schema_column_integrity (test_armed_diagnostics.ArmedDiagnostics.test_csv_schema_column_integrity) ... ok
+test_no_financial_or_market_read_side_effects (test_armed_diagnostics.ArmedDiagnostics.test_no_financial_or_market_read_side_effects) ... ok
+test_actual_csv_parser_and_legacy_pid_overflow (test_compatibility.CompatibilityTests.test_actual_csv_parser_and_legacy_pid_overflow) ... ok
+test_extracted_poc_and_weis_on_controlled_ticks_and_bars (test_compatibility.CompatibilityTests.test_extracted_poc_and_weis_on_controlled_ticks_and_bars) ... ok
+test_extracted_strategy_on_controlled_market_data (test_compatibility.CompatibilityTests.test_extracted_strategy_on_controlled_market_data) ... ok
+test_historical_71_input_types_order_names_and_defaults (test_compatibility.CompatibilityTests.test_historical_71_input_types_order_names_and_defaults) ... ok
+test_legacy_financial_journal_schemas (test_compatibility.CompatibilityTests.test_legacy_financial_journal_schemas) ... ok
+test_observational_modules_cannot_dispatch_or_write_strategy_state (test_compatibility.CompatibilityTests.test_observational_modules_cannot_dispatch_or_write_strategy_state) ... ok
+test_original_reference_bytes_unchanged (test_compatibility.CompatibilityTests.test_original_reference_bytes_unchanged) ... ok
+test_protected_strategy_function_bodies (test_compatibility.CompatibilityTests.test_protected_strategy_function_bodies) ... ok
+test_absent_file_is_not_empty_success (test_csv_infrastructure.CsvInfrastructureTests.test_absent_file_is_not_empty_success) ... ok
+test_duplicate_position_is_uncertain (test_csv_infrastructure.CsvInfrastructureTests.test_duplicate_position_is_uncertain) ... ok
+test_embedded_nul (test_csv_infrastructure.CsvInfrastructureTests.test_embedded_nul) ... ok
+test_foreign_row_not_silently_accepted (test_csv_infrastructure.CsvInfrastructureTests.test_foreign_row_not_silently_accepted) ... ok
+test_incompatible_header (test_csv_infrastructure.CsvInfrastructureTests.test_incompatible_header) ... ok
+test_incomplete_quote_is_distinct (test_csv_infrastructure.CsvInfrastructureTests.test_incomplete_quote_is_distinct) ... ok
+test_intact_and_large_position_id (test_csv_infrastructure.CsvInfrastructureTests.test_intact_and_large_position_id) ... ok
+test_invalid_and_overflow_position_ids (test_csv_infrastructure.CsvInfrastructureTests.test_invalid_and_overflow_position_ids) ... ok
+test_line_ending_compatibility (test_csv_infrastructure.CsvInfrastructureTests.test_line_ending_compatibility) ... ok
+test_missing_columns_reports_expected_received_and_row (test_csv_infrastructure.CsvInfrastructureTests.test_missing_columns_reports_expected_received_and_row) ... ok
+test_quoted_multiline_and_escaped_quotes (test_csv_infrastructure.CsvInfrastructureTests.test_quoted_multiline_and_escaped_quotes) ... ok
+test_recovery_reads_only_and_repeats_without_duplicates (test_csv_infrastructure.CsvInfrastructureTests.test_recovery_reads_only_and_repeats_without_duplicates) ... ok
+test_truncation_is_not_success (test_csv_infrastructure.CsvInfrastructureTests.test_truncation_is_not_success) ... ok
+test_unresolved_accounting_is_retained_not_invented (test_csv_infrastructure.CsvInfrastructureTests.test_unresolved_accounting_is_retained_not_invented) ... ok
+test_utf8_bom_and_utf16_diagnosis (test_csv_infrastructure.CsvInfrastructureTests.test_utf8_bom_and_utf16_diagnosis) ... ok
+test_actual_csv_formatter_bytes_before_after_and_monolith (test_matrix_identifier_fix.MatrixIdentifierFixTests.test_actual_csv_formatter_bytes_before_after_and_monolith) ... ok
+test_all_csv_string_literals_remain_exact (test_matrix_identifier_fix.MatrixIdentifierFixTests.test_all_csv_string_literals_remain_exact) ... ok
+test_collision_audit_detects_member_local_parameter_and_comma_declarators (test_matrix_identifier_fix.MatrixIdentifierFixTests.test_collision_audit_detects_member_local_parameter_and_comma_declarators) ... ok
+test_corrected_modular_reference_changes_only_the_authorized_two_files (test_matrix_identifier_fix.MatrixIdentifierFixTests.test_corrected_modular_reference_changes_only_the_authorized_two_files) ... ok
+test_entire_active_mql_program_changes_only_identifiers_and_pinned_provenance (test_matrix_identifier_fix.MatrixIdentifierFixTests.test_entire_active_mql_program_changes_only_identifiers_and_pinned_provenance) ... ok
+test_exact_identifier_alpha_renaming_and_nothing_else (test_matrix_identifier_fix.MatrixIdentifierFixTests.test_exact_identifier_alpha_renaming_and_nothing_else) ... ok
+test_frozen_reference_membership_rejects_changed_missing_and_omitted_paths (test_matrix_identifier_fix.MatrixIdentifierFixTests.test_frozen_reference_membership_rejects_changed_missing_and_omitted_paths) ... ok
+test_mql_active_declarations_have_no_reserved_type_name_collisions (test_matrix_identifier_fix.MatrixIdentifierFixTests.test_mql_active_declarations_have_no_reserved_type_name_collisions) ... ok
+test_actual_delayed_detection_reaction_and_invalidation (test_micro_reaction.MicroReactionTests.test_actual_delayed_detection_reaction_and_invalidation) ... ok
+test_actual_shared_math (test_microstructure.MicrostructureTests.test_actual_shared_math) ... ok
+test_fixed_csv_schema_matches_formatter (test_microstructure.MicrostructureTests.test_fixed_csv_schema_matches_formatter) ... ok
+test_main_integration_uses_existing_flow (test_microstructure.MicrostructureTests.test_main_integration_uses_existing_flow) ... ok
+test_observer_has_no_financial_or_duplicate_feed_api (test_microstructure.MicrostructureTests.test_observer_has_no_financial_or_duplicate_feed_api) ... ok
+test_91_inputs_and_official_dependencies_only (test_monolithic_delivery.MonolithicDeliveryTests.test_91_inputs_and_official_dependencies_only) ... ok
+test_actual_decision_and_poc_weis_fixtures_against_monolith (test_monolithic_delivery.MonolithicDeliveryTests.test_actual_decision_and_poc_weis_fixtures_against_monolith) ... ok
+test_entire_modular_reference_remains_byte_identical (test_monolithic_delivery.MonolithicDeliveryTests.test_entire_modular_reference_remains_byte_identical) ... ok
+test_every_original_source_line_is_accounted_for (test_monolithic_delivery.MonolithicDeliveryTests.test_every_original_source_line_is_accounted_for) ... ok
+test_exact_regeneration_and_original_include_order (test_monolithic_delivery.MonolithicDeliveryTests.test_exact_regeneration_and_original_include_order) ... ok
+test_independent_checker_rejects_unsupported_semantics (test_monolithic_delivery.MonolithicDeliveryTests.test_independent_checker_rejects_unsupported_semantics) ... ok
+test_independent_full_mql_program_and_inventory_equality (test_monolithic_delivery.MonolithicDeliveryTests.test_independent_full_mql_program_and_inventory_equality) ... ok
+test_modular_zip_is_exact_baseline_archive (test_monolithic_delivery.MonolithicDeliveryTests.test_modular_zip_is_exact_baseline_archive) ... ok
+test_actual_risk_core (test_risk_core.RiskCoreTests.test_actual_risk_core) ... ok
+test_actual_original_and_configurable_be_trigger (test_risk_integration.RiskIntegrationTests.test_actual_original_and_configurable_be_trigger) ... ok
+test_actual_risk_paths_cannot_poison_legacy_emr_namespace (test_risk_integration.RiskIntegrationTests.test_actual_risk_paths_cannot_poison_legacy_emr_namespace) ... ok
+test_actual_journal_parser_and_inputs (test_risk_journal.RiskJournalTests.test_actual_journal_parser_and_inputs) ... ok
+
+----------------------------------------------------------------------
+Ran 52 tests in 27.443s
+
+OK
+MATRIX_IDENTIFIER_CSV: 24 actual formatter rows identical across before/after/monolith; bytes=57614; SHA256=f9cabb9029bc0b5f0af74af69a4493c601dc8745351efc7c6a6fa8df702c0118
+actual micro reaction: delayed recognition, confirmation, gap, invalidation, late-touch cases passed
+PASS efficient sell aggression and lower-price acceptance
+PASS sell aggression with no price progress; ER unavailable
+PASS bilateral flow, unknown delta, tiny delta and untrusted flags
+PASS fall and recovery, false breakout and recovered-side rejection
+PASS silent market is uncovered; no-trade volume is not invented
+PASS causal level, late data and incomplete windows
+PASS exactly eleven closed M1 prices and rank tie semantics
+PASS C1 extension-to-stall is not monotonically restrictive; unconfigured sigma stays NA
+PASS C1 threshold-equivalence lattice (20,664 controlled snapshots)
+PASS 20705 assertions; native arithmetic benchmark ticks=1000000 total_us=8048.77 mean_us_per_tick=0.00804877 sizeof_flow=224 sizeof_snapshot=736 (C++ arithmetic only; not MT5 OnTick latency)
+MONOLITH FIXTURE matrix_stage2: matrix=12000 abs=2899 cont=31 conflicts=2 base=1413 turbo=2789 dom=96 stage2=4096 ready=1088 wait=1782 ended=1165 digest=aa16ed3577bb69ca
+MONOLITH FIXTURE poc_weis: poc=514 weis=128 fallback=64 live_flips=71 digest=febf922085385281
+risk core: 2216 assertions passed (host kernel only; no MT5/API execution)
+risk journal/input extraction: 56 assertions passed (ASCII host conversions; no MT5 file/server execution)
+
+CURRENT OPERATIONAL CANDIDATE
+test_actual_observer_collection_state (test_armed_diagnostics.ArmedDiagnostics.test_actual_observer_collection_state) ... ok
+test_actual_shared_trace_math (test_armed_diagnostics.ArmedDiagnostics.test_actual_shared_trace_math) ... ok
+test_csv_schema_column_integrity (test_armed_diagnostics.ArmedDiagnostics.test_csv_schema_column_integrity) ... ok
+test_no_financial_or_market_read_side_effects (test_armed_diagnostics.ArmedDiagnostics.test_no_financial_or_market_read_side_effects) ... ok
+test_actual_csv_parser_and_legacy_pid_overflow (test_compatibility.CompatibilityTests.test_actual_csv_parser_and_legacy_pid_overflow) ... ok
+test_extracted_poc_and_weis_on_controlled_ticks_and_bars (test_compatibility.CompatibilityTests.test_extracted_poc_and_weis_on_controlled_ticks_and_bars) ... ok
+test_extracted_strategy_on_controlled_market_data (test_compatibility.CompatibilityTests.test_extracted_strategy_on_controlled_market_data) ... ok
+test_historical_71_input_types_order_names_and_defaults (test_compatibility.CompatibilityTests.test_historical_71_input_types_order_names_and_defaults) ... ok
+test_legacy_financial_journal_schemas (test_compatibility.CompatibilityTests.test_legacy_financial_journal_schemas) ... ok
+test_observational_modules_cannot_dispatch_or_write_strategy_state (test_compatibility.CompatibilityTests.test_observational_modules_cannot_dispatch_or_write_strategy_state) ... ok
+test_original_reference_bytes_unchanged (test_compatibility.CompatibilityTests.test_original_reference_bytes_unchanged) ... ok
+test_protected_strategy_function_bodies (test_compatibility.CompatibilityTests.test_protected_strategy_function_bodies) ... ok
+test_absent_file_is_not_empty_success (test_csv_infrastructure.CsvInfrastructureTests.test_absent_file_is_not_empty_success) ... ok
+test_duplicate_position_is_uncertain (test_csv_infrastructure.CsvInfrastructureTests.test_duplicate_position_is_uncertain) ... ok
+test_embedded_nul (test_csv_infrastructure.CsvInfrastructureTests.test_embedded_nul) ... ok
+test_foreign_row_not_silently_accepted (test_csv_infrastructure.CsvInfrastructureTests.test_foreign_row_not_silently_accepted) ... ok
+test_incompatible_header (test_csv_infrastructure.CsvInfrastructureTests.test_incompatible_header) ... ok
+test_incomplete_quote_is_distinct (test_csv_infrastructure.CsvInfrastructureTests.test_incomplete_quote_is_distinct) ... ok
+test_intact_and_large_position_id (test_csv_infrastructure.CsvInfrastructureTests.test_intact_and_large_position_id) ... ok
+test_invalid_and_overflow_position_ids (test_csv_infrastructure.CsvInfrastructureTests.test_invalid_and_overflow_position_ids) ... ok
+test_line_ending_compatibility (test_csv_infrastructure.CsvInfrastructureTests.test_line_ending_compatibility) ... ok
+test_missing_columns_reports_expected_received_and_row (test_csv_infrastructure.CsvInfrastructureTests.test_missing_columns_reports_expected_received_and_row) ... ok
+test_quoted_multiline_and_escaped_quotes (test_csv_infrastructure.CsvInfrastructureTests.test_quoted_multiline_and_escaped_quotes) ... ok
+test_recovery_reads_only_and_repeats_without_duplicates (test_csv_infrastructure.CsvInfrastructureTests.test_recovery_reads_only_and_repeats_without_duplicates) ... ok
+test_truncation_is_not_success (test_csv_infrastructure.CsvInfrastructureTests.test_truncation_is_not_success) ... ok
+test_unresolved_accounting_is_retained_not_invented (test_csv_infrastructure.CsvInfrastructureTests.test_unresolved_accounting_is_retained_not_invented) ... ok
+test_utf8_bom_and_utf16_diagnosis (test_csv_infrastructure.CsvInfrastructureTests.test_utf8_bom_and_utf16_diagnosis) ... ok
+test_abs_accepted_opposite_continuation_vetoes (test_decision_core.DecisionCoreTests.test_abs_accepted_opposite_continuation_vetoes) ... ok
+test_abs_valid_with_effective_reaction_and_opposite_delta (test_decision_core.DecisionCoreTests.test_abs_valid_with_effective_reaction_and_opposite_delta) ... ok
+test_cont_produced_rejection_vetoes_or_invalidates (test_decision_core.DecisionCoreTests.test_cont_produced_rejection_vetoes_or_invalidates) ... ok
+test_cont_progress_acceptance_value_migration_pass_without_fixed_delay (test_decision_core.DecisionCoreTests.test_cont_progress_acceptance_value_migration_pass_without_fixed_delay) ... ok
+test_feed_quality_unknown_ambiguous_small_delta_gap_fail_closed (test_decision_core.DecisionCoreTests.test_feed_quality_unknown_ambiguous_small_delta_gap_fail_closed) ... ok
+test_operational_math_and_causal_level_units (test_decision_core.DecisionCoreTests.test_operational_math_and_causal_level_units) ... ok
+test_reference_capacity_and_minimum_are_compatible (test_decision_core.DecisionCoreTests.test_reference_capacity_and_minimum_are_compatible) ... ok
+test_small_pause_and_opposite_delta_do_not_end_trend (test_decision_core.DecisionCoreTests.test_small_pause_and_opposite_delta_do_not_end_trend) ... ok
+test_stall_inactivity_and_bilateral_flow_never_fabricate_absorption (test_decision_core.DecisionCoreTests.test_stall_inactivity_and_bilateral_flow_never_fabricate_absorption) ... ok
+test_threshold_sensitivity_changes_acceptance_without_statistical_claim (test_decision_core.DecisionCoreTests.test_threshold_sensitivity_changes_acceptance_without_statistical_claim) ... ok
+test_warmup_terminates_at_minimum_and_excludes_current_future (test_decision_core.DecisionCoreTests.test_warmup_terminates_at_minimum_and_excludes_current_future) ... ok
+test_actual_late_breakout_mapping_survives_generic_send_outcome (test_decision_diagnostics.DecisionDiagnosticsTests.test_actual_late_breakout_mapping_survives_generic_send_outcome) ... ok
+test_both_original_sendorder_late_breakout_diagnostics_are_preserved (test_decision_diagnostics.DecisionDiagnosticsTests.test_both_original_sendorder_late_breakout_diagnostics_are_preserved) ... ok
+test_actual_entry_verdict_injection_changes_api_logs_do_not (test_decision_integration.DecisionExecutionIntegration.test_actual_entry_verdict_injection_changes_api_logs_do_not) ... ok
+test_actual_policy_controls_the_only_entry_api_for_abs_and_cont (test_decision_integration.DecisionExecutionIntegration.test_actual_policy_controls_the_only_entry_api_for_abs_and_cont) ... ok
+test_control_actual_sendorder_baseline_fixture (test_decision_integration.DecisionExecutionIntegration.test_control_actual_sendorder_baseline_fixture) ... ok
+test_original_mode_exact_actual_entry_control (test_decision_integration.DecisionExecutionIntegration.test_original_mode_exact_actual_entry_control) ... ok
+test_post_prepare_and_dispatch_journal_rejection_cleanup_and_uncertainty (test_decision_integration.DecisionExecutionIntegration.test_post_prepare_and_dispatch_journal_rejection_cleanup_and_uncertainty) ... ok
+test_original_matrix_conflict_glass_and_ineligible_cannot_be_recovered (test_decision_lifecycle.DecisionLifecycleTests.test_original_matrix_conflict_glass_and_ineligible_cannot_be_recovered) ... ok
+test_original_terminal_terms_and_post_journal_precedence (test_decision_lifecycle.DecisionLifecycleTests.test_original_terminal_terms_and_post_journal_precedence) ... ok
+test_route_counts_original_cancellations_and_live_wait (test_decision_lifecycle.DecisionLifecycleTests.test_route_counts_original_cancellations_and_live_wait) ... ok
+test_actual_collector_history_evidence_and_sendorder_abs_cont (test_decision_pipeline.DecisionCompletePipelineTests.test_actual_collector_history_evidence_and_sendorder_abs_cont) ... ok
+test_all_existing_structures_and_enums_preserve_their_definitions (test_decision_preservation.DecisionPreservationTests.test_all_existing_structures_and_enums_preserve_their_definitions) ... ok
+test_all_historical_91_input_declarations_and_defaults_preserved_before_new_controls (test_decision_preservation.DecisionPreservationTests.test_all_historical_91_input_declarations_and_defaults_preserved_before_new_controls) ... ok
+test_control_monolith_and_all_prior_reports_remain_byte_identical (test_decision_preservation.DecisionPreservationTests.test_control_monolith_and_all_prior_reports_remain_byte_identical) ... ok
+test_diagnostic_change_is_only_demonstrated_late_breakout_mapping (test_decision_preservation.DecisionPreservationTests.test_diagnostic_change_is_only_demonstrated_late_breakout_mapping) ... ok
+test_financial_and_observational_arithmetic_modules_remain_byte_identical (test_decision_preservation.DecisionPreservationTests.test_financial_and_observational_arithmetic_modules_remain_byte_identical) ... ok
+test_matrix_original_readiness_book_financial_and_exit_functions_preserved (test_decision_preservation.DecisionPreservationTests.test_matrix_original_readiness_book_financial_and_exit_functions_preserved) ... ok
+test_standalone_regeneration_independent_program_equivalence_and_events (test_decision_preservation.DecisionPreservationTests.test_standalone_regeneration_independent_program_equivalence_and_events) ... ok
+test_actual_regular_window_warmup_terminates (test_decision_runtime.DecisionRuntimeTests.test_actual_regular_window_warmup_terminates) ... ok
+test_actual_trade_stream_to_abs_verdict_and_proof_win_wdo_both_directions (test_decision_runtime.DecisionRuntimeTests.test_actual_trade_stream_to_abs_verdict_and_proof_win_wdo_both_directions) ... ok
+test_actual_trade_stream_to_cont_verdict_pause_rejection_win_wdo_both_directions (test_decision_runtime.DecisionRuntimeTests.test_actual_trade_stream_to_cont_verdict_pause_rejection_win_wdo_both_directions) ... ok
+test_bounded_incremental_catchup_and_resource_accounting (test_decision_runtime.DecisionRuntimeTests.test_bounded_incremental_catchup_and_resource_accounting) ... ok
+test_final_proof_identity_freshness_and_original_clocks (test_decision_runtime.DecisionRuntimeTests.test_final_proof_identity_freshness_and_original_clocks) ... ok
+test_observer_csv_logs_independent_and_original_bypass (test_decision_runtime.DecisionRuntimeTests.test_observer_csv_logs_independent_and_original_bypass) ... ok
+test_overlapping_queries_and_identical_same_ms_trades (test_decision_runtime.DecisionRuntimeTests.test_overlapping_queries_and_identical_same_ms_trades) ... ok
+test_quality_gaps_prefix_order_flags_capacity_and_api_failure (test_decision_runtime.DecisionRuntimeTests.test_quality_gaps_prefix_order_flags_capacity_and_api_failure) ... ok
+test_reaction_cache_and_saturated_required_history (test_decision_runtime.DecisionRuntimeTests.test_reaction_cache_and_saturated_required_history) ... ok
+test_actual_delayed_detection_reaction_and_invalidation (test_micro_reaction.MicroReactionTests.test_actual_delayed_detection_reaction_and_invalidation) ... ok
+test_actual_shared_math (test_microstructure.MicrostructureTests.test_actual_shared_math) ... ok
+test_fixed_csv_schema_matches_formatter (test_microstructure.MicrostructureTests.test_fixed_csv_schema_matches_formatter) ... ok
+test_main_integration_uses_existing_flow (test_microstructure.MicrostructureTests.test_main_integration_uses_existing_flow) ... ok
+test_observer_has_no_financial_or_duplicate_feed_api (test_microstructure.MicrostructureTests.test_observer_has_no_financial_or_duplicate_feed_api) ... ok
+test_actual_risk_core (test_risk_core.RiskCoreTests.test_actual_risk_core) ... ok
+test_actual_original_and_configurable_be_trigger (test_risk_integration.RiskIntegrationTests.test_actual_original_and_configurable_be_trigger) ... ok
+test_actual_risk_paths_cannot_poison_legacy_emr_namespace (test_risk_integration.RiskIntegrationTests.test_actual_risk_paths_cannot_poison_legacy_emr_namespace) ... ok
+test_actual_journal_parser_and_inputs (test_risk_journal.RiskJournalTests.test_actual_journal_parser_and_inputs) ... ok
+
+----------------------------------------------------------------------
+Ran 74 tests in 41.664s
+
+OK
+ABS blocked: opposite progress=10ticks, opposite acceptance(volume,time)=1,1 -> candidate veto/armed invalidation
+ABS valid: T resistance=1, R net=6ticks, acceptance(volume,time)=1,1; opposite delta retained
+CONT blocked by produced opposite progress+accepted volume/time beyond frozen context
+CONT valid: net=10ticks, acceptance(volume,time)=1,1, positive prior-VWAP migration; no extra wait
+Smalldelta, ambiguous flags, unknownvolume, gap, unordered, invalidsource, incompleteprefix fail closed
+V/delta/coverage/interval/Net/Max/path/ER exact; no epsilon and no futurelevel
+384sample reference ring remains bounded and warms; no impossible minimum
+Efficient trend small pause retained; expired evidence waits/unavailable, never trend-ended by ER/volume alone
+No absorption fabricated from inactivity or bilateral rotation
+Acceptance sensitivity .60passes/.70waits on measuredtime=.6667; P70/80/90 and P10/20/30 finite sweep
+Warmup ends exactly at16 comparable prior windows; self/future/bucket excluded
+fixture_only_verdict_injection pairs=16 VALIDAR_API=1 VETAR_API=0 logs_have_no_effect
+POLICY_VALID route=ABS dir=-1 tick=0.5 book=0 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 max_ticks=6 resistance=1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=ABS dir=-1 tick=0.5 book=0 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-10 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=ABS dir=-1 tick=5 book=0 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 max_ticks=6 resistance=1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=ABS dir=-1 tick=5 book=0 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-10 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=ABS dir=-1 tick=0.5 book=1 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 max_ticks=6 resistance=1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=ABS dir=-1 tick=0.5 book=1 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-10 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=ABS dir=-1 tick=5 book=1 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 max_ticks=6 resistance=1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=ABS dir=-1 tick=5 book=1 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-10 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=CONT dir=-1 tick=0.5 book=0 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 max_ticks=10 resistance=-1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=CONT dir=-1 tick=0.5 book=0 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-17.5 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=CONT dir=-1 tick=5 book=0 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 max_ticks=10 resistance=-1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=CONT dir=-1 tick=5 book=0 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-17.5 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=CONT dir=-1 tick=0.5 book=1 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 max_ticks=10 resistance=-1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=CONT dir=-1 tick=0.5 book=1 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-17.5 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=CONT dir=-1 tick=5 book=1 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 max_ticks=10 resistance=-1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=CONT dir=-1 tick=5 book=1 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-17.5 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=ABS dir=1 tick=0.5 book=0 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 max_ticks=6 resistance=1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=ABS dir=1 tick=0.5 book=0 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-10 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=ABS dir=1 tick=5 book=0 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 max_ticks=6 resistance=1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=ABS dir=1 tick=5 book=0 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-10 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=ABS dir=1 tick=0.5 book=1 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 max_ticks=6 resistance=1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=ABS dir=1 tick=0.5 book=1 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-10 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=ABS dir=1 tick=5 book=1 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 max_ticks=6 resistance=1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=ABS dir=1 tick=5 book=1 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-10 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=CONT dir=1 tick=0.5 book=0 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 max_ticks=10 resistance=-1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=CONT dir=1 tick=0.5 book=0 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-17.5 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=CONT dir=1 tick=5 book=0 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 max_ticks=10 resistance=-1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=CONT dir=1 tick=5 book=0 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-17.5 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=CONT dir=1 tick=0.5 book=1 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 max_ticks=10 resistance=-1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=CONT dir=1 tick=0.5 book=1 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-17.5 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+POLICY_VALID route=CONT dir=1 tick=5 book=1 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 max_ticks=10 resistance=-1 vol_accept=1 time_accept=1 API=1
+POLICY_BLOCK route=CONT dir=1 tick=5 book=1 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-17.5 pressure_share=1 coverage=1 vol_accept=0 time_accept=0 API=0
+actual_policy_to_PositionOpen valid=16 blocked=16 observer=OFF
+DECISION ORIGINAL: 192 actual SendOrder scenarios exactly equal control; new decision calls=0
+post_journal actual_entry clean_wait=16 unresolved_retained=16 no_dispatch_or_resend
+ACTUAL_EvaluateMatrix conflict/glass/ineligible never reach candidate; eligible veto cannot arm; API=0
+ORIGINAL_TERMINAL_PRECEDENCE cases=48 uncertain_intents_retained=72 API=0
+REGRESSION_ROUTE=ABS identified=20 approved=4 waiting=4 vetoed=4 timeout=4 overshoot=4 valid_entries_preserved=4 (deterministic fixtures, not market statistics)
+REGRESSION_ROUTE=CONT identified=20 approved=4 waiting=4 vetoed=4 timeout=4 overshoot=4 valid_entries_preserved=4 (deterministic fixtures, not market statistics)
+FULL_PIPELINE route=ABS symbol=WIN_TEST d=-1 book=0 refs=16 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 resistance=1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=ABS symbol=WIN_TEST d=-1 book=0 refs=0 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-6 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=ABS symbol=WIN_TEST d=-1 book=1 refs=16 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 resistance=1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=ABS symbol=WIN_TEST d=-1 book=1 refs=0 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-6 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=CONT symbol=WIN_TEST d=-1 book=0 refs=16 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 resistance=-1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=CONT symbol=WIN_TEST d=-1 book=0 refs=0 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-13.5 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=CONT symbol=WIN_TEST d=-1 book=1 refs=16 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 resistance=-1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=CONT symbol=WIN_TEST d=-1 book=1 refs=0 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-13.5 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=ABS symbol=WIN_TEST d=1 book=0 refs=16 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 resistance=1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=ABS symbol=WIN_TEST d=1 book=0 refs=0 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-6 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=ABS symbol=WIN_TEST d=1 book=1 refs=16 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 resistance=1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=ABS symbol=WIN_TEST d=1 book=1 refs=0 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-6 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=CONT symbol=WIN_TEST d=1 book=0 refs=16 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 resistance=-1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=CONT symbol=WIN_TEST d=1 book=0 refs=0 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-13.5 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=CONT symbol=WIN_TEST d=1 book=1 refs=16 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 resistance=-1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=CONT symbol=WIN_TEST d=1 book=1 refs=0 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-13.5 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=ABS symbol=WDO_TEST d=-1 book=0 refs=16 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 resistance=1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=ABS symbol=WDO_TEST d=-1 book=0 refs=0 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-6 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=ABS symbol=WDO_TEST d=-1 book=1 refs=16 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 resistance=1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=ABS symbol=WDO_TEST d=-1 book=1 refs=0 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-6 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=CONT symbol=WDO_TEST d=-1 book=0 refs=16 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 resistance=-1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=CONT symbol=WDO_TEST d=-1 book=0 refs=0 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-13.5 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=CONT symbol=WDO_TEST d=-1 book=1 refs=16 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 resistance=-1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=CONT symbol=WDO_TEST d=-1 book=1 refs=0 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-13.5 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=ABS symbol=WDO_TEST d=1 book=0 refs=16 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 resistance=1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=ABS symbol=WDO_TEST d=1 book=0 refs=0 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-6 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=ABS symbol=WDO_TEST d=1 book=1 refs=16 result=0 reason=ABS_STALL_STRICT_TEST_AND_REACTION net_ticks=6 resistance=1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=ABS symbol=WDO_TEST d=1 book=1 refs=0 result=3 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION net_ticks=-6 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=CONT symbol=WDO_TEST d=1 book=0 refs=16 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 resistance=-1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=CONT symbol=WDO_TEST d=1 book=0 refs=0 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-13.5 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+FULL_PIPELINE route=CONT symbol=WDO_TEST d=1 book=1 refs=16 result=0 reason=CONT_PROGRESS_ACCEPTANCE_VALUE_MIGRATION net_ticks=10 resistance=-1 volume_acceptance=1 time_acceptance=1 opposite_volume_acceptance=0 opposite_time_acceptance=0 API=1
+FULL_PIPELINE route=CONT symbol=WDO_TEST d=1 book=1 refs=0 result=3 reason=CONT_ACCEPTED_OPPOSITE_REJECTION net_ticks=-13.5 resistance=-1 volume_acceptance=0 time_acceptance=0 opposite_volume_acceptance=1 opposite_time_acceptance=1 API=0
+ACTUAL_COLLECTOR_TO_PositionOpen valid=16 blocked=16 observer=off csv=off logs=off
+DECISION_RUNTIME actual regular-window warm-up: prior 15 insufficient, prior 16 available; compare before insert
+DECISION_RUNTIME STREAM ABS VALID WIN d=-1 resistance=1 R_net_ticks=6 accepted_volume=1 accepted_time=1 refs=16 proof=1 observer=off logs=off
+STREAM ABS BLOCK WIN d=-1 entry_net_ticks=-6 pressure_share=1 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION proof=0
+STREAM ABS VALID WIN d=1 resistance=1 R_net_ticks=6 accepted_volume=1 accepted_time=1 refs=16 proof=1 observer=off logs=off
+STREAM ABS BLOCK WIN d=1 entry_net_ticks=-6 pressure_share=1 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION proof=0
+STREAM ABS VALID WDO d=-1 resistance=1 R_net_ticks=6 accepted_volume=1 accepted_time=1 refs=16 proof=1 observer=off logs=off
+STREAM ABS BLOCK WDO d=-1 entry_net_ticks=-6 pressure_share=1 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION proof=0
+STREAM ABS VALID WDO d=1 resistance=1 R_net_ticks=6 accepted_volume=1 accepted_time=1 refs=16 proof=1 observer=off logs=off
+STREAM ABS BLOCK WDO d=1 entry_net_ticks=-6 pressure_share=1 reason=ABS_ACCEPTED_OPPOSITE_CONTINUATION proof=0
+DECISION_RUNTIME STREAM CONT VALID WIN d=-1 net_ticks=10 accepted_volume=1 accepted_time=1 refs=16 proof=1 observer=off logs=off no_extra_wait
+STREAM CONT PAUSE preserved d=-1 signed_net=-0.25tick bilateral_delta=0 waits_without_cancelling=1
+STREAM CONT BLOCK WIN d=-1 entry_net_ticks=-13.5 pressure_share=1 reason=CONT_ACCEPTED_OPPOSITE_REJECTION proof=0
+STREAM CONT VALID WIN d=1 net_ticks=10 accepted_volume=1 accepted_time=1 refs=16 proof=1 observer=off logs=off no_extra_wait
+STREAM CONT PAUSE preserved d=1 signed_net=-0.25tick bilateral_delta=0 waits_without_cancelling=1
+STREAM CONT BLOCK WIN d=1 entry_net_ticks=-13.5 pressure_share=1 reason=CONT_ACCEPTED_OPPOSITE_REJECTION proof=0
+STREAM CONT VALID WDO d=-1 net_ticks=10 accepted_volume=1 accepted_time=1 refs=16 proof=1 observer=off logs=off no_extra_wait
+STREAM CONT PAUSE preserved d=-1 signed_net=-0.25tick bilateral_delta=0 waits_without_cancelling=1
+STREAM CONT BLOCK WDO d=-1 entry_net_ticks=-13.5 pressure_share=1 reason=CONT_ACCEPTED_OPPOSITE_REJECTION proof=0
+STREAM CONT VALID WDO d=1 net_ticks=10 accepted_volume=1 accepted_time=1 refs=16 proof=1 observer=off logs=off no_extra_wait
+STREAM CONT PAUSE preserved d=1 signed_net=-0.25tick bilateral_delta=0 waits_without_cancelling=1
+STREAM CONT BLOCK WDO d=1 entry_net_ticks=-13.5 pressure_share=1 reason=CONT_ACCEPTED_OPPOSITE_REJECTION proof=0
+DECISION_RUNTIME bounded 8192-row incremental catch-up, ten-ms query throttle and capacity accounting
+DECISION_RUNTIME proof identity/epoch/version/age/bar/timeout/session invalidation; BID/ASK alone not a cancellation
+DECISION_RUNTIME CSV/observer/log switches do not control collection or verdict; ORIGINAL bypass and unverified feed guarded
+DECISION_RUNTIME ordinal cursor: five distinct rows, two identical pairs retained, overlaps idempotent
+DECISION_RUNTIME changed prefix, uncovered interval, ordering, time identity, exact-volume capacity, ambiguous flags, saturated ms and API error fail closed
+DECISION_RUNTIME reaction rebuilding cached by epoch/test/data version; overwritten needed prefix stays unavailable
+actual micro reaction: delayed recognition, confirmation, gap, invalidation, late-touch cases passed
+PASS efficient sell aggression and lower-price acceptance
+PASS sell aggression with no price progress; ER unavailable
+PASS bilateral flow, unknown delta, tiny delta and untrusted flags
+PASS fall and recovery, false breakout and recovered-side rejection
+PASS silent market is uncovered; no-trade volume is not invented
+PASS causal level, late data and incomplete windows
+PASS exactly eleven closed M1 prices and rank tie semantics
+PASS C1 extension-to-stall is not monotonically restrictive; unconfigured sigma stays NA
+PASS C1 threshold-equivalence lattice (20,664 controlled snapshots)
+PASS 20705 assertions; native arithmetic benchmark ticks=1000000 total_us=7490.55 mean_us_per_tick=0.00749055 sizeof_flow=224 sizeof_snapshot=736 (C++ arithmetic only; not MT5 OnTick latency)
+risk core: 2216 assertions passed (host kernel only; no MT5/API execution)
+risk journal/input extraction: 56 assertions passed (ASCII host conversions; no MT5 file/server execution)
