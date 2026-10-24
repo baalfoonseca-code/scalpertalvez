@@ -309,6 +309,10 @@ template<class... T> void WriteAuditRow(T...){ }
 template<class... T> void ResponseLiveWave(T...){ }
 template<class... T> void ResponseStageSample(T...){ }
 void ResponseSnapshotBegin(){ }
+// This fixture isolates the original matrix/readiness state in ORIGINAL mode.
+// The new private decision binding is tested with its real implementation in
+// test_decision_pipeline; resetting that absent private state has no host effect.
+void BookDecisionResetSignal(){ }
 '''
 
 FIXTURE_GLOBALS = r'''
