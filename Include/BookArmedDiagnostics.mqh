@@ -215,6 +215,7 @@ void BookDiagAudit(string status)
    else if(status=="ARMED_CANCEL_HARD") BookDiagFinish("CANCEL_HARD_CONTRADICTION");
    else if(status=="OVERSHOOT_BLOCK" || status=="LATE_OVERSHOOT_BLOCK")
       BookDiagFinish("CANCEL_OVERSHOOT");
+   else if(status=="LATE_BREAKOUT_LOST") BookDiagFinish("CANCEL_BREAKOUT_LOST");
    else if(status=="LATE_VWAP_INVALID") BookDiagFinish("CANCEL_DATA:LIVE_VWAP");
    else if(status=="LATE_DIRECTION_BLOCK" || status=="LATE_GLASS_BLOCK" ||
       status=="DAILY_RISK_BLOCK" || status=="STOPS_LEVEL_BLOCK" ||
