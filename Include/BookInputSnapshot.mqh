@@ -94,5 +94,17 @@ void BookCollectInputIdentity(string &canonical)
    BookIdentityAdd(canonical,"double","TP_BASE_R",StringFormat("%.17g",TP_BASE_R));
    BookIdentityAdd(canonical,"double","TP_TURBO_R",StringFormat("%.17g",TP_TURBO_R));
    BookIdentityAdd(canonical,"bool","Inp_EnableArmedDiagnostics",(Inp_EnableArmedDiagnostics?"1":"0"));
+   BookIdentityAdd(canonical,"ENUM_BOOK_DECISION_MODE","Inp_DecisionMode",(string)(int)Inp_DecisionMode);
+   BookIdentityAdd(canonical,"ENUM_BOOK_DECISION_SOURCE","Inp_DecisionAggressorSource",(string)(int)Inp_DecisionAggressorSource);
+   BookIdentityAdd(canonical,"int","Inp_DecisionWindowSec",(string)(int)Inp_DecisionWindowSec);
+   BookIdentityAdd(canonical,"int","Inp_DecisionMinReferences",(string)(int)Inp_DecisionMinReferences);
+   BookIdentityAdd(canonical,"double","Inp_DecisionEffortQuantile",StringFormat("%.17g",Inp_DecisionEffortQuantile));
+   BookIdentityAdd(canonical,"double","Inp_DecisionResultQuantile",StringFormat("%.17g",Inp_DecisionResultQuantile));
+   BookIdentityAdd(canonical,"double","Inp_DecisionMinCoverage",StringFormat("%.17g",Inp_DecisionMinCoverage));
+   BookIdentityAdd(canonical,"double","Inp_DecisionMinDirectionalShare",StringFormat("%.17g",Inp_DecisionMinDirectionalShare));
+   BookIdentityAdd(canonical,"double","Inp_DecisionMinAcceptance",StringFormat("%.17g",Inp_DecisionMinAcceptance));
+   BookIdentityAdd(canonical,"double","Inp_DecisionMinObservedCoverage",StringFormat("%.17g",Inp_DecisionMinObservedCoverage));
+   BookIdentityAdd(canonical,"double","Inp_DecisionMinProgressTicks",StringFormat("%.17g",Inp_DecisionMinProgressTicks));
+   BookIdentityAdd(canonical,"double","Inp_DecisionComparableEffortFactor",StringFormat("%.17g",Inp_DecisionComparableEffortFactor));
 }
 #endif

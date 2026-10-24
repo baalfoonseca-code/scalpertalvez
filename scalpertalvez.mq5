@@ -33,7 +33,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Remora Scalper Research"
 #property version "1.125" // EXPERIMENTAL: PDF reconstruction + directional DOM confluence.
-#property description "BOOK PRO 1.125 experimental surgery; opt-in risk and observational microstructure; native compilation pending"
+#property description "BOOK PRO experimental operational ABS/CONT validation; DECISION_APLICAR default; native compilation pending"
 
 #include <Trade\Trade.mqh>
 #include <Trade\PositionInfo.mqh>
@@ -226,6 +226,8 @@ input int Inp_Obs_WindowBudgetUS = 5000; // Suspend extension after an over-budg
 
 #include "Include\BookRiskInputs.mqh"
 #include "Include/BookArmedInputs.mqh"
+// New experimental controls are appended after all 91 historical inputs.
+#include "Include/BookDecisionInputs.mqh"
 
 //=====================================================================
 // STRUCTS
@@ -1522,6 +1524,7 @@ void OnTimer()
 {
    ulong began=GetMicrosecondCount();
    DOMBaseOnTimer();
+   BookDecisionPump(); // Financial timer/protection always runs first.
    BookDiagTimer();
    DOMGateSubscriptionTimer(); // Only after the original financial timer body.
    if(Inp_DOM_Enable) DOMRuntimeTimer();
@@ -2067,6 +2070,9 @@ bool DOMGateDecisionCurrent(BookGateDecision &decision,const MqlTick &pricedTick
   { decision.reason="SIZING_STOPS_OR_MARGIN_CHANGED"; return false; }
   if(GetMicrosecondCount()-windowBegin>BOOK_GATE_DECISION_BUDGET_US)
   { gBookGateDecisionBudgetBlocks++; decision.reason="LOCAL_REVALIDATION_BUDGET_EXCEEDED"; return false; }
+  if(Inp_DecisionMode!=DECISION_ORIGINAL &&
+     BookDecisionEvaluateArmed()!=DECISION_VALIDAR)
+  { decision.reason="ABS_CONT_DECISION_REJECTED"; return false; }
   // No cached DOM authorization survives either journal or slow calculation.
   bool bookConfirmed=DOMGateRead(original.dir,decision);
   clocksCurrent=clocksCurrent && decision.signalClock==signalClock &&
@@ -2108,6 +2114,8 @@ bool DOMGateDecisionCurrent(BookGateDecision &decision,const MqlTick &pricedTick
   if(elapsed>gBookGateDecisionMaxUS) gBookGateDecisionMaxUS=elapsed;
   if(elapsed>BOOK_GATE_DECISION_BUDGET_US)
   { gBookGateDecisionBudgetBlocks++; decision.reason="LOCAL_REVALIDATION_BUDGET_EXCEEDED"; return false; }
+  if(Inp_DecisionMode!=DECISION_ORIGINAL && !BookDecisionDispatchValid(original))
+  { decision.reason="ABS_CONT_DECISION_STALE"; return false; }
   return bookConfirmed;
 }
 
@@ -2412,6 +2420,7 @@ void ResetMatrixSnapshot(MatrixSnapshot &s)
 void ResetArmedSignal()
 {
   BookDiagBeforeReset();
+  BookDecisionResetSignal();
   armed.active=false;armed.dir=0;
   armed.regionHigh=0;armed.regionLow=0;
   armed.activeSL_Pts=0;armed.activeTP_Pts=0;
@@ -2441,6 +2450,9 @@ int CopyTradeTicksStrict(ulong from_msc, ulong to_msc, MqlTick &ticksOut[])
    int copied = CopyTicksRange(Symbol(), ticksOut, COPY_TICKS_TRADE, from_msc,
 to_msc);
     if(copied < 0 || GetLastError() != 0) return -1;
+    // Reuse the exact acquired trade batch; independent of observation/export.
+    if(Inp_DecisionMode!=DECISION_ORIGINAL)
+       BookDecisionIngestBatch(from_msc,to_msc,ticksOut,copied);
     return copied;
 }
 
@@ -3975,6 +3987,151 @@ bool WriteTradeRow(const TradeRecord &r)
 }
 
 
+// Additional validation never upgrades an original STILL/terminal result.
+ENUM_APS BookDecisionArmedGate(const ENUM_APS originalReadiness)
+{
+   if(Inp_DecisionMode==DECISION_ORIGINAL ||
+      (originalReadiness!=APS_ENTRY_READY && originalReadiness!=APS_STILL_ARMED))
+      return originalReadiness;
+   ENUM_BOOK_DECISION_RESULT result=BookDecisionEvaluateArmed();
+   bool conflict=HasExecutionInFlight() || gAccountingUnresolved ||
+                 gEntryJournalInvalid || gExitJournalInvalid;
+   if(conflict)
+   {
+      // Preserve the original terminal READY-path financial rejection; only the
+      // thesis is reset, never an accounting obligation or pending intent.
+      if(originalReadiness==APS_ENTRY_READY)
+      { ResetArmedSignal(); return APS_TRADE_OR_POSITION; }
+      return APS_STILL_ARMED;
+   }
+   if(result==DECISION_INVALIDAR_ARMED)
+   {
+      BookDiagFinish("CANCEL_DECISION_INVALIDATION");
+      ResetArmedSignal();
+      return APS_ENDED_FAIL_CLOSED;
+   }
+   if(result!=DECISION_VALIDAR) return APS_STILL_ARMED;
+   return originalReadiness;
+}
+
+ENUM_SEND_OUTCOME BookDecisionRejectUnprepared()
+{
+   if(HasExecutionInFlight() || gAccountingUnresolved ||
+      gEntryJournalInvalid || gExitJournalInvalid) return SEND_FINANCIAL_UNRESOLVED;
+   if(!armed.active) return SEND_ORIGINAL_CANCEL;
+   ArmedSignal original=armed;
+   double effort,trigger,last;
+   MqlTick current;
+   ENUM_APS readiness=CheckArmedEntryReady(effort,trigger,last,current);
+   if(readiness==APS_ENDED_REEVAL_ALLOWED) return SEND_CANCEL_REEVAL;
+   if(readiness==APS_TRADE_OR_POSITION) return SEND_TRADE_OR_POSITION;
+   if(readiness==APS_ENDED_FAIL_CLOSED || !DOMGateIdentityCurrent(original))
+      return SEND_ORIGINAL_CANCEL;
+   if(readiness==APS_ENTRY_READY)
+   {
+      // A new veto cannot conceal an original terminal execution predicate.
+      if(DOMGateOriginalOvershoot(current,original,trigger))
+      {
+         WriteAuditRow("OVERSHOOT_BLOCK",DirStr(original.dir),original.mode,current.last,
+                       original.posRel,original.distD1,effort,trigger);
+         ResetArmedSignal(); return SEND_ORIGINAL_CANCEL;
+      }
+      double exec=original.dir==1?current.ask:current.bid;
+      if(!DOMGateFinalTickReady(current,original,trigger,exec,readiness) &&
+         readiness==APS_ENDED_FAIL_CLOSED) return SEND_ORIGINAL_CANCEL;
+      double sl=NormEntrySL(original.dir,exec-original.dir*original.activeSL_Pts);
+      double tp=NormEntryTP(original.dir,exec+original.dir*original.activeTP_Pts);
+      // SendOrder has already frozen the original risk terms before any new WAIT.
+      if(BookRiskEnabled() && !BookRiskResolveTerms(original.dir,exec,original.mode,
+         original.activeSL_Pts,original.activeTP_Pts,false,sl,tp))
+      { ResetArmedSignal(); return SEND_ORIGINAL_CANCEL; }
+      double lots=ComputeLotsForEntry(original.dir,exec,sl);
+      if(!DOMGateTermsCurrent(current,original,exec,lots,sl,tp,readiness) &&
+         readiness==APS_ENDED_FAIL_CLOSED) return SEND_ORIGINAL_CANCEL;
+   }
+   readiness=BookDecisionArmedGate(readiness);
+   if(readiness==APS_ENDED_FAIL_CLOSED || !armed.active) return SEND_ORIGINAL_CANCEL;
+   if(readiness==APS_TRADE_OR_POSITION) return SEND_FINANCIAL_UNRESOLVED;
+   return SEND_WAIT_ARMED;
+}
+
+bool BookDecisionRevalidateNoBook(const ArmedSignal &original,
+   const PendingExecContext &expected,ENUM_APS &readiness,
+   const double price,const double lots,const double sl,const double tp,
+   const datetime signalClock,const datetime contextClock)
+{
+   readiness=APS_STILL_ARMED;
+   if(!DOMGateIdentityCurrent(original) || !DOMGateOwnUndispatchedIntent(expected))
+      return false;
+   double effort,trigger,last;
+   MqlTick current;
+   // The exclusive local intent is already prepared; retain the original
+   // market rules without treating our own intent as an unrelated execution.
+   readiness=CheckArmedMarketReady(effort,trigger,last,current);
+   if(readiness!=APS_ENTRY_READY || !DOMGateIdentityCurrent(original)) return false;
+   if(HasOpenPosition() || ordersEnteredToday>=Inp_MaxTradesDay ||
+      dailyRiskBlocked || gAccountingUnresolved)
+   { ResetArmedSignal(); readiness=APS_ENDED_FAIL_CLOSED; return false; }
+   if(!DOMGateFinalTickReady(current,original,trigger,price,readiness) ||
+      !DOMGateTermsCurrent(current,original,price,lots,sl,tp,readiness)) return false;
+   if(!SymbolInfoTick(Symbol(),current))
+   { readiness=APS_STILL_ARMED; return false; }
+   datetime now=TimeTradeServer();
+   MqlDateTime dt; TimeToStruct(now,dt);
+   if((armed.armedAt>0 && now-armed.armedAt>=(datetime)Inp_ArmedTimeoutSec) ||
+      dt.hour*100+dt.min>=Inp_StopEntryHHMM)
+   { readiness=CheckArmedMarketReady(effort,trigger,last,current); return false; }
+   if(DOMGateOriginalOvershoot(current,original,trigger))
+   {
+      WriteAuditRow("OVERSHOOT_BLOCK",DirStr(original.dir),original.mode,current.last,
+                    original.posRel,original.distD1,effort,trigger);
+      ResetArmedSignal(); readiness=APS_ENDED_FAIL_CLOSED; return false;
+   }
+   if(!DOMGateFinalTickReady(current,original,trigger,price,readiness) ||
+      !DOMGateTermsCurrent(current,original,price,lots,sl,tp,readiness)) return false;
+   if(signalClock<=0 || contextClock<=0 ||
+      iTime(Symbol(),Inp_SignalTF,0)!=signalClock ||
+      iTime(Symbol(),Inp_ContextTF,0)!=contextClock) return false;
+   if(BookDecisionEvaluateArmed()!=DECISION_VALIDAR)
+   { readiness=APS_STILL_ARMED; return false; }
+   return BookDecisionDispatchValid(original);
+}
+
+ENUM_SEND_OUTCOME BookDecisionRejectPrepared(const ArmedSignal &original,
+   const PendingExecContext &expected,const bool apiCallStarted,const ENUM_APS readiness)
+{
+   // Same-invocation witness only. A zero ticket is never proof of no dispatch.
+   // This helper does not report a new veto as a book observation.
+   if(apiCallStarted || !DOMGateIntentMatches(expected) || HasOpenPosition() ||
+      HasOwnPendingOrder() || gPendingExit.active ||
+      gOrderObligationScanUnresolved || gPendingOrderClassificationUnresolved)
+      return SEND_FINANCIAL_UNRESOLVED;
+   for(int i=0;i<ArraySize(gUnresolvedOrders);i++)
+      if(gUnresolvedOrders[i].active && (gUnresolvedOrders[i].classificationPending ||
+         gUnresolvedOrders[i].persistencePending)) return SEND_FINANCIAL_UNRESOLVED;
+   for(int i=0;i<gTradeRecordCount;i++)
+      if(gTradeRecords[i].positionID>0 && !gTradeRecords[i].closed &&
+         gTradeRecords[i].totalVolumeIn>0) return SEND_FINANCIAL_UNRESOLVED;
+   // PREPARED or MAY is resolved durably, never silently downgraded.
+   if(!ResolveRequestJournal(false)) return SEND_FINANCIAL_UNRESOLVED;
+   ResetLastError();
+   bool exists=FileIsExist(RequestJournalPath(false));
+   int error=GetLastError();
+   if(exists || (error!=0 && error!=ERR_FILE_NOT_EXIST) ||
+      gEntryJournalCleanupPending || gEntryJournalWritePending || gEntryJournalInvalid)
+      return SEND_FINANCIAL_UNRESOLVED;
+   ResetPendingExec(false);
+   if(HasExecutionInFlight() || gEntryJournalInvalid || gExitJournalInvalid)
+      return SEND_FINANCIAL_UNRESOLVED;
+   if(readiness==APS_ENDED_REEVAL_ALLOWED) return SEND_CANCEL_REEVAL;
+   if(readiness==APS_ENDED_FAIL_CLOSED || !DOMGateIdentityCurrent(original))
+      return SEND_ORIGINAL_CANCEL;
+   if(readiness==APS_TRADE_OR_POSITION) return SEND_TRADE_OR_POSITION;
+   // Durable cleanup may take time: run original timeout/session/market checks
+   // again. Any retry starts a new SendOrder and obtains its own final book.
+   return BookDecisionRejectUnprepared();
+}
+
 ENUM_SEND_OUTCOME SendOrder(int direction, double unusedLots, string mode,
      double slPts, double tpPts,
      double posRel, double distD1, double effort, double trigger)
@@ -3998,6 +4155,12 @@ return SEND_FINAL_FAILURE; }
  PendingExecContext bookIntent;
  ZeroMemory(bookIntent);
   bool bookApiCallStarted=false; // local control-flow witness, never persisted
+  datetime decisionSignalClock=0,decisionContextClock=0;
+  if(Inp_DecisionMode!=DECISION_ORIGINAL)
+  {
+     decisionSignalClock=iTime(Symbol(),Inp_SignalTF,0);
+     decisionContextClock=iTime(Symbol(),Inp_ContextTF,0);
+  }
    // One final snapshot: all risk/stops calculations refer to this executable quote.
    MqlTick finalTick;
    if(!SymbolInfoTick(Symbol(),finalTick) || finalTick.ask<=0 || finalTick.bid<=0 ||
@@ -4082,6 +4245,9 @@ return SEND_FINAL_FAILURE; }
    {
 WriteAuditRow("LATE_PENDING_BLOCK",dStr,mode,finalExec,posRel,distD1,effort,trigger)
 ; return SEND_FINAL_FAILURE; }
+   if(Inp_DecisionMode!=DECISION_ORIGINAL &&
+      BookDecisionArmedGate(APS_ENTRY_READY)!=APS_ENTRY_READY)
+      return BookDecisionRejectUnprepared();
    if(Inp_DOM_TradeGateEnable)
    {
       // Original terminal execution guards above take precedence over DOM veto.
@@ -4096,6 +4262,8 @@ WriteAuditRow("LATE_PENDING_BLOCK",dStr,mode,finalExec,posRel,distD1,effort,trig
       if(!DOMGateDecisionCurrent(bookDecision,dispatchTick,bookOriginal,false,bookIntent,
                          ready,currentEff,currentTrigger,currentLast,finalExec,lots,sl,tp))
       {
+         if(StringFind(bookDecision.reason,"ABS_CONT_DECISION_")==0)
+            return BookDecisionRejectUnprepared();
          if(ready==APS_ENDED_REEVAL_ALLOWED) return SEND_CANCEL_REEVAL;
          if(ready==APS_TRADE_OR_POSITION) return SEND_TRADE_OR_POSITION;
          if(!armed.active || ready==APS_ENDED_FAIL_CLOSED) return
@@ -4105,12 +4273,15 @@ DOMGateDefer(bookDecision,"CURRENT_CONDITIONS_NOT_READY_BEFORE_INTENT");
       }
       effort=currentEff; trigger=currentTrigger; gLastBreakoutPrice=currentLast;
    }
+   if(Inp_DecisionMode!=DECISION_ORIGINAL && !BookDecisionDispatchValid(bookOriginal))
+      return BookDecisionRejectUnprepared();
    ulong bookPrepareBegin=Inp_DOM_TradeGateEnable?GetMicrosecondCount():0;
    if(!Inp_DOM_TradeGateEnable) armed.lots=lots; // Original gate-off behavior.
    if(!PreparePendingExec(direction,armed.route,mode,finalExec,lots,sl,tp))
    {
-      if(Inp_DOM_TradeGateEnable && (HasExecutionInFlight() ||
-         gEntryJournalInvalid || gExitJournalInvalid)) return SEND_FINANCIAL_UNRESOLVED;
+      if((Inp_DOM_TradeGateEnable || Inp_DecisionMode!=DECISION_ORIGINAL) &&
+         (HasExecutionInFlight() || gEntryJournalInvalid || gExitJournalInvalid))
+         return SEND_FINANCIAL_UNRESOLVED;
       return SEND_FINAL_FAILURE;
    }
   if(!BookRiskPrepareEntry())
@@ -4122,6 +4293,7 @@ DOMGateDefer(bookDecision,"CURRENT_CONDITIONS_NOT_READY_BEFORE_INTENT");
   }
   gPendingExec.breakoutPrice=gLastBreakoutPrice;
   gPendingExec.breakoutPriceAvailable=gLastBreakoutPrice>0;
+  if(Inp_DecisionMode!=DECISION_ORIGINAL) bookIntent=gPendingExec;
   if(Inp_DOM_TradeGateEnable)
   {
      ulong elapsed=GetMicrosecondCount()-bookPrepareBegin;
@@ -4132,14 +4304,29 @@ DOMGateDefer(bookDecision,"CURRENT_CONDITIONS_NOT_READY_BEFORE_INTENT");
      double currentEff,currentTrigger,currentLast;
      if(!DOMGateDecisionCurrent(bookDecision,dispatchTick,bookOriginal,true,bookIntent,
                         ready,currentEff,currentTrigger,currentLast,finalExec,lots,sl,tp))
-       return
-DOMGateRejectPrepared(bookDecision,"CURRENT_CONDITIONS_CHANGED_DURING_PREPARE",
+     {
+        if(StringFind(bookDecision.reason,"ABS_CONT_DECISION_")==0)
+           return BookDecisionRejectPrepared(bookOriginal,bookIntent,bookApiCallStarted,ready);
+        return DOMGateRejectPrepared(bookDecision,"CURRENT_CONDITIONS_CHANGED_DURING_PREPARE",
                             bookOriginal,bookIntent,bookApiCallStarted,ready);
+     }
     gLastBreakoutPrice=currentLast;
+ }
+ if(Inp_DecisionMode!=DECISION_ORIGINAL && !Inp_DOM_TradeGateEnable)
+ {
+    ENUM_APS ready;
+    if(!BookDecisionRevalidateNoBook(bookOriginal,bookIntent,ready,finalExec,lots,sl,tp,
+                                   decisionSignalClock,decisionContextClock))
+       return BookDecisionRejectPrepared(bookOriginal,bookIntent,bookApiCallStarted,ready);
  }
  ulong bookJournalBegin=Inp_DOM_TradeGateEnable?GetMicrosecondCount():0;
  if(!MarkRequestDispatchPossible(false))
  {
+    if(Inp_DecisionMode!=DECISION_ORIGINAL)
+    {
+       bookIntent.dispatchPhase=gPendingExec.dispatchPhase;
+       return BookDecisionRejectPrepared(bookOriginal,bookIntent,bookApiCallStarted,APS_STILL_ARMED);
+    }
     if(Inp_DOM_TradeGateEnable)
     {
        bookIntent.dispatchPhase=gPendingExec.dispatchPhase;
@@ -4159,11 +4346,28 @@ DOMGateRejectPrepared(bookDecision,"CURRENT_CONDITIONS_CHANGED_DURING_PREPARE",
     double currentEff,currentTrigger,currentLast;
     if(!DOMGateDecisionCurrent(bookDecision,dispatchTick,bookOriginal,true,bookIntent,
                      ready,currentEff,currentTrigger,currentLast,finalExec,lots,sl,tp))
-       return
-DOMGateRejectPrepared(bookDecision,"CURRENT_CONDITIONS_CHANGED_DURING_DISPATCH_JOURNAL",
+    {
+       if(StringFind(bookDecision.reason,"ABS_CONT_DECISION_")==0)
+          return BookDecisionRejectPrepared(bookOriginal,bookIntent,bookApiCallStarted,ready);
+       return DOMGateRejectPrepared(bookDecision,"CURRENT_CONDITIONS_CHANGED_DURING_DISPATCH_JOURNAL",
                             bookOriginal,bookIntent,bookApiCallStarted,ready);
+    }
     armed.lots=lots;
     gLastBreakoutPrice=currentLast;
+ }
+ if(Inp_DecisionMode!=DECISION_ORIGINAL)
+ {
+    bookIntent.dispatchPhase=REQUEST_MAY_HAVE_DISPATCHED;
+    if(!Inp_DOM_TradeGateEnable)
+    {
+       ENUM_APS ready;
+       if(!BookDecisionRevalidateNoBook(bookOriginal,bookIntent,ready,finalExec,lots,sl,tp,
+                                      decisionSignalClock,decisionContextClock))
+          return BookDecisionRejectPrepared(bookOriginal,bookIntent,bookApiCallStarted,ready);
+    }
+    // PASS is strictly memory-only after the last book read: no export, logging or history API.
+    if(!BookDecisionDispatchValid(bookOriginal))
+       return BookDecisionRejectPrepared(bookOriginal,bookIntent,bookApiCallStarted,APS_STILL_ARMED);
  }
  ulong bookDispatchStartUS=Inp_DOM_TradeGateEnable?GetMicrosecondCount():0;
  bookApiCallStarted=true; // immediately BEFORE the only entry API call
@@ -4194,7 +4398,7 @@ WriteAuditRow(accepted?"REQUEST_ACCEPTED":"ORDER_FAILED",dStr,mode,finalExec
 gBookGateSymbol,direction,(long)armed.armedAt,BStr(gBookGateWaiting),bookDecision.pctBid,bookDecision.pctAsk);
     }
   }
-  if(Inp_DOM_TradeGateEnable && !accepted &&
+  if((Inp_DOM_TradeGateEnable || Inp_DecisionMode!=DECISION_ORIGINAL) && !accepted &&
      (HasExecutionInFlight() || gEntryJournalInvalid || gExitJournalInvalid))
      return SEND_FINANCIAL_UNRESOLVED;
   return accepted?SEND_ACCEPTED:SEND_FINAL_FAILURE;
@@ -4316,6 +4520,10 @@ WriteAuditRow("REGION_INVALID",DirStr(dirSel),mode,s.price,s.posRel,s.distAbs,s.
     return;
   }
 
+ // Assess only the already-selected original route; conflicts returned above.
+ if(Inp_DecisionMode!=DECISION_ORIGINAL &&
+    !BookDecisionCandidate(s,dirSel,useCont,gCachedMicroBar)) return;
+
  // ARMAR
  if(iTime(Symbol(),Inp_SignalTF,0)!=gCachedMicroBar) return; // closed snapshot/region
 // must share the same clock
@@ -4343,6 +4551,7 @@ armed.c3=(int)(useCont?s.c3Cont:s.c3);
 armed.c4=(int)(useCont?s.c4Cont:s.c4);
 armed.c5=(int)(useCont?s.c5ContOk:s.c5AbsOk);
 armed.scoreEff=scoreSel;
+  BookDecisionBind(); // Freeze identity without changing armedAt or timeout.
 
 double armTrigger=ComputeTrigger(dirSel,regHigh,regLow);
 PrintFormat("[SCALPER][ARMED_%s] %s %s %.2f lots SCORE=%d/3 SL=%.1f "
@@ -4560,6 +4769,10 @@ ENUM_APS ResponseBaseProcessArmedSignal()
    double curEff,trigger,last;
    MqlTick validatedStageTick;
    ENUM_APS readiness=CheckArmedEntryReady(curEff,trigger,last,validatedStageTick);
+   // Original STILL can be invalidated objectively, never upgraded. READY
+   // continues through original terminal sizing/stops/margin in SendOrder before
+   // its new gate, which is still before PreparePendingExec or any dispatch.
+   if(readiness==APS_STILL_ARMED) readiness=BookDecisionArmedGate(readiness);
    if(readiness!=APS_ENTRY_READY) return readiness;
 if(!Inp_DOM_TradeGateEnable)
 PrintFormat("[SCALPER][DISPARO_%s] %s Trigger=%.4f Last=%.4f WW_EFF=%.2f>=%.2f Modo=%s",
@@ -4578,8 +4791,9 @@ armed.route,DirStr(armed.dir),trigger,last,curEff,armed.breakoutEffortMin,armed.
    {
       // WAIT is legal only with no financial obligation. Never erase a pending
       // intent here merely to preserve ARMED. Next event uses original guards.
-      if(Inp_DOM_TradeGateEnable && (HasExecutionInFlight() ||
-         gEntryJournalInvalid || gExitJournalInvalid))
+      if((Inp_DOM_TradeGateEnable || Inp_DecisionMode!=DECISION_ORIGINAL) &&
+         (HasExecutionInFlight() || gAccountingUnresolved ||
+          gEntryJournalInvalid || gExitJournalInvalid))
       { ResetArmedSignal(); return APS_TRADE_OR_POSITION; }
       return APS_STILL_ARMED;
    }
@@ -4856,6 +5070,7 @@ mm=(ENUM_ACCOUNT_MARGIN_MODE)AccountInfoInteger(ACCOUNT_MARGIN_MODE);
  TryCalcD1();
  BootstrapCachesNoTrade();
  BookIdentityInit();
+ BookDecisionInit(); // Unavailable decision data blocks entries, never protection.
 // A configurable label cannot remove the explicit schema namespace.
 string prefix="Scalper01_RC1_";
 if(CSVFileName!="Scalper01_RC1" && CSVFileName!="") prefix+=CSVFileName+"_";
@@ -4898,6 +5113,7 @@ BStr(Inp_EnableMacroDirectionGate),BStr(Inp_EnableLateDirectionBlock),BStr(Inp_R
 //=====================================================================
 void OnDeinit(const int reason)
 {
+   BookDecisionDeinit();
    BookDiagDeinit();
    EventKillTimer();
    if(csvAuditHandle !=INVALID_HANDLE){ FileFlush(csvAuditHandle);
@@ -4958,6 +5174,7 @@ void ResponseBaseOnTick()
  ProcessEOD(hhmm);
  ManageBreakEven();
  BookRiskManage();
+ BookDecisionPump(); // Entry data failure cannot skip BE, locks, accounting or EOD.
  if(hhmm>=Inp_StopEntryHHMM && armed.active) ResetArmedSignal();
  datetime btCtx=iTime(Symbol(),Inp_ContextTF,0);
  datetime btSig=iTime(Symbol(),Inp_SignalTF,0);
@@ -10246,3 +10463,6 @@ void ResponseDeinit()
 #include "Include/BookArmedDiagnostics.mqh"
 
 #include "Include/BookRuntimePerf.mqh"
+
+// Operational validation shares arithmetic, never the observer CSV queue.
+#include "Include/BookDecisionRuntime.mqh"
