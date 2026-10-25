@@ -1,0 +1,55 @@
+{
+  "schema": "REMORA_RESEARCH_DELIVERY_V1",
+  "branch": "dev/remora-decision-research",
+  "implementation_commit": "b203645a4ba13ea17feebbe77245a9b2c48ef311",
+  "reference": "94fddd73f0455c63a6cd238d6cb9f8924e9a497a",
+  "checkpoint": "checkpoint/book-decisoria-pre-research-94fddd7",
+  "main": "REMORA_BOOK_PRO_DECISORIA.mq5",
+  "main_sha256": "67d5d6145e6b3703525587e7b85b6a4ae2a86b75e97fb55ca9f685705743a102",
+  "inputs": {
+    "original_103_preserved_exact": true,
+    "total": 104,
+    "only_added": "input bool Inp_ResearchEnable = false;",
+    "live_chart_preset_provided": false
+  },
+  "research_default": false,
+  "strategy_changed": false,
+  "financial_schema_changed": false,
+  "production_modified": false,
+  "host_tests": {
+    "research_candidate": {
+      "tests_run": 136,
+      "passed": 136,
+      "successful": true
+    },
+    "frozen_decision_control": {
+      "tests_run": 90,
+      "passed": 90,
+      "successful": true
+    },
+    "frozen_book_control": {
+      "tests_run": 52,
+      "passed": 52,
+      "successful": true
+    }
+  },
+  "native_compilation_executed": false,
+  "native_errors": null,
+  "native_warnings": null,
+  "market_replay_executed": false,
+  "statistical_advantage_demonstrated": false,
+  "demonstrated": [
+    "Native M3/C1-C5/live-wave bodies + actual decision/SendOrder + isolated research: ABS denied API, ORIGINAL stage2 reference, TP quote touch",
+    "CONT insufficient comparable references: TP first, SL first, and no original stage2/no hypothetical entry",
+    "384 before/OFF/ON dispatch-financial traces per arm across original/apply/assets/routes/book",
+    "10000 identical WAIT returns produce one research event",
+    "136 candidate tests, 90 immutable decision-control tests and 52 immutable BOOK-control tests"
+  ],
+  "limitations": [
+    "No native MetaEditor compilation, MT5 replay, broker execution or native timing/locking validation",
+    "Provider aggressor economic classification remains an external assumption; runtime checks do not certify it",
+    "Missing Stage2/book/clock/quote continuity yields unavailable/conditional evidence; exact independent ORIGINAL dispatch assessment may be NOT_EVALUATED",
+    "Initial SL/TP quote barriers are not fills or financial PnL; hypothetical BE/locks and tradable portfolio are not simulated",
+    "No actual chart preset or new real market/trade sample supplied"
+  ]
+}

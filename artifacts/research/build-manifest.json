@@ -1,0 +1,209 @@
+{
+  "schema": "BOOK_RESEARCH_STANDALONE_V1",
+  "control_commit": "815077efec40adf1897bcf64640756bb46c4c118",
+  "research_reference_commit": "94fddd73f0455c63a6cd238d6cb9f8924e9a497a",
+  "control_sha256": "c3a2e1bd2ea4f9f04eeafa48a2c8fb70cd20af441d2c09b296e41f44c30534ae",
+  "source": "scalpertalvez.mq5",
+  "target": "REMORA_BOOK_PRO_DECISORIA.mq5",
+  "sha256": "67d5d6145e6b3703525587e7b85b6a4ae2a86b75e97fb55ca9f685705743a102",
+  "bytes": 815469,
+  "lines": 16811,
+  "include_order": [
+    {
+      "owner": "scalpertalvez.mq5",
+      "line": 227,
+      "path": "Include/BookRiskInputs.mqh",
+      "sha256": "e4a64fd2db53fca1017ad1e3f320a3be86260e6f0dd15be5972359f1096aa910"
+    },
+    {
+      "owner": "scalpertalvez.mq5",
+      "line": 228,
+      "path": "Include/BookArmedInputs.mqh",
+      "sha256": "03b1d3e95a73a09b401b97e8da42c3de7b499d448593876df7c471ecc33dd3c7"
+    },
+    {
+      "owner": "scalpertalvez.mq5",
+      "line": 230,
+      "path": "Include/BookDecisionInputs.mqh",
+      "sha256": "296055c372f39bdbea02073282499c70a464634e351b0ebb1752b14b54f5196c"
+    },
+    {
+      "owner": "scalpertalvez.mq5",
+      "line": 704,
+      "path": "Include/BookAdvancedRisk.mqh",
+      "sha256": "5c9f7236434959dd3178557386527efcea5a857562be4646f5e2be3922208cd9"
+    },
+    {
+      "owner": "Include/BookAdvancedRisk.mqh",
+      "line": 3,
+      "path": "Include/BookRiskCore.mqh",
+      "sha256": "faa4b4b16830c9d9a552a98c61f9ba3aa5e7e6105658fb046443be34297c20f0"
+    },
+    {
+      "owner": "scalpertalvez.mq5",
+      "line": 3345,
+      "path": "Include/BookCsvDiagnostics.mqh",
+      "sha256": "36940610fcd99f45efb2d3267e5bf1a686fdc4b0c1de33b3190f33c244f24c9f"
+    },
+    {
+      "owner": "scalpertalvez.mq5",
+      "line": 3346,
+      "path": "Include/BookIdentity.mqh",
+      "sha256": "90ab63b6e4339eaa9a2127b6279d3dd655ff679f89298707c65cbeb5f99f6e6c"
+    },
+    {
+      "owner": "Include/BookIdentity.mqh",
+      "line": 3,
+      "path": "Include/BookBuildIdentity.mqh",
+      "sha256": "64193798a18e368edc4f96a4a667bdeedac9653d4da32e9984b3e847ea596e89"
+    },
+    {
+      "owner": "Include/BookIdentity.mqh",
+      "line": 32,
+      "path": "Include/BookInputSnapshot.mqh",
+      "sha256": "2df1613da13ae0748a83cfb064e4249a46c87a8e65f52df71a3479f9c46e7704"
+    },
+    {
+      "owner": "scalpertalvez.mq5",
+      "line": 9736,
+      "path": "Include/BookMicroMath.mqh",
+      "sha256": "00e3ef8741e0403b11171f4a3293fe5f727a6229d3735fcc2f0dd6b9f4c55864"
+    },
+    {
+      "owner": "scalpertalvez.mq5",
+      "line": 9894,
+      "path": "Include/BookMicrostructure.mqh",
+      "sha256": "af5ab949513393bf5e557c08f5db1782604e8fd7aad9839dd94f6efa41b8457a"
+    },
+    {
+      "owner": "scalpertalvez.mq5",
+      "line": 10483,
+      "path": "Include/BookArmedDiagnostics.mqh",
+      "sha256": "3cd7215a9da16abfcb2dd789d5f0e4f21dd8da6a0cf71816108ac8109f9dd25c"
+    },
+    {
+      "owner": "Include/BookArmedDiagnostics.mqh",
+      "line": 3,
+      "path": "Include/BookArmedMath.mqh",
+      "sha256": "9dec02c161855d12b6c6e80dda706450581f9a7609a202523a56351911708d45"
+    },
+    {
+      "owner": "scalpertalvez.mq5",
+      "line": 10485,
+      "path": "Include/BookRuntimePerf.mqh",
+      "sha256": "a454a0e9387573c76adb5f822107d9d9524bcc7ee505e25a4ce1243688375a91"
+    },
+    {
+      "owner": "scalpertalvez.mq5",
+      "line": 10488,
+      "path": "Include/BookDecisionRuntime.mqh",
+      "sha256": "816721e7285ae6e24fef5f27e3eb48a4e8eae2f31ae18a62c1fbf14522a2f641"
+    },
+    {
+      "owner": "Include/BookDecisionRuntime.mqh",
+      "line": 3,
+      "path": "Include/BookDecisionCore.mqh",
+      "sha256": "7f7ea7aec509aede37bc182575257399befc3a47cad5fe386d6e1a1cfa040d03"
+    },
+    {
+      "owner": "scalpertalvez.mq5",
+      "line": 10491,
+      "path": "Include/BookResearchRuntime.mqh",
+      "sha256": "ac2aa4d89cf4df91bc7c9cd82348cc0b7337a00beb2f5b4b18c540e11f20bed4"
+    },
+    {
+      "owner": "Include/BookResearchRuntime.mqh",
+      "line": 3,
+      "path": "Include/BookResearchCore.mqh",
+      "sha256": "d78611b7d7c198cd09b4d824e7b016a2f147e92c0a0a951f886d8578d71156f8"
+    },
+    {
+      "owner": "Include/BookResearchCore.mqh",
+      "line": 3,
+      "path": "Include/BookRiskCore.mqh",
+      "sha256": "faa4b4b16830c9d9a552a98c61f9ba3aa5e7e6105658fb046443be34297c20f0"
+    },
+    {
+      "owner": "Include/BookResearchRuntime.mqh",
+      "line": 4,
+      "path": "Include/BookDecisionCore.mqh",
+      "sha256": "7f7ea7aec509aede37bc182575257399befc3a47cad5fe386d6e1a1cfa040d03"
+    },
+    {
+      "owner": "scalpertalvez.mq5",
+      "line": 10492,
+      "path": "Include/BookResearchBridge.mqh",
+      "sha256": "31215e6f2528ab8eca679610a99763014b2e1da4a4145e23082186f04ee5d8ad"
+    }
+  ],
+  "official_includes": [
+    "Trade\\Trade.mqh",
+    "Trade\\PositionInfo.mqh"
+  ],
+  "comparison": {
+    "status": "passed",
+    "active_tokens_equal": true,
+    "inventories_equal": true,
+    "active_token_count": 147550,
+    "active_tokens_sha256": "0e179c4a8406b264cefca26378e78a215b068749ecd9b65abfc90f1586c79d2f",
+    "counts": {
+      "inputs": 104,
+      "functions": 628,
+      "structs": 53,
+      "enums": 23,
+      "globals": 666
+    },
+    "input_count": 104,
+    "historical_inputs_preserved": 91,
+    "new_inputs": [
+      "input ENUM_BOOK_DECISION_MODE Inp_DecisionMode = DECISION_APLICAR",
+      "input ENUM_BOOK_DECISION_SOURCE Inp_DecisionAggressorSource = DECISION_FLAGS_RUNTIME_QUALIFIED",
+      "input int Inp_DecisionWindowSec = 5",
+      "input int Inp_DecisionMinReferences = 16",
+      "input double Inp_DecisionEffortQuantile = 0.80",
+      "input double Inp_DecisionResultQuantile = 0.20",
+      "input double Inp_DecisionMinCoverage = 0.80",
+      "input double Inp_DecisionMinDirectionalShare = 0.20",
+      "input double Inp_DecisionMinAcceptance = 0.60",
+      "input double Inp_DecisionMinObservedCoverage = 0.50",
+      "input double Inp_DecisionMinProgressTicks = 1.0",
+      "input double Inp_DecisionComparableEffortFactor = 2.0",
+      "input bool Inp_ResearchEnable = false"
+    ],
+    "research_reference_inputs_preserved": 103,
+    "research_new_inputs": [
+      "input bool Inp_ResearchEnable = false"
+    ],
+    "duplicates": {
+      "functions": {},
+      "structs": {},
+      "enums": {},
+      "globals": {}
+    },
+    "native_compilation_executed": false
+  },
+  "source_sha256": {
+    "scalpertalvez.mq5": "d8c67e4c8d8e8130a1ab85abea3803d8f9491916af48cdeff91560cbbbbd1f34",
+    "Include/BookAdvancedRisk.mqh": "5c9f7236434959dd3178557386527efcea5a857562be4646f5e2be3922208cd9",
+    "Include/BookArmedDiagnostics.mqh": "3cd7215a9da16abfcb2dd789d5f0e4f21dd8da6a0cf71816108ac8109f9dd25c",
+    "Include/BookArmedInputs.mqh": "03b1d3e95a73a09b401b97e8da42c3de7b499d448593876df7c471ecc33dd3c7",
+    "Include/BookArmedMath.mqh": "9dec02c161855d12b6c6e80dda706450581f9a7609a202523a56351911708d45",
+    "Include/BookBuildIdentity.mqh": "64193798a18e368edc4f96a4a667bdeedac9653d4da32e9984b3e847ea596e89",
+    "Include/BookCsvDiagnostics.mqh": "36940610fcd99f45efb2d3267e5bf1a686fdc4b0c1de33b3190f33c244f24c9f",
+    "Include/BookDecisionCore.mqh": "7f7ea7aec509aede37bc182575257399befc3a47cad5fe386d6e1a1cfa040d03",
+    "Include/BookDecisionInputs.mqh": "296055c372f39bdbea02073282499c70a464634e351b0ebb1752b14b54f5196c",
+    "Include/BookDecisionRuntime.mqh": "816721e7285ae6e24fef5f27e3eb48a4e8eae2f31ae18a62c1fbf14522a2f641",
+    "Include/BookIdentity.mqh": "90ab63b6e4339eaa9a2127b6279d3dd655ff679f89298707c65cbeb5f99f6e6c",
+    "Include/BookInputSnapshot.mqh": "2df1613da13ae0748a83cfb064e4249a46c87a8e65f52df71a3479f9c46e7704",
+    "Include/BookMicroMath.mqh": "00e3ef8741e0403b11171f4a3293fe5f727a6229d3735fcc2f0dd6b9f4c55864",
+    "Include/BookMicrostructure.mqh": "af5ab949513393bf5e557c08f5db1782604e8fd7aad9839dd94f6efa41b8457a",
+    "Include/BookResearchBridge.mqh": "31215e6f2528ab8eca679610a99763014b2e1da4a4145e23082186f04ee5d8ad",
+    "Include/BookResearchCore.mqh": "d78611b7d7c198cd09b4d824e7b016a2f147e92c0a0a951f886d8578d71156f8",
+    "Include/BookResearchRuntime.mqh": "ac2aa4d89cf4df91bc7c9cd82348cc0b7337a00beb2f5b4b18c540e11f20bed4",
+    "Include/BookRiskCore.mqh": "faa4b4b16830c9d9a552a98c61f9ba3aa5e7e6105658fb046443be34297c20f0",
+    "Include/BookRiskInputs.mqh": "e4a64fd2db53fca1017ad1e3f320a3be86260e6f0dd15be5972359f1096aa910",
+    "Include/BookRuntimePerf.mqh": "a454a0e9387573c76adb5f822107d9d9524bcc7ee505e25a4ce1243688375a91"
+  },
+  "native_compilation_executed": false,
+  "production_modified": false
+}

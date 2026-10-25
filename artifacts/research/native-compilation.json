@@ -1,0 +1,24 @@
+{
+  "path_tools": {
+    "metaeditor": null,
+    "metaeditor64": null,
+    "metaeditor.exe": null,
+    "metaeditor64.exe": null,
+    "wine": null,
+    "wine64": null
+  },
+  "readable_candidates": [],
+  "search_exit_code": 1,
+  "search_diagnostics": [
+    "find: ‘/opt/containerd’: Permission denied",
+    "find: ‘/tmp/codex-daemon-1000’: Permission denied"
+  ],
+  "absolute_filesystem_absence_proven": false,
+  "executed": false,
+  "errors": null,
+  "warnings": null,
+  "compiler_log": null,
+  "ex5_produced": false,
+  "production_modified": false,
+  "reason": "No accessible MetaEditor discovered. Native compilation was not executed."
+}

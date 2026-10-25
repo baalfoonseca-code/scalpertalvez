@@ -1,0 +1,1798 @@
+{
+  "schema": "BOOK_DECISION_SOURCE_MAP_V1",
+  "target_sha256": "67d5d6145e6b3703525587e7b85b6a4ae2a86b75e97fb55ca9f685705743a102",
+  "segments": [
+    {
+      "generated_start_line": 9,
+      "generated_end_line": 234,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 1,
+      "source_end_line": 226,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 235,
+      "generated_end_line": 235,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 227,
+      "source_end_line": 227,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 236,
+      "generated_end_line": 236,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 227,
+      "source_end_line": 227,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 237,
+      "generated_end_line": 257,
+      "source_path": "Include/BookRiskInputs.mqh",
+      "source_start_line": 1,
+      "source_end_line": 21,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 258,
+      "generated_end_line": 258,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 227,
+      "source_end_line": 227,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 259,
+      "generated_end_line": 259,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 228,
+      "source_end_line": 228,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 260,
+      "generated_end_line": 260,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 228,
+      "source_end_line": 228,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 261,
+      "generated_end_line": 265,
+      "source_path": "Include/BookArmedInputs.mqh",
+      "source_start_line": 1,
+      "source_end_line": 5,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 266,
+      "generated_end_line": 266,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 228,
+      "source_end_line": 228,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 267,
+      "generated_end_line": 267,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 229,
+      "source_end_line": 229,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 268,
+      "generated_end_line": 268,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 230,
+      "source_end_line": 230,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 269,
+      "generated_end_line": 269,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 230,
+      "source_end_line": 230,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 270,
+      "generated_end_line": 306,
+      "source_path": "Include/BookDecisionInputs.mqh",
+      "source_start_line": 1,
+      "source_end_line": 37,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 307,
+      "generated_end_line": 307,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 230,
+      "source_end_line": 230,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 308,
+      "generated_end_line": 780,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 231,
+      "source_end_line": 703,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 781,
+      "generated_end_line": 781,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 704,
+      "source_end_line": 704,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 782,
+      "generated_end_line": 782,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 704,
+      "source_end_line": 704,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 783,
+      "generated_end_line": 784,
+      "source_path": "Include/BookAdvancedRisk.mqh",
+      "source_start_line": 1,
+      "source_end_line": 2,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 785,
+      "generated_end_line": 785,
+      "source_path": "Include/BookAdvancedRisk.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 786,
+      "generated_end_line": 786,
+      "source_path": "Include/BookAdvancedRisk.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 787,
+      "generated_end_line": 789,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 1,
+      "source_end_line": 3,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 790,
+      "generated_end_line": 796,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 4,
+      "source_end_line": 10,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 797,
+      "generated_end_line": 800,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 11,
+      "source_end_line": 14,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 801,
+      "generated_end_line": 801,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 15,
+      "source_end_line": 15,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 802,
+      "generated_end_line": 880,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 16,
+      "source_end_line": 94,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 881,
+      "generated_end_line": 881,
+      "source_path": "Include/BookAdvancedRisk.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 882,
+      "generated_end_line": 1391,
+      "source_path": "Include/BookAdvancedRisk.mqh",
+      "source_start_line": 4,
+      "source_end_line": 513,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 1392,
+      "generated_end_line": 1392,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 704,
+      "source_end_line": 704,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 1393,
+      "generated_end_line": 4032,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 705,
+      "source_end_line": 3344,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 4033,
+      "generated_end_line": 4033,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3345,
+      "source_end_line": 3345,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 4034,
+      "generated_end_line": 4034,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3345,
+      "source_end_line": 3345,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4035,
+      "generated_end_line": 4371,
+      "source_path": "Include/BookCsvDiagnostics.mqh",
+      "source_start_line": 1,
+      "source_end_line": 337,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 4372,
+      "generated_end_line": 4372,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3345,
+      "source_end_line": 3345,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4373,
+      "generated_end_line": 4373,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3346,
+      "source_end_line": 3346,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 4374,
+      "generated_end_line": 4374,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3346,
+      "source_end_line": 3346,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4375,
+      "generated_end_line": 4376,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 1,
+      "source_end_line": 2,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 4377,
+      "generated_end_line": 4377,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 4378,
+      "generated_end_line": 4378,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4379,
+      "generated_end_line": 4386,
+      "source_path": "Include/BookBuildIdentity.mqh",
+      "source_start_line": 1,
+      "source_end_line": 8,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 4387,
+      "generated_end_line": 4387,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4388,
+      "generated_end_line": 4415,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 4,
+      "source_end_line": 31,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 4416,
+      "generated_end_line": 4416,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 32,
+      "source_end_line": 32,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 4417,
+      "generated_end_line": 4417,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 32,
+      "source_end_line": 32,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4418,
+      "generated_end_line": 4528,
+      "source_path": "Include/BookInputSnapshot.mqh",
+      "source_start_line": 1,
+      "source_end_line": 111,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 4529,
+      "generated_end_line": 4529,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 32,
+      "source_end_line": 32,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4530,
+      "generated_end_line": 4648,
+      "source_path": "Include/BookIdentity.mqh",
+      "source_start_line": 33,
+      "source_end_line": 151,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 4649,
+      "generated_end_line": 4649,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3346,
+      "source_end_line": 3346,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 4650,
+      "generated_end_line": 11029,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 3347,
+      "source_end_line": 9726,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11030,
+      "generated_end_line": 11034,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9727,
+      "source_end_line": 9731,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 11035,
+      "generated_end_line": 11036,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9732,
+      "source_end_line": 9733,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11037,
+      "generated_end_line": 11037,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9734,
+      "source_end_line": 9734,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 11038,
+      "generated_end_line": 11038,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9735,
+      "source_end_line": 9735,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11039,
+      "generated_end_line": 11039,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9736,
+      "source_end_line": 9736,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 11040,
+      "generated_end_line": 11040,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9736,
+      "source_end_line": 9736,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 11041,
+      "generated_end_line": 11044,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 1,
+      "source_end_line": 4,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11045,
+      "generated_end_line": 11049,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 5,
+      "source_end_line": 9,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 11050,
+      "generated_end_line": 11051,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 10,
+      "source_end_line": 11,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11052,
+      "generated_end_line": 11052,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 12,
+      "source_end_line": 12,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 11053,
+      "generated_end_line": 11197,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 13,
+      "source_end_line": 157,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11198,
+      "generated_end_line": 11200,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 158,
+      "source_end_line": 160,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 11201,
+      "generated_end_line": 11201,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 161,
+      "source_end_line": 161,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11202,
+      "generated_end_line": 11202,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 162,
+      "source_end_line": 162,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 11203,
+      "generated_end_line": 11209,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 163,
+      "source_end_line": 169,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11210,
+      "generated_end_line": 11212,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 170,
+      "source_end_line": 172,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 11213,
+      "generated_end_line": 11213,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 173,
+      "source_end_line": 173,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11214,
+      "generated_end_line": 11214,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 174,
+      "source_end_line": 174,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 11215,
+      "generated_end_line": 11293,
+      "source_path": "Include/BookMicroMath.mqh",
+      "source_start_line": 175,
+      "source_end_line": 253,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11294,
+      "generated_end_line": 11294,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9736,
+      "source_end_line": 9736,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 11295,
+      "generated_end_line": 11451,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9737,
+      "source_end_line": 9893,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11452,
+      "generated_end_line": 11452,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9894,
+      "source_end_line": 9894,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 11453,
+      "generated_end_line": 11453,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9894,
+      "source_end_line": 9894,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 11454,
+      "generated_end_line": 11900,
+      "source_path": "Include/BookMicrostructure.mqh",
+      "source_start_line": 1,
+      "source_end_line": 447,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 11901,
+      "generated_end_line": 11901,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9894,
+      "source_end_line": 9894,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 11902,
+      "generated_end_line": 12489,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 9895,
+      "source_end_line": 10482,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 12490,
+      "generated_end_line": 12490,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10483,
+      "source_end_line": 10483,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 12491,
+      "generated_end_line": 12491,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10483,
+      "source_end_line": 10483,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 12492,
+      "generated_end_line": 12493,
+      "source_path": "Include/BookArmedDiagnostics.mqh",
+      "source_start_line": 1,
+      "source_end_line": 2,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 12494,
+      "generated_end_line": 12494,
+      "source_path": "Include/BookArmedDiagnostics.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 12495,
+      "generated_end_line": 12495,
+      "source_path": "Include/BookArmedDiagnostics.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 12496,
+      "generated_end_line": 12498,
+      "source_path": "Include/BookArmedMath.mqh",
+      "source_start_line": 1,
+      "source_end_line": 3,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 12499,
+      "generated_end_line": 12502,
+      "source_path": "Include/BookArmedMath.mqh",
+      "source_start_line": 4,
+      "source_end_line": 7,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 12503,
+      "generated_end_line": 12503,
+      "source_path": "Include/BookArmedMath.mqh",
+      "source_start_line": 8,
+      "source_end_line": 8,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 12504,
+      "generated_end_line": 12504,
+      "source_path": "Include/BookArmedMath.mqh",
+      "source_start_line": 9,
+      "source_end_line": 9,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 12505,
+      "generated_end_line": 12553,
+      "source_path": "Include/BookArmedMath.mqh",
+      "source_start_line": 10,
+      "source_end_line": 58,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 12554,
+      "generated_end_line": 12554,
+      "source_path": "Include/BookArmedDiagnostics.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 12555,
+      "generated_end_line": 13174,
+      "source_path": "Include/BookArmedDiagnostics.mqh",
+      "source_start_line": 4,
+      "source_end_line": 623,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 13175,
+      "generated_end_line": 13175,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10483,
+      "source_end_line": 10483,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 13176,
+      "generated_end_line": 13176,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10484,
+      "source_end_line": 10484,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 13177,
+      "generated_end_line": 13177,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10485,
+      "source_end_line": 10485,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 13178,
+      "generated_end_line": 13178,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10485,
+      "source_end_line": 10485,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 13179,
+      "generated_end_line": 13209,
+      "source_path": "Include/BookRuntimePerf.mqh",
+      "source_start_line": 1,
+      "source_end_line": 31,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 13210,
+      "generated_end_line": 13210,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10485,
+      "source_end_line": 10485,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 13211,
+      "generated_end_line": 13212,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10486,
+      "source_end_line": 10487,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 13213,
+      "generated_end_line": 13213,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10488,
+      "source_end_line": 10488,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 13214,
+      "generated_end_line": 13214,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10488,
+      "source_end_line": 10488,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 13215,
+      "generated_end_line": 13216,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 1,
+      "source_end_line": 2,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 13217,
+      "generated_end_line": 13217,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 13218,
+      "generated_end_line": 13218,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 13219,
+      "generated_end_line": 13611,
+      "source_path": "Include/BookDecisionCore.mqh",
+      "source_start_line": 1,
+      "source_end_line": 393,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 13612,
+      "generated_end_line": 13612,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 13613,
+      "generated_end_line": 13615,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 4,
+      "source_end_line": 6,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 13616,
+      "generated_end_line": 13861,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 7,
+      "source_end_line": 252,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 13862,
+      "generated_end_line": 13864,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 253,
+      "source_end_line": 255,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 13865,
+      "generated_end_line": 13865,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 256,
+      "source_end_line": 256,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 13866,
+      "generated_end_line": 13866,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 257,
+      "source_end_line": 257,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 13867,
+      "generated_end_line": 13961,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 258,
+      "source_end_line": 352,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 13962,
+      "generated_end_line": 13964,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 353,
+      "source_end_line": 355,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 13965,
+      "generated_end_line": 13965,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 356,
+      "source_end_line": 356,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 13966,
+      "generated_end_line": 13966,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 357,
+      "source_end_line": 357,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 13967,
+      "generated_end_line": 13984,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 358,
+      "source_end_line": 375,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 13985,
+      "generated_end_line": 13987,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 376,
+      "source_end_line": 378,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 13988,
+      "generated_end_line": 13988,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 379,
+      "source_end_line": 379,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 13989,
+      "generated_end_line": 13989,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 380,
+      "source_end_line": 380,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 13990,
+      "generated_end_line": 14269,
+      "source_path": "Include/BookDecisionRuntime.mqh",
+      "source_start_line": 381,
+      "source_end_line": 660,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14270,
+      "generated_end_line": 14270,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10488,
+      "source_end_line": 10488,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 14271,
+      "generated_end_line": 14272,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10489,
+      "source_end_line": 10490,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14273,
+      "generated_end_line": 14273,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10491,
+      "source_end_line": 10491,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 14274,
+      "generated_end_line": 14274,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10491,
+      "source_end_line": 10491,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 14275,
+      "generated_end_line": 14276,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 1,
+      "source_end_line": 2,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14277,
+      "generated_end_line": 14277,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 14278,
+      "generated_end_line": 14278,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 14279,
+      "generated_end_line": 14280,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 1,
+      "source_end_line": 2,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14281,
+      "generated_end_line": 14281,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 14282,
+      "generated_end_line": 14282,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 14283,
+      "generated_end_line": 14285,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 1,
+      "source_end_line": 3,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14286,
+      "generated_end_line": 14292,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 4,
+      "source_end_line": 10,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 14293,
+      "generated_end_line": 14296,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 11,
+      "source_end_line": 14,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14297,
+      "generated_end_line": 14297,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 15,
+      "source_end_line": 15,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 14298,
+      "generated_end_line": 14376,
+      "source_path": "Include/BookRiskCore.mqh",
+      "source_start_line": 16,
+      "source_end_line": 94,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14377,
+      "generated_end_line": 14377,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 14378,
+      "generated_end_line": 14432,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 4,
+      "source_end_line": 58,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14433,
+      "generated_end_line": 14435,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 59,
+      "source_end_line": 61,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 14436,
+      "generated_end_line": 14436,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 62,
+      "source_end_line": 62,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14437,
+      "generated_end_line": 14437,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 63,
+      "source_end_line": 63,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 14438,
+      "generated_end_line": 14459,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 64,
+      "source_end_line": 85,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14460,
+      "generated_end_line": 14464,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 86,
+      "source_end_line": 90,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 14465,
+      "generated_end_line": 14467,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 91,
+      "source_end_line": 93,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14468,
+      "generated_end_line": 14468,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 94,
+      "source_end_line": 94,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 14469,
+      "generated_end_line": 14480,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 95,
+      "source_end_line": 106,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14481,
+      "generated_end_line": 14483,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 107,
+      "source_end_line": 109,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 14484,
+      "generated_end_line": 14484,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 110,
+      "source_end_line": 110,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14485,
+      "generated_end_line": 14485,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 111,
+      "source_end_line": 111,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 14486,
+      "generated_end_line": 14716,
+      "source_path": "Include/BookResearchCore.mqh",
+      "source_start_line": 112,
+      "source_end_line": 342,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 14717,
+      "generated_end_line": 14717,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 3,
+      "source_end_line": 3,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 14718,
+      "generated_end_line": 14718,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 4,
+      "source_end_line": 4,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 14719,
+      "generated_end_line": 14719,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 4,
+      "source_end_line": 4,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 14720,
+      "generated_end_line": 15112,
+      "source_path": "Include/BookDecisionCore.mqh",
+      "source_start_line": 1,
+      "source_end_line": 393,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15113,
+      "generated_end_line": 15113,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 4,
+      "source_end_line": 4,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 15114,
+      "generated_end_line": 15116,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 5,
+      "source_end_line": 7,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15117,
+      "generated_end_line": 15123,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 8,
+      "source_end_line": 14,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15124,
+      "generated_end_line": 15192,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 15,
+      "source_end_line": 83,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15193,
+      "generated_end_line": 15195,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 84,
+      "source_end_line": 86,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15196,
+      "generated_end_line": 15196,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 87,
+      "source_end_line": 87,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15197,
+      "generated_end_line": 15197,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 88,
+      "source_end_line": 88,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15198,
+      "generated_end_line": 15201,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 89,
+      "source_end_line": 92,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15202,
+      "generated_end_line": 15204,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 93,
+      "source_end_line": 95,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15205,
+      "generated_end_line": 15205,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 96,
+      "source_end_line": 96,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15206,
+      "generated_end_line": 15206,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 97,
+      "source_end_line": 97,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15207,
+      "generated_end_line": 15209,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 98,
+      "source_end_line": 100,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15210,
+      "generated_end_line": 15212,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 101,
+      "source_end_line": 103,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15213,
+      "generated_end_line": 15213,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 104,
+      "source_end_line": 104,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15214,
+      "generated_end_line": 15214,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 105,
+      "source_end_line": 105,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15215,
+      "generated_end_line": 15253,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 106,
+      "source_end_line": 144,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15254,
+      "generated_end_line": 15256,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 145,
+      "source_end_line": 147,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15257,
+      "generated_end_line": 15257,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 148,
+      "source_end_line": 148,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15258,
+      "generated_end_line": 15258,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 149,
+      "source_end_line": 149,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15259,
+      "generated_end_line": 15265,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 150,
+      "source_end_line": 156,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15266,
+      "generated_end_line": 15273,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 157,
+      "source_end_line": 164,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15274,
+      "generated_end_line": 15282,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 165,
+      "source_end_line": 173,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15283,
+      "generated_end_line": 15283,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 174,
+      "source_end_line": 174,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15284,
+      "generated_end_line": 15347,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 175,
+      "source_end_line": 238,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15348,
+      "generated_end_line": 15350,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 239,
+      "source_end_line": 241,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15351,
+      "generated_end_line": 15351,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 242,
+      "source_end_line": 242,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15352,
+      "generated_end_line": 15352,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 243,
+      "source_end_line": 243,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15353,
+      "generated_end_line": 15407,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 244,
+      "source_end_line": 298,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15408,
+      "generated_end_line": 15410,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 299,
+      "source_end_line": 301,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15411,
+      "generated_end_line": 15411,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 302,
+      "source_end_line": 302,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15412,
+      "generated_end_line": 15412,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 303,
+      "source_end_line": 303,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15413,
+      "generated_end_line": 15842,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 304,
+      "source_end_line": 733,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15843,
+      "generated_end_line": 15845,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 734,
+      "source_end_line": 736,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15846,
+      "generated_end_line": 15846,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 737,
+      "source_end_line": 737,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15847,
+      "generated_end_line": 15847,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 738,
+      "source_end_line": 738,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15848,
+      "generated_end_line": 15981,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 739,
+      "source_end_line": 872,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15982,
+      "generated_end_line": 15984,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 873,
+      "source_end_line": 875,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15985,
+      "generated_end_line": 15985,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 876,
+      "source_end_line": 876,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 15986,
+      "generated_end_line": 15986,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 877,
+      "source_end_line": 877,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 15987,
+      "generated_end_line": 16001,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 878,
+      "source_end_line": 892,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16002,
+      "generated_end_line": 16004,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 893,
+      "source_end_line": 895,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16005,
+      "generated_end_line": 16005,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 896,
+      "source_end_line": 896,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16006,
+      "generated_end_line": 16006,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 897,
+      "source_end_line": 897,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16007,
+      "generated_end_line": 16022,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 898,
+      "source_end_line": 913,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16023,
+      "generated_end_line": 16025,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 914,
+      "source_end_line": 916,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16026,
+      "generated_end_line": 16026,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 917,
+      "source_end_line": 917,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16027,
+      "generated_end_line": 16027,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 918,
+      "source_end_line": 918,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16028,
+      "generated_end_line": 16041,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 919,
+      "source_end_line": 932,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16042,
+      "generated_end_line": 16045,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 933,
+      "source_end_line": 936,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16046,
+      "generated_end_line": 16049,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 937,
+      "source_end_line": 940,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16050,
+      "generated_end_line": 16050,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 941,
+      "source_end_line": 941,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16051,
+      "generated_end_line": 16054,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 942,
+      "source_end_line": 945,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16055,
+      "generated_end_line": 16058,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 946,
+      "source_end_line": 949,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16059,
+      "generated_end_line": 16062,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 950,
+      "source_end_line": 953,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16063,
+      "generated_end_line": 16063,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 954,
+      "source_end_line": 954,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16064,
+      "generated_end_line": 16070,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 955,
+      "source_end_line": 961,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16071,
+      "generated_end_line": 16073,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 962,
+      "source_end_line": 964,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16074,
+      "generated_end_line": 16074,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 965,
+      "source_end_line": 965,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16075,
+      "generated_end_line": 16075,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 966,
+      "source_end_line": 966,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16076,
+      "generated_end_line": 16089,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 967,
+      "source_end_line": 980,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16090,
+      "generated_end_line": 16090,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 981,
+      "source_end_line": 981,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16091,
+      "generated_end_line": 16091,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 982,
+      "source_end_line": 982,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16092,
+      "generated_end_line": 16092,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 983,
+      "source_end_line": 983,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16093,
+      "generated_end_line": 16199,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 984,
+      "source_end_line": 1090,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16200,
+      "generated_end_line": 16200,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 1091,
+      "source_end_line": 1091,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16201,
+      "generated_end_line": 16201,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 1092,
+      "source_end_line": 1092,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16202,
+      "generated_end_line": 16202,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 1093,
+      "source_end_line": 1093,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16203,
+      "generated_end_line": 16226,
+      "source_path": "Include/BookResearchRuntime.mqh",
+      "source_start_line": 1094,
+      "source_end_line": 1117,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16227,
+      "generated_end_line": 16227,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10491,
+      "source_end_line": 10491,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 16228,
+      "generated_end_line": 16228,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10492,
+      "source_end_line": 10492,
+      "rendering": "include_directive_comment"
+    },
+    {
+      "generated_start_line": 16229,
+      "generated_end_line": 16229,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10492,
+      "source_end_line": 10492,
+      "rendering": "boundary_comment"
+    },
+    {
+      "generated_start_line": 16230,
+      "generated_end_line": 16798,
+      "source_path": "Include/BookResearchBridge.mqh",
+      "source_start_line": 1,
+      "source_end_line": 569,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16799,
+      "generated_end_line": 16801,
+      "source_path": "Include/BookResearchBridge.mqh",
+      "source_start_line": 570,
+      "source_end_line": 572,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16802,
+      "generated_end_line": 16802,
+      "source_path": "Include/BookResearchBridge.mqh",
+      "source_start_line": 573,
+      "source_end_line": 573,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16803,
+      "generated_end_line": 16803,
+      "source_path": "Include/BookResearchBridge.mqh",
+      "source_start_line": 574,
+      "source_end_line": 574,
+      "rendering": "inactive_host_comment"
+    },
+    {
+      "generated_start_line": 16804,
+      "generated_end_line": 16810,
+      "source_path": "Include/BookResearchBridge.mqh",
+      "source_start_line": 575,
+      "source_end_line": 581,
+      "rendering": "original"
+    },
+    {
+      "generated_start_line": 16811,
+      "generated_end_line": 16811,
+      "source_path": "scalpertalvez.mq5",
+      "source_start_line": 10492,
+      "source_end_line": 10492,
+      "rendering": "boundary_comment"
+    }
+  ]
+}
